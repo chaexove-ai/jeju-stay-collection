@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island</title>
+<meta name="description" content="A curated collection of private pool villas, ocean-view retreats and quiet guesthouses across Jeju Island — each one visited and looked after by a local team.">
+<style>
+  :root{
+    --ink:#12242b; --ink-2:#3d5058; --ink-3:#6b7d85;
+    --paper:#fbfaf7; --card:#ffffff; --line:#e6e2da;
+    --sea:#0d3b45; --sea-2:#134f5c; --sea-3:#1c6b7a;
+    --tang:#e07a33; --tang-2:#c8621f;
+    --gold:#b98b34;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(18,36,43,.05), 0 8px 24px rgba(18,36,43,.06);
+    --shadow-lg:0 2px 4px rgba(18,36,43,.06), 0 18px 44px rgba(18,36,43,.12);
+    --font:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; font-family:var(--font); color:var(--ink);
+    background:var(--paper); line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%; display:block}
+  a{color:inherit; text-decoration:none}
+
+  /* ---------- top bar ---------- */
+  .bar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(251,250,247,.88); backdrop-filter:saturate(160%) blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .bar-in{
+    max-width:1180px; margin:0 auto; padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .brand{display:flex; align-items:baseline; gap:9px; font-weight:700; letter-spacing:-.01em}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--tang);align-self:center}
+  .brand span{font-size:15px}
+  .brand small{font-size:11px;color:var(--ink-3);font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+  .lang{display:flex; gap:2px; background:#efece5; padding:3px; border-radius:999px}
+  .lang button{
+    border:0; background:transparent; cursor:pointer; font:inherit;
+    font-size:12.5px; font-weight:600; color:var(--ink-2);
+    padding:5px 13px; border-radius:999px; transition:.16s;
+  }
+  .lang button[aria-pressed="true"]{background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.09)}
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative; overflow:hidden;
+    background:
+      radial-gradient(120% 100% at 15% 0%, rgba(28,107,122,.55) 0%, transparent 60%),
+      radial-gradient(90% 90% at 92% 12%, rgba(224,122,51,.28) 0%, transparent 55%),
+      linear-gradient(168deg, #0b333c 0%, #103f4a 45%, #0a2a32 100%);
+    color:#fff;
+  }
+  .hero::after{
+    content:""; position:absolute; inset:auto 0 -1px 0; height:52px;
+    background:linear-gradient(to bottom, transparent, rgba(251,250,247,.55) 62%, var(--paper));
+    pointer-events:none; z-index:2;
+  }
+  /* 제주 풍경 일러스트 (사진을 넣으면 자동으로 대체됩니다) */
+  .scene{position:absolute; inset:auto 0 0 0; width:100%; height:86%; z-index:0; pointer-events:none}
+  .scene svg{width:100%; height:100%; display:block}
+  /* 텍스트 가독성용 스크림 */
+  .scrim{position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(102deg, rgba(7,32,40,.60) 0%, rgba(7,32,40,.28) 46%, rgba(7,32,40,0) 74%);}
+  /* 실사진 모드 */
+  .hero.photo .scene{display:none}
+  .hero.photo .hero-photo{
+    position:absolute; inset:0; z-index:0;
+    background-size:cover; background-position:var(--hero-pos, center);
+  }
+  /* 사진 모드에서는 .scrim을 끕니다 — 안 그러면 막이 두 겹 겹쳐 왼쪽이 96% 어두워집니다 */
+  .hero.photo .scrim{display:none}
+  .hero.photo .hero-photo::after{
+    content:""; position:absolute; inset:0;
+    background:
+      linear-gradient(100deg, rgba(6,28,36,.80) 0%, rgba(6,28,36,.52) 44%, rgba(6,28,36,.10) 100%),
+      linear-gradient(to bottom, rgba(6,28,36,.26) 0%, rgba(6,28,36,0) 40%);
+  }
+  /* 사진 위 글자는 어떤 사진이 와도 읽히도록 */
+  .hero.photo h1,
+  .hero.photo .lede,
+  .hero.photo .eyebrow{text-shadow:0 2px 18px rgba(2,18,24,.55)}
+  .hero-in{max-width:1180px; margin:0 auto; padding:76px 20px 92px; position:relative; z-index:1}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:#ffd9b8; border:1px solid rgba(255,217,184,.32);
+    padding:7px 14px; border-radius:999px; margin-bottom:26px;
+  }
+  h1{
+    margin:0 0 20px; font-size:clamp(34px,6vw,60px); line-height:1.06;
+    letter-spacing:-.028em; font-weight:800; max-width:19ch;
+  }
+  h1 em{font-style:normal; color:#ffc38a}
+  .lede{
+    margin:0 0 34px; font-size:clamp(16px,2.1vw,19px); line-height:1.62;
+    color:rgba(255,255,255,.84); max-width:56ch; font-weight:400;
+  }
+  .stats{display:flex; flex-wrap:wrap; gap:12px}
+  .stat{
+    background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.15);
+    border-radius:12px; padding:13px 18px; min-width:118px;
+  }
+  .stat b{display:block; font-size:23px; line-height:1.15; letter-spacing:-.02em}
+  .stat span{font-size:11.5px; color:rgba(255,255,255,.68); letter-spacing:.03em}
+
+  /* ---------- listings ---------- */
+  main{max-width:1180px; margin:0 auto; padding:0 20px 72px}
+  .sec-head{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:20px; flex-wrap:wrap; margin:6px 0 26px;
+  }
+  .sec-head h2{margin:0; font-size:24px; letter-spacing:-.02em; font-weight:750}
+  .sec-head p{margin:5px 0 0; color:var(--ink-3); font-size:14px}
+  .count{font-size:13px; color:var(--ink-3); white-space:nowrap}
+
+  .grid{display:grid; gap:22px; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); align-items:start}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column;
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg)}
+  .thumb{position:relative; aspect-ratio:4/3; background:#dfd9cf; overflow:hidden}
+  .thumb img{position:absolute; inset:0; width:100%;height:100%;object-fit:cover; object-position:center; z-index:1}
+  .thumb .ph{
+    position:absolute; inset:0; display:grid; place-items:center;
+    font-size:44px; font-weight:800; color:rgba(255,255,255,.9); letter-spacing:-.03em;
+  }
+  .badge{
+    position:absolute; top:12px; left:12px; z-index:2;
+    font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase;
+    padding:6px 11px; border-radius:7px; color:#fff; background:var(--sea);
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+  }
+  .badge.deal{background:var(--tang)}
+  .badge.new{background:var(--gold)}
+  .body{padding:17px 18px 18px; display:flex; flex-direction:column; flex:1}
+  .region{
+    font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--tang-2); margin-bottom:6px;
+  }
+  .name{margin:0 0 8px; font-size:18.5px; line-height:1.28; letter-spacing:-.018em; font-weight:700}
+  .intro{margin:0 0 14px; font-size:14px; color:var(--ink-2); line-height:1.58}
+  .fill{flex:1; min-height:4px}
+  .meta{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:15px}
+  .tag{
+    font-size:11.5px; font-weight:600; color:var(--ink-2);
+    background:#f3f1ec; border:1px solid var(--line); padding:4px 9px; border-radius:6px;
+  }
+  .cta{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--sea); color:#fff; font-weight:700; font-size:14.5px;
+    padding:12px 16px; border-radius:10px; transition:.16s;
+    border:0; width:100%; font-family:inherit; cursor:pointer;
+  }
+  .cta:hover{background:var(--sea-3)}
+  .cta svg{width:15px;height:15px;flex:none; transition:transform .2s}
+  .cta[aria-expanded="true"] svg.chev{transform:rotate(180deg)}
+  .spec{font-size:12.5px; color:var(--ink-3); margin:-4px 0 12px; font-weight:600}
+
+  /* 객실 목록 */
+  .rooms{display:none; margin-top:10px; border-top:1px solid var(--line); padding-top:10px}
+  .rooms.open{display:block}
+  .room{
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+    padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+    margin-bottom:7px; background:#fcfbf9; transition:.15s;
+  }
+  .room:last-child{margin-bottom:0}
+  .room:hover{border-color:#c3cfd4; background:#fff}
+  .room.whole{background:#f0f6f7; border-color:#c9dde1}
+  .room-l{min-width:0}
+  .room-n{font-size:14px; font-weight:700; line-height:1.3}
+  .room.whole .room-n{color:var(--sea)}
+  .room-s{font-size:11.5px; color:var(--ink-3); margin-top:1px}
+  .room-go{
+    flex:none; display:inline-flex; align-items:center; gap:5px;
+    font-size:12.5px; font-weight:700; color:var(--sea); white-space:nowrap;
+  }
+  .room-go svg{width:13px;height:13px}
+
+  /* ---------- states ---------- */
+  .note{
+    border:1px dashed var(--line); background:#fffdf8; border-radius:var(--radius);
+    padding:22px; color:var(--ink-2); font-size:14px; line-height:1.65;
+  }
+  .note b{color:var(--ink)}
+  .skeleton{background:linear-gradient(90deg,#eeebe4 25%,#f6f4ef 50%,#eeebe4 75%);background-size:200% 100%;animation:sk 1.3s infinite}
+  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .sk-card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .sk-card .a{aspect-ratio:4/3}
+  .sk-card .b{height:15px;margin:18px;border-radius:5px}
+  .sk-card .c{height:15px;margin:0 18px 26px;width:60%;border-radius:5px}
+
+  /* ---------- footer ---------- */
+  footer{background:var(--sea); color:rgba(255,255,255,.72); font-size:13.5px}
+  .foot-in{max-width:1180px; margin:0 auto; padding:44px 20px; display:flex; flex-wrap:wrap; gap:26px; justify-content:space-between}
+  footer .brand{color:#fff; margin-bottom:8px}
+  footer p{margin:0; max-width:46ch; line-height:1.62}
+  footer a{color:#ffc38a}
+
+  @media (max-width:640px){
+    .hero-in{padding:56px 20px 76px}
+    .grid{grid-template-columns:1fr; gap:18px}
+    .stat{flex:1 1 calc(50% - 6px); min-width:0}
+    .scene{height:64%}
+    .scrim{background:linear-gradient(180deg, rgba(7,32,40,.74) 0%, rgba(7,32,40,.56) 40%, rgba(7,32,40,.18) 66%, rgba(7,32,40,0) 100%)}
+    /* 모바일에서는 막을 세로 방향으로 — 글자가 있는 위쪽만 덮고 아래 사진은 살립니다 */
+    .hero.photo .hero-photo::after{
+      background:linear-gradient(to bottom, rgba(6,28,36,.82) 0%, rgba(6,28,36,.66) 34%, rgba(6,28,36,.34) 62%, rgba(6,28,36,.10) 100%);
+    }
+    .bar-in{padding:10px 16px; gap:10px}
+    .brand span{font-size:14px}
+    .brand small{display:none}
+    .lang button{padding:5px 10px; font-size:12px}
+  }
+  .brand span,.lang button{white-space:nowrap}
+  @media (max-width:360px){ .lang button{padding:5px 8px; font-size:11.5px} }
+</style>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VQ6CNN14WF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VQ6CNN14WF');
+</script>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand"><span class="dot"></span><span>Jeju Stay Collection</span></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">English</button>
+      <button data-lang="zh" aria-pressed="false">繁體中文</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero" id="hero">
+  <div class="hero-photo" id="heroPhoto"></div>
+  <div class="scene" aria-hidden="true">
+    <svg viewBox="0 0 1440 560" preserveAspectRatio="xMaxYMax slice">
+      <defs>
+        <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffd7a8"/><stop offset="55%" stop-color="#ffab63"/><stop offset="100%" stop-color="#f08a3c"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffb066" stop-opacity=".42"/>
+          <stop offset="55%" stop-color="#ff9a4d" stop-opacity=".13"/>
+          <stop offset="100%" stop-color="#ff9a4d" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2b7684" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#0d3b45" stop-opacity=".16"/>
+        </linearGradient>
+        <linearGradient id="farG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity=".13"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="landG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#072028"/><stop offset="100%" stop-color="#041318"/>
+        </linearGradient>
+        <clipPath id="seaClip"><rect x="0" y="286" width="1440" height="104"/></clipPath>
+      </defs>
+
+      <!-- 구름 -->
+      <g fill="#ffffff" opacity=".07">
+        <ellipse cx="250" cy="86" rx="190" ry="15"/>
+        <ellipse cx="360" cy="118" rx="120" ry="10"/>
+        <ellipse cx="1180" cy="70" rx="150" ry="12"/>
+      </g>
+
+      <!-- 해 + 빛무리 -->
+      <circle cx="1142" cy="272" r="238" fill="url(#glow)"/>
+      <circle cx="1142" cy="272" r="62" fill="url(#sun)" opacity=".94"/>
+
+      <!-- 한라산 (완만한 순상화산) -->
+      <path d="M-60 292 C 150 286 300 258 430 204 C 470 187 502 176 534 176 C 566 176 596 188 632 206 C 760 268 920 290 1120 292 L 1120 300 L -60 300 Z"
+            fill="url(#farG)"/>
+
+      <!-- 바다 -->
+      <rect x="0" y="286" width="1440" height="104" fill="url(#seaG)"/>
+      <g clip-path="url(#seaClip)" stroke="#cbe9ef" stroke-opacity=".22" stroke-width="1.4" fill="none">
+        <path d="M40 316 q26 -6 52 0 t52 0 t52 0 t52 0"/>
+        <path d="M380 336 q26 -6 52 0 t52 0 t52 0"/>
+        <path d="M760 322 q26 -6 52 0 t52 0 t52 0 t52 0"/>
+        <path d="M180 358 q26 -6 52 0 t52 0 t52 0"/>
+        <path d="M980 352 q26 -6 52 0 t52 0 t52 0"/>
+      </g>
+
+      <!-- 성산일출봉 -->
+      <path d="M1192 292 C 1202 260 1222 238 1248 230 C 1258 233 1264 226 1272 220 C 1282 224 1288 232 1296 234
+               C 1306 226 1314 219 1324 222 C 1334 226 1340 234 1350 232 C 1382 242 1402 264 1410 292 Z"
+            fill="#07222a" opacity=".94"/>
+
+      <!-- 오름 (앞쪽 능선) -->
+      <path d="M-40 372 C 90 372 150 322 246 322 C 342 322 396 372 512 374 L 512 392 L -40 392 Z" fill="#0a2c34"/>
+      <path d="M470 380 C 600 380 660 330 762 330 C 866 330 918 380 1040 382 L 1040 400 L 470 400 Z" fill="#092830" opacity=".95"/>
+      <path d="M960 384 C 1064 384 1108 344 1196 344 C 1286 344 1330 384 1470 386 L 1470 404 L 960 404 Z" fill="#082630" opacity=".9"/>
+
+      <!-- 앞 들판 + 밭담 -->
+      <path d="M-40 414 C 220 394 460 408 720 400 C 980 392 1220 406 1480 396 L 1480 580 L -40 580 Z" fill="url(#landG)"/>
+      <g stroke="#a8cbd2" stroke-opacity=".22" stroke-width="1.7" fill="none">
+        <path d="M-20 462 C 240 444 520 456 780 448 C 1020 441 1240 452 1470 444"/>
+        <path d="M-20 508 C 260 490 540 502 800 494 C 1050 487 1250 498 1470 490"/>
+        <path d="M120 430 C 128 470 122 512 112 560"/>
+        <path d="M420 424 C 430 466 424 512 414 560"/>
+        <path d="M760 416 C 770 460 764 510 754 560"/>
+        <path d="M1090 420 C 1100 464 1094 512 1084 560"/>
+        <path d="M1330 414 C 1340 460 1334 510 1324 560"/>
+      </g>
+    </svg>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div class="hero-in">
+    <div class="eyebrow" data-t="eyebrow"></div>
+    <h1 data-t="h1"></h1>
+    <p class="lede" data-t="lede"></p>
+    <div class="stats">
+      <div class="stat"><b>23</b><span data-t="s1"></span></div>
+      <div class="stat"><b>4.93</b><span data-t="s2"></span></div>
+      <div class="stat"><b>15</b><span data-t="s3"></span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="sec-head">
+    <div>
+      <h2 data-t="secTitle"></h2>
+      <p data-t="secSub"></p>
+    </div>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <div class="foot-in">
+    <div>
+      <div class="brand"><span class="dot"></span><span>Jeju Stay Collection</span></div>
+      <p data-t="footer"></p>
+    </div>
+    <div><p data-t="contact"></p></div>
+  </div>
+</footer>
+
+<script>
+/* ==========================================================
+   1) 구글 시트 연결
+   시트를 "링크가 있는 모든 사용자 - 뷰어"로 공유한 뒤
+   아래 SHEET_ID 만 확인하면 됩니다. (이미 채워져 있습니다)
+   ========================================================== */
+/* 히어로 배경 사진: 아래에 이미지 주소를 넣으면 일러스트 대신 사진이 깔립니다.
+   비워두면 제주 풍경 일러스트가 표시됩니다. (가로로 넓은 사진, 1600px 이상 권장) */
+const HERO_PHOTO = "";
+
+/* 상단 배경 사진은 시트의 _hero 행에서 관리합니다.
+   아래 HERO_PHOTO는 시트에 값이 없을 때만 쓰이는 예비값입니다. */
+
+/* 사진을 사이트에 같이 올릴 경우의 폴더. 시트에 파일명만 적으면 여기서 찾습니다.
+   (Cloudinary 등 외부 주소를 시트에 통째로 붙여넣으면 이 값은 무시됩니다) */
+const IMG_DIR = "img";
+
+const SHEET_ID = "1HLiwPib_S6P4K5V3TzNWPu84y3D2Z_-nE3V7F87Hhfc";
+const SHEET_NAME = "";            // 시트 탭 이름이 다르면 여기에 입력
+/* headers=1 필수 — 없으면 구글이 머리글 줄 수를 자기 마음대로 판단해서
+   _hero 행을 머리글에 붙여버립니다 (2026.9 확인) */
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1${SHEET_NAME?`&sheet=${encodeURIComponent(SHEET_NAME)}`:""}`;
+
+/* ---------- 문구 ---------- */
+const T = {
+  en:{
+    eyebrow:"Handpicked stays on Jeju Island",
+    h1:'Jeju, the way<br>locals <em>actually</em> stay.',
+    lede:"Private pool villas, ocean-view retreats and quiet guesthouses — each one visited, photographed and looked after by a local team who lives here.",
+    s1:"Stays we manage", s2:"Average rating", s3:"Guest Favourites",
+    secTitle:"Where to stay",
+    secSub:"Tap any stay to see live dates and prices on Airbnb.",
+    count:n=>`${n} ${n===1?"stay":"stays"}`,
+    cta:"View on Airbnb",
+    ctaRooms:n=>`View ${n} rooms`,
+    ctaHide:"Hide rooms",
+    whole:"Whole property",
+    sleeps:n=>`Sleeps up to ${n}`,
+    spec:(r,s)=>r===1 ? (s?`Sleeps up to ${s}`:"") : `${r} rooms${s?` · sleeps up to ${s}`:""}`,
+    book:"Book",
+    footer:"A curated collection of independent stays across Jeju Island, put together and looked after by a team that lives here. We take no booking commission — you book directly with your host on Airbnb.",
+    contact:"Jeju Island, Republic of Korea",
+    empty:"<b>No stays loaded yet.</b><br>Fill in the Google Sheet and set its sharing to “Anyone with the link — Viewer”. This page will pick it up automatically.",
+    error:"<b>Could not load the stay list.</b><br>Check that the Google Sheet is shared as “Anyone with the link — Viewer”."
+  },
+  zh:{
+    eyebrow:"濟州島精選住宿",
+    h1:'濟州島，<br>當地人<em>真正</em>住的地方。',
+    lede:"私人泳池別墅、面海度假屋與寧靜民宿 —— 每一間都由住在當地的團隊親自走訪、拍攝並長期照料。",
+    s1:"合作住宿", s2:"平均評分", s3:"旅客之選",
+    secTitle:"住宿選擇",
+    secSub:"點選任一住宿，即可在 Airbnb 查看即時房況與價格。",
+    count:n=>`共 ${n} 間`,
+    cta:"在 Airbnb 查看",
+    ctaRooms:n=>`查看 ${n} 間客房`,
+    ctaHide:"收合客房",
+    whole:"整棟包棟",
+    sleeps:n=>`最多 ${n} 人`,
+    spec:(r,s)=>r===1 ? (s?`最多 ${s} 人`:"") : `${r} 間客房${s?` · 最多 ${s} 人`:""}`,
+    book:"預訂",
+    footer:"由住在濟州島的在地團隊親自挑選並長期照料的獨立住宿精選。我們不收取任何訂房佣金 —— 您直接在 Airbnb 向房東預訂。",
+    contact:"大韓民國 濟州島",
+    empty:"<b>尚未載入住宿資料。</b><br>請填寫 Google 試算表，並將共用設定改為「知道連結的任何人 — 檢視者」。",
+    error:"<b>無法載入住宿清單。</b><br>請確認 Google 試算表已設為「知道連結的任何人 — 檢視者」。"
+  }
+};
+
+/* ---------- 태그 사전 (시트에는 영문 코드만 입력) ---------- */
+const TAGS = {
+  POOL:{en:"Private pool",zh:"私人泳池"},     OCEAN:{en:"Ocean view",zh:"海景"},
+  BEACH:{en:"Near beach",zh:"鄰近海灘"},      MOUNTAIN:{en:"Mountain view",zh:"山景"},
+  PET:{en:"Pet friendly",zh:"寵物友善"},      BBQ:{en:"BBQ",zh:"烤肉"},
+  SPA:{en:"Spa",zh:"水療"},                   JACUZZI:{en:"Jacuzzi",zh:"按摩浴缸"},
+  KITCHEN:{en:"Full kitchen",zh:"完整廚房"},  PARKING:{en:"Free parking",zh:"免費停車"},
+  FAMILY:{en:"Family friendly",zh:"適合家庭"},COUPLE:{en:"For couples",zh:"適合情侶"},
+  PRIVATE:{en:"Entire place",zh:"獨棟包棟"},  CINEMA:{en:"Home cinema",zh:"家庭劇院"},
+  SUNRISE:{en:"Sunrise view",zh:"日出景觀"},  SUNSET:{en:"Sunset view",zh:"日落景觀"},
+  GARDEN:{en:"Garden",zh:"庭園"},             CAMPING:{en:"Camping",zh:"露營"},
+  /* 2026.9 추가 */
+  GROUP:{en:"Group friendly",zh:"適合團體"},  HEATED:{en:"Heated pool",zh:"溫水泳池"},
+  INDOOR:{en:"Indoor pool",zh:"室內泳池"},    DESIGN:{en:"Design stay",zh:"設計旅宿"},
+  KARAOKE:{en:"Karaoke",zh:"卡拉OK"},         FOREST:{en:"Forest setting",zh:"森林環繞"},
+  STONE:{en:"Jeju stone house",zh:"濟州石屋"},SAUNA:{en:"Finnish sauna",zh:"芬蘭浴"},
+  ORCHARD:{en:"Tangerine grove",zh:"橘園景觀"},PHOTO:{en:"Instagrammable",zh:"網美打卡"}
+};
+const BADGES = {
+  FEATURED:{en:"Featured",zh:"精選",cls:""},
+  NEW:{en:"New",zh:"新上架",cls:"new"},
+  POPULAR:{en:"Popular",zh:"熱門",cls:""}
+};
+
+let lang = "en";
+let props = [];   // 숙소 단위로 묶인 목록
+let SITE  = {};   // 시트의 _hero 행에서 가져온 상단 영역 설정
+
+/* ---------- CSV 파서 ---------- */
+function parseCSV(text){
+  const out=[]; let row=[], cell="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===","){ row.push(cell); cell=""; }
+      else if(c==="\n"){ row.push(cell); out.push(row); row=[]; cell=""; }
+      else if(c!=="\r") cell+=c;
+    }
+  }
+  if(cell!==""||row.length){ row.push(cell); out.push(row); }
+  return out;
+}
+
+function isUrl(s){ const v=(s||"").trim(); return /^https?:\/\/\S+\.\S+/.test(v) && !v.startsWith("https://..."); }
+
+/* 사진 값 해석 — 전체 URL이면 그대로, 파일명이면 IMG_DIR 안에서 찾음 */
+function photoSrc(v){
+  const s=(v||"").trim();
+  if(!s || s.startsWith("https://...")) return "";
+  if(/^https?:\/\//.test(s)) return s;
+  if(s.startsWith("/") || s.startsWith("./")) return s;
+  if(/\.(jpe?g|png|webp|avif)$/i.test(s)) return IMG_DIR.replace(/\/$/,"") + "/" + s;
+  return "";
+}
+function num(s){ const v=parseFloat(String(s).replace(/[^\d.\-]/g,"")); return Number.isFinite(v)?v:null; }
+const esc = s => String(s??"").replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+/* 시트에서 온 문구: 줄바꿈 → <br>, *강조* → 색상 강조 */
+const fmt = s => esc(s).replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/\r?\n/g, "<br>");
+
+const PH = ["#1c6b7a","#0d3b45","#e07a33","#b98b34","#3d5058","#134f5c"];
+
+/* 시트 T열 "사진위치" — 비워두면 center. 세로 사진에서 위/아래가 잘릴 때만 쓰세요. */
+const FOCUS = { top:"center top", bottom:"center bottom", left:"left center", right:"right center", center:"center" };
+
+/* ---------- 행 → 숙소 그룹 ---------- */
+const PROP_FIELDS = ["badge","badgeRaw","nameKo","nameEn","nameZh","regionEn","regionZh","introEn","introZh","tagsRaw","photo","focus"];
+
+function buildProps(table){
+  const body = table.slice(1).filter(r=>r.some(c=>c&&c.trim()));
+  const map = new Map();
+
+  const site = {};
+  for(const c of body){
+    const id = (c[3]||"").trim();
+    if(!id || id === "숙소ID") continue;      // 머리글 줄 방어
+
+    if(id.startsWith("_")){                       // 설정 행 (_hero 등)
+      site[id.toLowerCase()] = {
+        h1:{ en:(c[6]||"").trim(),  zh:(c[7]||"").trim()  },
+        lede:{ en:(c[10]||"").trim(), zh:(c[11]||"").trim() },
+        photo:(c[17]||"").trim(), focus:(c[19]||"").trim().toLowerCase()
+      };
+      continue;
+    }
+
+    if(!map.has(id)) map.set(id, {id, pin:null, occ:null, badge:"", badgeRaw:"", nameKo:"", nameEn:"", nameZh:"",
+      regionEn:"", regionZh:"", introEn:"", introZh:"", tagsRaw:"", photo:"", rooms:[]});
+    const g = map.get(id);
+
+    if(g.pin === null) g.pin = num(c[0]);
+    if(g.occ === null) g.occ = num(c[1]);
+
+    const row = {
+      badge:(c[4]||"").trim().toUpperCase(), nameKo:(c[5]||"").trim(),
+      nameEn:(c[6]||"").trim(), nameZh:(c[7]||"").trim(),
+      regionEn:(c[8]||"").trim(), regionZh:(c[9]||"").trim(),
+      introEn:(c[10]||"").trim(), introZh:(c[11]||"").trim(),
+      tagsRaw:(c[12]||"").trim(), photo:(c[17]||"").trim(), focus:(c[19]||"").trim().toLowerCase()
+    };
+    for(const k of PROP_FIELDS) if(!g[k] && row[k]) g[k] = row[k];   // 첫 값 상속
+
+    const show = (c[2]||"Y").trim().toUpperCase() !== "N";
+    const link = (c[18]||"").trim();
+    if(show && isUrl(link)){
+      g.rooms.push({
+        nameEn:(c[13]||"").trim(), nameZh:(c[14]||"").trim(),
+        sleeps:num(c[15]), whole:(c[16]||"").trim().toUpperCase()==="Y",
+        photo:(c[17]||"").trim(), focus:(c[19]||"").trim().toLowerCase(), link
+      });
+    }
+  }
+
+  const list = [...map.values()].filter(g=>g.rooms.length);
+  list.forEach(g=>{
+    g.tags = g.tagsRaw.split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
+    g.rooms.sort((a,b)=> (b.whole?1:0)-(a.whole?1:0));           // 전체대관을 맨 위로
+    if(!photoSrc(g.photo)){
+      const src = g.rooms.find(r=>photoSrc(r.photo));
+      if(src){ g.photo = src.photo; if(!g.focus) g.focus = src.focus; }
+    }
+    g.photo = photoSrc(g.photo) || "";
+    g.maxSleeps = Math.max(0, ...g.rooms.map(r=>r.sleeps||0));
+  });
+
+  /* 정렬 규칙
+     고정순서(A열) 양수  1,2,3…  → 맨 위로 고정 (작은 수가 먼저)
+     고정순서(A열) 음수  -1,-2…   → 맨 아래로 고정 (-1이 제일 마지막)
+     비어 있으면        → 예약률 낮은 순, 동점이면 이름순 */
+  list.sort((a,b)=>{
+    const aBot = a.pin!==null && a.pin<0, bBot = b.pin!==null && b.pin<0;
+    if(aBot !== bBot) return aBot ? 1 : -1;
+    if(aBot && bBot) return a.pin - b.pin;          // -2 가 -1 보다 앞
+    const aTop = a.pin!==null, bTop = b.pin!==null;
+    if(aTop !== bTop) return aTop ? -1 : 1;
+    if(aTop) return a.pin - b.pin;
+    const ao=a.occ===null?9999:a.occ, bo=b.occ===null?9999:b.occ;
+    if(ao!==bo) return ao-bo;
+    return (a.nameEn||"").localeCompare(b.nameEn||"");
+  });
+  return { list, site };
+}
+
+/* 상단 영역에 시트 설정 적용 */
+function applyHero(cfg){
+  SITE = {};
+  const src = photoSrc(cfg?.photo) || HERO_PHOTO;
+  const hero = document.getElementById("hero");
+  if(src){
+    const el = document.getElementById("heroPhoto");
+    el.style.backgroundImage = `url("${src}")`;
+    el.style.setProperty("--hero-pos", FOCUS[cfg?.focus] || "center");
+    hero.classList.add("photo");
+  }else{
+    hero.classList.remove("photo");
+  }
+  if(cfg?.h1?.en || cfg?.h1?.zh)     SITE.h1   = { en: fmt(cfg.h1.en),   zh: fmt(cfg.h1.zh || cfg.h1.en) };
+  if(cfg?.lede?.en || cfg?.lede?.zh) SITE.lede = { en: fmt(cfg.lede.en), zh: fmt(cfg.lede.zh || cfg.lede.en) };
+}
+
+/* ---------- 렌더 ---------- */
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+const CHEV  = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+function render(){
+  const t = T[lang];
+  document.documentElement.lang = lang==="zh" ? "zh-Hant" : "en";
+  document.querySelectorAll("[data-t]").forEach(el=>{
+    const k = el.dataset.t;
+    const v = (SITE[k] && SITE[k][lang]) || t[k];
+    if(typeof v === "string") el.innerHTML = v;
+  });
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.lang===lang)));
+
+  const grid = document.getElementById("grid");
+  document.getElementById("count").textContent = props.length ? t.count(props.length) : "";
+
+  if(!props.length){ grid.innerHTML = `<div class="note" style="grid-column:1/-1">${t.empty}</div>`; return; }
+
+  grid.innerHTML = props.map((g,i)=>{
+    const name   = (lang==="zh" ? g.nameZh : g.nameEn) || g.nameEn || g.nameKo;
+    const region = (lang==="zh" ? g.regionZh : g.regionEn) || g.regionEn;
+    const intro  = (lang==="zh" ? g.introZh : g.introEn) || g.introEn || "";
+    const tags   = g.tags.map(k=>TAGS[k]?.[lang]).filter(Boolean).slice(0,4);
+    const single = g.rooms.length === 1;
+
+    let badgeHtml = "";
+    if(g.badge){
+      const raw = g.badgeRaw || g.badge;
+      const m = /^DEAL:?(\d+)?$/.exec(g.badge);
+      if(m){
+        const txt = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"OFF"}` : (lang==="zh"?"優惠":"Deal");
+        badgeHtml = `<span class="badge deal">${txt}</span>`;
+      }else if(BADGES[g.badge]){
+        badgeHtml = `<span class="badge ${BADGES[g.badge].cls}">${BADGES[g.badge][lang]}</span>`;
+      }else if(raw.includes("|")){                 // 자유 문구: "Free BBQ|免費烤肉"
+        const parts = raw.split("|");
+        const txt = (lang==="zh" ? parts[1] : parts[0]) || parts[0];
+        badgeHtml = `<span class="badge deal">${esc(txt.trim())}</span>`;
+      }
+    }
+
+    const grad = `linear-gradient(150deg, ${PH[i%PH.length]}, ${PH[(i+3)%PH.length]})`;
+    const initial = esc((name||"?").trim()[0]);
+    const thumb =
+      `<div class="ph" style="background:${grad}">${initial}</div>` +
+      (g.photo ? `<img src="${esc(g.photo)}" alt="${esc(name)}" loading="lazy" decoding="async"
+            style="object-position:${esc(FOCUS[g.focus] || "center")}" onerror="this.remove()">` : "");
+
+    const roomsHtml = g.rooms.map(r=>{
+      const rn = (lang==="zh" ? r.nameZh : r.nameEn) || r.nameEn || (r.whole ? t.whole : "");
+      return `<a class="room${r.whole?" whole":""}" href="${esc(r.link)}" target="_blank" rel="noopener"
+        data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(rn||t.whole)}">
+        <span class="room-l">
+          <span class="room-n">${esc(rn || t.whole)}</span>
+          ${r.sleeps?`<span class="room-s">${t.sleeps(r.sleeps)}</span>`:""}
+        </span>
+        <span class="room-go">${t.book} ${ARROW}</span>
+      </a>`;
+    }).join("");
+
+    const action = single
+      ? `<a class="cta" href="${esc(g.rooms[0].link)}" target="_blank" rel="noopener"
+           data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(g.rooms[0].nameEn||t.whole)}">${t.cta} ${ARROW}</a>`
+      : `<button class="cta" type="button" aria-expanded="false" data-toggle="${esc(g.id)}">
+           <span class="lbl">${t.ctaRooms(g.rooms.length)}</span> ${CHEV}
+         </button>
+         <div class="rooms" id="rooms-${esc(g.id)}">${roomsHtml}</div>`;
+
+    return `<article class="card">
+      <div class="thumb">${badgeHtml}${thumb}</div>
+      <div class="body">
+        ${region?`<div class="region">${esc(region)}</div>`:""}
+        <h3 class="name">${esc(name)}</h3>
+        ${t.spec(g.rooms.length, g.maxSleeps)?`<div class="spec">${t.spec(g.rooms.length, g.maxSleeps)}</div>`:""}
+        ${intro?`<p class="intro">${esc(intro)}</p>`:""}
+        <div class="fill"></div>
+        ${tags.length?`<div class="meta">${tags.map(x=>`<span class="tag">${x}</span>`).join("")}</div>`:""}
+        ${action}
+      </div>
+    </article>`;
+  }).join("");
+
+  grid.querySelectorAll("[data-toggle]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const box = document.getElementById("rooms-"+btn.dataset.toggle);
+      const open = box.classList.toggle("open");
+      btn.setAttribute("aria-expanded", String(open));
+      btn.querySelector(".lbl").textContent = open ? T[lang].ctaHide : T[lang].ctaRooms(box.children.length);
+    });
+  });
+}
+
+function showSkeleton(){
+  document.getElementById("grid").innerHTML =
+    Array.from({length:6}).map(()=>`<div class="sk-card"><div class="a skeleton"></div><div class="b skeleton"></div><div class="c skeleton"></div></div>`).join("");
+}
+
+async function load(){
+  showSkeleton();
+  try{
+    const res = await fetch(CSV_URL, {cache:"no-store"});
+    if(!res.ok) throw new Error(res.status);
+    const built = buildProps(parseCSV(await res.text()));
+    props = built.list;
+    applyHero(built.site["_hero"]);
+    render();
+  }catch(e){
+    props = []; render();
+    document.getElementById("grid").innerHTML =
+      `<div class="note" style="grid-column:1/-1">${T[lang].error}</div>`;
+  }
+}
+
+document.querySelectorAll(".lang button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    lang=b.dataset.lang;
+    try{localStorage.setItem("mm_lang",lang)}catch(e){}
+    track("language_switch", {language: lang});
+    render();
+  });
+});
+try{ const s=localStorage.getItem("mm_lang"); if(s&&T[s]) lang=s; }catch(e){}
+
+/* ---------- GA4 이벤트 ----------
+   airbnb_click   : 에어비앤비로 나간 클릭 (숙소·객실별) ← 사장님별 정산 근거
+   rooms_open     : 객실 목록을 펼친 클릭 (관심 신호)
+   language_switch: 번체중문 전환                                    */
+function track(name, params){
+  try{ if(typeof gtag === "function") gtag("event", name, params); }catch(e){}
+}
+document.getElementById("grid").addEventListener("click", e=>{
+  const a = e.target.closest("a[data-prop]");
+  if(a){
+    track("airbnb_click", {stay:a.dataset.prop, stay_name:a.dataset.name, room:a.dataset.room, language:lang});
+    return;
+  }
+  const b = e.target.closest("button[data-toggle]");
+  if(b) track("rooms_open", {stay:b.dataset.toggle, language:lang});
+});
+
+load();
+</script>
+</body>
+</html>
