@@ -290,9 +290,12 @@ const SHEET_NAME = "";
 const IMG_DIR    = "img";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1${SHEET_NAME?`&sheet=${encodeURIComponent(SHEET_NAME)}`:""}`;
 
-/* 히어로 사진 —— 시트 _hero 행에 사진을 넣으면 그 사진이 고정으로 쓰이고,
-   비워두면 사진이 있는 숙소들 사이에서 주 단위로 자동 순환한다.
-   맨 아래로 고정된 숙소(고정순서 음수)는 순환에서 제외된다. */
+/* 히어로 사진 —— 손으로 고르지 않는다.
+   사진이 있는 숙소들 사이에서 주 단위로 자동 순환하며,
+   맨 아래로 고정된 숙소(고정순서 음수)는 순환에서 제외된다.
+   시트 _hero 행의 사진 칸은 무시된다 — 컬렉션 운영자가 자기 숙소를
+   히어로에 올릴 수 없게 하려는 규칙이므로 되돌리지 말 것.
+   _hero 행의 문구(제목·리드)는 그대로 쓰인다. */
 
 /* ---------- 문구 ---------- */
 const T = {
@@ -509,8 +512,7 @@ function build(table){
 }
 
 /* ---------- 히어로 ---------- */
-function pickHero(cfg){
-  if(cfg && photoSrc(cfg.photo)) return {src:photoSrc(cfg.photo), focus:cfg.focus, stay:null};
+function pickHero(){
   const pool = props.filter(g=>g.photo && !g.bottom);   /* 최하단 고정 숙소는 제외 */
   if(!pool.length) return null;
   const week = Math.floor(Date.now()/6048e5);           /* 주 단위 순환 */
@@ -521,11 +523,11 @@ function applyHero(cfg){
   SITE={};
   if(cfg?.h1?.en || cfg?.h1?.zh)   SITE.h1   = {en:fmt(cfg.h1.en),   zh:fmt(cfg.h1.zh || cfg.h1.en)};
   if(cfg?.lede?.en || cfg?.lede?.zh) SITE.lede = {en:fmt(cfg.lede.en), zh:fmt(cfg.lede.zh || cfg.lede.en)};
-  HERO = pickHero(cfg);
+  HERO = pickHero();
   const img=document.getElementById("heroImg"), cap=document.getElementById("heroCap");
   if(HERO){
     img.src=HERO.src; img.style.objectPosition=FOCUS[HERO.focus]||"center"; img.hidden=false;
-    if(HERO.stay){ cap.hidden=false; } else { cap.hidden=true; }
+    cap.hidden = !HERO.stay;
   }
 }
 
