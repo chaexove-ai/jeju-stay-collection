@@ -4,226 +4,176 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island</title>
-<meta name="description" content="A curated collection of private pool villas, ocean-view retreats and quiet guesthouses across Jeju Island — each one visited and looked after by a local team.">
+<meta name="description" content="A curated collection of private pool villas, ocean-view retreats and quiet stone houses across Jeju Island — each one visited and looked after by a local team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Jost:wght@400;500&family=Noto+Serif+TC:wght@400&family=Noto+Sans+TC:wght@400;500&display=swap">
 <style>
   :root{
-    --ink:#12242b; --ink-2:#3d5058; --ink-3:#6b7d85;
-    --paper:#fbfaf7; --card:#ffffff; --line:#e6e2da;
-    --sea:#0d3b45; --sea-2:#134f5c; --sea-3:#1c6b7a;
-    --tang:#e07a33; --tang-2:#c8621f;
-    --gold:#b98b34;
-    --radius:16px;
-    --shadow:0 1px 2px rgba(18,36,43,.05), 0 8px 24px rgba(18,36,43,.06);
-    --shadow-lg:0 2px 4px rgba(18,36,43,.06), 0 18px 44px rgba(18,36,43,.12);
-    --font:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    --paper:#FBF9F5; --limestone:#F4F1EA; --hairline:#E0DBD1; --hairline-2:#CDC6B9;
+    --linen:#C4BEB2; --ash:#8B857A; --clay:#6E6558; --stone:#57534B; --basalt:#191817;
+    --pine:#2F4A43; --pine-dark:#243934; --placeholder:#E6E1D7;
+    --serif:"Instrument Serif","Noto Serif TC",Georgia,serif;
+    --sans:"Jost","Noto Sans TC","Avenir Next","Helvetica Neue",sans-serif;
+    --pad:72px;
   }
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
   body{
-    margin:0; font-family:var(--font); color:var(--ink);
-    background:var(--paper); line-height:1.6;
+    margin:0; background:var(--paper); color:var(--basalt);
+    font-family:var(--sans); font-weight:400; font-size:16px; line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
   img{max-width:100%; display:block}
   a{color:inherit; text-decoration:none}
+  button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
 
-  /* ---------- top bar ---------- */
-  .bar{
-    position:sticky; top:0; z-index:50;
-    background:rgba(251,250,247,.88); backdrop-filter:saturate(160%) blur(12px);
-    border-bottom:1px solid var(--line);
-  }
-  .bar-in{
-    max-width:1180px; margin:0 auto; padding:12px 20px;
-    display:flex; align-items:center; justify-content:space-between; gap:16px;
-  }
-  .brand{display:flex; align-items:baseline; gap:9px; font-weight:700; letter-spacing:-.01em}
-  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--tang);align-self:center}
-  .brand span{font-size:15px}
-  .brand small{font-size:11px;color:var(--ink-3);font-weight:500;letter-spacing:.06em;text-transform:uppercase}
-  .lang{display:flex; gap:2px; background:#efece5; padding:3px; border-radius:999px}
-  .lang button{
-    border:0; background:transparent; cursor:pointer; font:inherit;
-    font-size:12.5px; font-weight:600; color:var(--ink-2);
-    padding:5px 13px; border-radius:999px; transition:.16s;
-  }
-  .lang button[aria-pressed="true"]{background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.09)}
+  .lbl{font-size:11px; font-weight:500; letter-spacing:.2em; text-transform:uppercase; color:var(--clay)}
+  .rule{height:1px; background:var(--hairline)}
+  .wrap{max-width:1440px; margin:0 auto; padding:0 var(--pad)}
 
-  /* ---------- hero ---------- */
-  .hero{
-    position:relative; overflow:hidden;
-    background:
-      radial-gradient(120% 100% at 15% 0%, rgba(28,107,122,.55) 0%, transparent 60%),
-      radial-gradient(90% 90% at 92% 12%, rgba(224,122,51,.28) 0%, transparent 55%),
-      linear-gradient(168deg, #0b333c 0%, #103f4a 45%, #0a2a32 100%);
-    color:#fff;
-  }
-  .hero::after{
-    content:""; position:absolute; inset:auto 0 -1px 0; height:52px;
-    background:linear-gradient(to bottom, transparent, rgba(251,250,247,.55) 62%, var(--paper));
-    pointer-events:none; z-index:2;
-  }
-  /* 제주 풍경 일러스트 (사진을 넣으면 자동으로 대체됩니다) */
-  .scene{position:absolute; inset:auto 0 0 0; width:100%; height:86%; z-index:0; pointer-events:none}
-  .scene svg{width:100%; height:100%; display:block}
-  /* 텍스트 가독성용 스크림 */
-  .scrim{position:absolute; inset:0; z-index:0; pointer-events:none;
-    background:linear-gradient(102deg, rgba(7,32,40,.60) 0%, rgba(7,32,40,.28) 46%, rgba(7,32,40,0) 74%);}
-  /* 실사진 모드 */
-  .hero.photo .scene{display:none}
-  .hero.photo .hero-photo{
-    position:absolute; inset:0; z-index:0;
-    background-size:cover; background-position:var(--hero-pos, center);
-  }
-  /* 사진 모드에서는 .scrim을 끕니다 — 안 그러면 막이 두 겹 겹쳐 왼쪽이 96% 어두워집니다 */
-  .hero.photo .scrim{display:none}
-  .hero.photo .hero-photo::after{
-    content:""; position:absolute; inset:0;
-    background:
-      linear-gradient(100deg, rgba(6,28,36,.80) 0%, rgba(6,28,36,.52) 44%, rgba(6,28,36,.10) 100%),
-      linear-gradient(to bottom, rgba(6,28,36,.26) 0%, rgba(6,28,36,0) 40%);
-  }
-  /* 사진 위 글자는 어떤 사진이 와도 읽히도록 */
-  .hero.photo h1,
-  .hero.photo .lede,
-  .hero.photo .eyebrow{text-shadow:0 2px 18px rgba(2,18,24,.55)}
-  .hero-in{max-width:1180px; margin:0 auto; padding:76px 20px 92px; position:relative; z-index:1}
-  .eyebrow{
-    display:inline-flex; align-items:center; gap:8px;
-    font-size:11.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
-    color:#ffd9b8; border:1px solid rgba(255,217,184,.32);
-    padding:7px 14px; border-radius:999px; margin-bottom:26px;
-  }
-  h1{
-    margin:0 0 20px; font-size:clamp(34px,6vw,60px); line-height:1.06;
-    letter-spacing:-.028em; font-weight:800; max-width:19ch;
-  }
-  h1 em{font-style:normal; color:#ffc38a}
-  .lede{
-    margin:0 0 34px; font-size:clamp(16px,2.1vw,19px); line-height:1.62;
-    color:rgba(255,255,255,.84); max-width:56ch; font-weight:400;
-  }
-  .stats{display:flex; flex-wrap:wrap; gap:12px}
-  .stat{
-    background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.15);
-    border-radius:12px; padding:13px 18px; min-width:118px;
-  }
-  .stat b{display:block; font-size:23px; line-height:1.15; letter-spacing:-.02em}
-  .stat span{font-size:11.5px; color:rgba(255,255,255,.68); letter-spacing:.03em}
+  /* ── masthead ───────────────────────────────────────────── */
+  .bar{background:var(--paper); border-bottom:1px solid var(--hairline)}
+  .bar-in{display:flex; align-items:center; justify-content:space-between; gap:24px; padding:22px 0 20px}
+  .brand{display:flex; align-items:center; gap:14px}
+  .brand-txt{display:flex; flex-direction:column; gap:3px}
+  .brand-txt b{font-size:13px; font-weight:500; letter-spacing:.26em; text-transform:uppercase}
+  .brand-txt span{font-size:13px; font-weight:400; letter-spacing:.26em; text-transform:uppercase; color:var(--stone)}
+  .lang{display:flex; border:1px solid var(--hairline-2)}
+  .lang button{height:44px; min-width:88px; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:500; letter-spacing:.12em; color:var(--basalt); transition:.15s}
+  .lang button[aria-pressed="true"]{background:var(--pine); color:var(--paper)}
+  .lang button[data-lang="zh"]{font-family:"Noto Serif TC",serif; letter-spacing:.06em; font-size:13.5px}
 
-  /* ---------- listings ---------- */
-  main{max-width:1180px; margin:0 auto; padding:0 20px 72px}
-  .sec-head{
-    display:flex; align-items:flex-end; justify-content:space-between;
-    gap:20px; flex-wrap:wrap; margin:6px 0 26px;
-  }
-  .sec-head h2{margin:0; font-size:24px; letter-spacing:-.02em; font-weight:750}
-  .sec-head p{margin:5px 0 0; color:var(--ink-3); font-size:14px}
-  .count{font-size:13px; color:var(--ink-3); white-space:nowrap}
+  /* ── hero ───────────────────────────────────────────────── */
+  .hero{display:grid; grid-template-columns:1fr 1fr; background:var(--paper)}
+  .hero-txt{padding:76px 60px 76px 0; display:flex; flex-direction:column}
+  .eyebrow{display:flex; align-items:center; gap:14px; margin-bottom:30px}
+  .eyebrow i{width:26px; height:1px; background:var(--hairline-2); display:block}
+  h1{margin:0 0 26px; font-family:var(--serif); font-weight:400; font-size:clamp(34px,4vw,56px);
+     line-height:1.08; letter-spacing:-.015em; text-wrap:pretty}
+  h1 em{font-style:italic}
+  .lede{margin:0 0 30px; max-width:46ch; font-size:17px; line-height:1.72; color:var(--stone)}
+  .hero-act{display:flex; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:34px}
+  .avg{display:flex; align-items:center; gap:8px; min-height:50px; font-size:13.5px; color:var(--stone)}
+  .avg b{color:var(--basalt); font-weight:500}
+  .stats{display:flex; flex-wrap:wrap; gap:52px; padding-top:22px}
+  .stat b{display:block; font-family:var(--serif); font-weight:400; font-size:30px; line-height:1; margin-bottom:7px}
+  .hero-img{position:relative; min-height:600px; overflow:hidden; background:var(--placeholder)}
+  .hero-img img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  .hero-cap{position:absolute; left:0; bottom:0; background:var(--paper); padding:13px 22px;
+    display:flex; align-items:center; gap:12px; font-size:11px; font-weight:500;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--stone)}
+  .hero-cap i{width:20px; height:1px; background:var(--hairline-2); display:block}
 
-  .grid{display:grid; gap:22px; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); align-items:start}
-  .card{
-    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-    overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column;
-    transition:transform .2s ease, box-shadow .2s ease;
-  }
-  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg)}
-  .thumb{position:relative; aspect-ratio:4/3; background:#dfd9cf; overflow:hidden}
-  .thumb img{position:absolute; inset:0; width:100%;height:100%;object-fit:cover; object-position:center; z-index:1}
-  .thumb .ph{
-    position:absolute; inset:0; display:grid; place-items:center;
-    font-size:44px; font-weight:800; color:rgba(255,255,255,.9); letter-spacing:-.03em;
-  }
-  .badge{
-    position:absolute; top:12px; left:12px; z-index:2;
-    font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase;
-    padding:6px 11px; border-radius:7px; color:#fff; background:var(--sea);
-    box-shadow:0 2px 8px rgba(0,0,0,.2);
-  }
-  .badge.deal{background:var(--tang)}
-  .badge.new{background:var(--gold)}
-  .body{padding:17px 18px 18px; display:flex; flex-direction:column; flex:1}
-  .region{
-    font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--tang-2); margin-bottom:6px;
-  }
-  .name{margin:0 0 8px; font-size:18.5px; line-height:1.28; letter-spacing:-.018em; font-weight:700}
-  .intro{margin:0 0 14px; font-size:14px; color:var(--ink-2); line-height:1.58}
-  .fill{flex:1; min-height:4px}
-  .meta{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:15px}
-  .tag{
-    font-size:11.5px; font-weight:600; color:var(--ink-2);
-    background:#f3f1ec; border:1px solid var(--line); padding:4px 9px; border-radius:6px;
-  }
-  .cta{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    background:var(--sea); color:#fff; font-weight:700; font-size:14.5px;
-    padding:12px 16px; border-radius:10px; transition:.16s;
-    border:0; width:100%; font-family:inherit; cursor:pointer;
-  }
-  .cta:hover{background:var(--sea-3)}
-  .cta svg{width:15px;height:15px;flex:none; transition:transform .2s}
-  .cta[aria-expanded="true"] svg.chev{transform:rotate(180deg)}
-  .spec{font-size:12.5px; color:var(--ink-3); margin:-4px 0 12px; font-weight:600}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; padding:0 30px;
+    background:var(--pine); color:var(--paper); font-size:13px; font-weight:500;
+    letter-spacing:.14em; text-transform:uppercase; transition:.15s; width:100%}
+  .btn:hover{background:var(--pine-dark)}
+  .btn-o{background:transparent; border:1px solid var(--pine); color:var(--pine)}
+  .btn-o:hover{background:var(--pine); color:var(--paper)}
+  .btn-o:hover svg{stroke:var(--paper)}
+  .btn-auto{width:auto}
 
-  /* 객실 목록 */
-  .rooms{display:none; margin-top:10px; border-top:1px solid var(--line); padding-top:10px}
+  /* ── collection ─────────────────────────────────────────── */
+  .coll{background:var(--limestone); border-top:1px solid var(--hairline-2); padding:76px 0 88px}
+  .coll-head{display:flex; align-items:flex-end; justify-content:space-between; gap:32px; margin-bottom:26px}
+  .coll-head h2{margin:0; font-family:var(--serif); font-weight:400; font-size:36px; letter-spacing:-.01em}
+  .coll-note{font-size:13.5px; color:var(--stone); padding-bottom:8px; max-width:46ch}
+
+  .filters{display:flex; flex-direction:column; gap:14px; margin-bottom:22px}
+  .frow{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+  .frow > .lbl{width:76px; flex:none}
+  .chip{display:inline-flex; align-items:center; height:40px; padding:0 18px; border:1px solid var(--hairline-2);
+    font-size:12.5px; color:var(--basalt); white-space:nowrap; transition:.15s}
+  .chip:hover{border-color:var(--stone)}
+  .chip[aria-pressed="true"]{background:var(--pine); border-color:var(--pine); color:var(--paper); font-weight:500}
+  .count-row{display:flex; align-items:center; justify-content:space-between; gap:24px; padding-bottom:14px}
+  .count-row .n{font-size:14px; color:var(--stone)}
+  .count-row .n b{color:var(--basalt); font-weight:500}
+
+  .grid{display:grid; gap:40px; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:stretch}
+  .card{background:var(--paper); border:1px solid var(--hairline); padding:14px 14px 22px;
+    display:flex; flex-direction:column; height:100%}
+  .thumb{position:relative; aspect-ratio:4/5; overflow:hidden; background:var(--placeholder)}
+  .thumb img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  .thumb .ph{position:absolute; inset:0; display:grid; place-items:center;
+    font-family:var(--serif); font-size:44px; color:rgba(255,255,255,.9)}
+  .flag{position:absolute; left:0; top:18px; background:var(--paper); color:var(--basalt);
+    font-size:10.5px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; padding:8px 14px}
+  .c-top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 6px 8px}
+  .stars{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--stone); white-space:nowrap}
+  .stars b{color:var(--basalt); font-weight:500}
+  .card h3{margin:0 6px 10px; font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.2}
+  .card p{margin:0 6px 14px; font-size:14.5px; line-height:1.7; color:var(--stone)}
+  .incl{font-family:var(--serif); font-style:italic; font-size:15.5px; color:var(--clay); margin:0 6px 12px}
+  .tags{display:flex; flex-wrap:wrap; gap:6px 12px; margin:0 6px; font-size:12px; color:var(--clay)}
+  .c-foot{margin-top:auto; padding-top:20px}
+  .avail{display:flex; align-items:center; padding:15px 6px 13px;
+    font-family:var(--serif); font-style:italic; font-size:15.5px; color:var(--clay)}
+  .micro{text-align:center; font-size:11.5px; color:var(--clay); padding-top:10px}
+  .micro-a{color:var(--pine)}
+  .rooms{display:none; margin:12px 6px 0; border-top:1px solid var(--hairline); padding-top:6px}
   .rooms.open{display:block}
-  .room{
-    display:flex; align-items:center; gap:10px; justify-content:space-between;
-    padding:10px 12px; border:1px solid var(--line); border-radius:10px;
-    margin-bottom:7px; background:#fcfbf9; transition:.15s;
-  }
-  .room:last-child{margin-bottom:0}
-  .room:hover{border-color:#c3cfd4; background:#fff}
-  .room.whole{background:#f0f6f7; border-color:#c9dde1}
-  .room-l{min-width:0}
-  .room-n{font-size:14px; font-weight:700; line-height:1.3}
-  .room.whole .room-n{color:var(--sea)}
-  .room-s{font-size:11.5px; color:var(--ink-3); margin-top:1px}
-  .room-go{
-    flex:none; display:inline-flex; align-items:center; gap:5px;
-    font-size:12.5px; font-weight:700; color:var(--sea); white-space:nowrap;
-  }
-  .room-go svg{width:13px;height:13px}
+  .room{display:flex; align-items:center; justify-content:space-between; gap:12px;
+    min-height:56px; padding:10px 0; border-bottom:1px solid var(--hairline)}
+  .room:last-child{border-bottom:0}
+  .room-n{font-size:14.5px; font-weight:500; line-height:1.3}
+  .room-s{font-size:12px; color:var(--clay); margin-top:2px}
+  .room-go{flex:none; display:inline-flex; align-items:center; gap:6px; font-size:12px;
+    font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--pine); white-space:nowrap}
 
-  /* ---------- states ---------- */
-  .note{
-    border:1px dashed var(--line); background:#fffdf8; border-radius:var(--radius);
-    padding:22px; color:var(--ink-2); font-size:14px; line-height:1.65;
-  }
-  .note b{color:var(--ink)}
-  .skeleton{background:linear-gradient(90deg,#eeebe4 25%,#f6f4ef 50%,#eeebe4 75%);background-size:200% 100%;animation:sk 1.3s infinite}
-  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  .sk-card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
-  .sk-card .a{aspect-ratio:4/3}
-  .sk-card .b{height:15px;margin:18px;border-radius:5px}
-  .sk-card .c{height:15px;margin:0 18px 26px;width:60%;border-radius:5px}
+  .note{border:1px dashed var(--hairline-2); background:var(--paper); padding:26px;
+    color:var(--stone); font-size:14.5px; line-height:1.7; grid-column:1/-1}
+  .sk{border:1px solid var(--hairline); background:var(--paper); padding:14px 14px 22px}
+  .sk .a{aspect-ratio:4/5}
+  .sk .b{height:16px; margin:20px 6px 12px}
+  .sk .c{height:16px; margin:0 6px; width:62%}
+  .shim{background:linear-gradient(90deg,#EBE7DE 25%,#F5F2EC 50%,#EBE7DE 75%); background-size:200% 100%;
+    animation:sh 1.3s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  /* ---------- footer ---------- */
-  footer{background:var(--sea); color:rgba(255,255,255,.72); font-size:13.5px}
-  .foot-in{max-width:1180px; margin:0 auto; padding:44px 20px; display:flex; flex-wrap:wrap; gap:26px; justify-content:space-between}
-  footer .brand{color:#fff; margin-bottom:8px}
-  footer p{margin:0; max-width:46ch; line-height:1.62}
-  footer a{color:#ffc38a}
+  /* ── closing block ──────────────────────────────────────── */
+  .dark{background:var(--basalt); padding:92px 0 64px}
+  .wall{max-width:880px; margin:0 auto 76px; display:flex; flex-direction:column; align-items:center; gap:30px; text-align:center}
+  .wall .eyebrow .lbl{color:var(--linen)}
+  .wall .eyebrow i{background:#4A463F}
+  .wall-q{font-family:var(--serif); font-size:clamp(24px,3vw,34px); line-height:1.42;
+    letter-spacing:-.008em; color:var(--limestone); text-wrap:pretty}
+  .wall-s{font-size:14px; line-height:1.8; color:var(--linen); max-width:58ch}
+  .dark hr{border:0; height:1px; background:#3A3733; margin:0 0 40px}
+  .foot{display:grid; grid-template-columns:4fr 5fr 3fr; gap:40px}
+  .foot p{margin:0; font-size:14px; line-height:1.85; color:var(--linen)}
+  .foot .meta{display:flex; flex-direction:column; gap:12px; font-size:13px; color:var(--linen)}
+  .foot .brand-txt b{color:var(--limestone)}
+  .foot .brand-txt span{color:var(--linen)}
 
-  @media (max-width:640px){
-    .hero-in{padding:56px 20px 76px}
-    .grid{grid-template-columns:1fr; gap:18px}
-    .stat{flex:1 1 calc(50% - 6px); min-width:0}
-    .scene{height:64%}
-    .scrim{background:linear-gradient(180deg, rgba(7,32,40,.74) 0%, rgba(7,32,40,.56) 40%, rgba(7,32,40,.18) 66%, rgba(7,32,40,0) 100%)}
-    /* 모바일에서는 막을 세로 방향으로 — 글자가 있는 위쪽만 덮고 아래 사진은 살립니다 */
-    .hero.photo .hero-photo::after{
-      background:linear-gradient(to bottom, rgba(6,28,36,.82) 0%, rgba(6,28,36,.66) 34%, rgba(6,28,36,.34) 62%, rgba(6,28,36,.10) 100%);
-    }
-    .bar-in{padding:10px 16px; gap:10px}
-    .brand span{font-size:14px}
-    .brand small{display:none}
-    .lang button{padding:5px 10px; font-size:12px}
+  @media (max-width:1080px){
+    :root{--pad:40px}
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px}
+    .foot{grid-template-columns:1fr 1fr}
   }
-  .brand span,.lang button{white-space:nowrap}
-  @media (max-width:360px){ .lang button{padding:5px 8px; font-size:11.5px} }
+  @media (max-width:760px){
+    :root{--pad:20px}
+    .hero{grid-template-columns:1fr}
+    .hero-txt{padding:32px 0 30px; order:1}
+    .hero-img{order:2; min-height:0; height:260px}
+    .lede{font-size:15.5px}
+    .btn{height:52px}
+    .stats{gap:32px}
+    .stat b{font-size:24px}
+    .coll{padding:34px 0 40px}
+    .coll-head{flex-direction:column; align-items:flex-start; gap:12px; margin-bottom:18px}
+    .coll-head h2{font-size:30px}
+    .frow{flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch}
+    .frow::-webkit-scrollbar{display:none}
+    .frow > .lbl{display:none}
+    .chip{height:44px; font-size:13px}
+    .grid{grid-template-columns:1fr; gap:24px}
+    .dark{padding:48px 0 36px}
+    .wall{margin-bottom:40px; gap:22px}
+    .foot{grid-template-columns:1fr; gap:24px}
+  }
 </style>
 
 <!-- Google Analytics 4 -->
@@ -238,220 +188,207 @@
 <body>
 
 <div class="bar">
-  <div class="bar-in">
-    <div class="brand"><span class="dot"></span><span>Jeju Stay Collection</span></div>
+  <div class="wrap bar-in">
+    <div class="brand">
+      <svg width="40" height="28" viewBox="0 0 40 28" fill="none" stroke="#191817" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
+        <path d="M3 26 C 9 4, 31 4, 37 26"/><path d="M10 26 C 14 12, 26 12, 30 26"/><path d="M16 26 C 18 19, 22 19, 24 26"/>
+      </svg>
+      <div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div>
+    </div>
     <div class="lang" role="group" aria-label="Language">
-      <button data-lang="en" aria-pressed="true">English</button>
-      <button data-lang="zh" aria-pressed="false">繁體中文</button>
+      <button type="button" data-lang="en" aria-pressed="true">English</button>
+      <button type="button" data-lang="zh" aria-pressed="false">繁體中文</button>
     </div>
   </div>
 </div>
 
-<header class="hero" id="hero">
-  <div class="hero-photo" id="heroPhoto"></div>
-  <div class="scene" aria-hidden="true">
-    <svg viewBox="0 0 1440 560" preserveAspectRatio="xMaxYMax slice">
-      <defs>
-        <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#ffd7a8"/><stop offset="55%" stop-color="#ffab63"/><stop offset="100%" stop-color="#f08a3c"/>
-        </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#ffb066" stop-opacity=".42"/>
-          <stop offset="55%" stop-color="#ff9a4d" stop-opacity=".13"/>
-          <stop offset="100%" stop-color="#ff9a4d" stop-opacity="0"/>
-        </radialGradient>
-        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#2b7684" stop-opacity=".55"/>
-          <stop offset="100%" stop-color="#0d3b45" stop-opacity=".16"/>
-        </linearGradient>
-        <linearGradient id="farG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity=".13"/>
-          <stop offset="100%" stop-color="#ffffff" stop-opacity=".04"/>
-        </linearGradient>
-        <linearGradient id="landG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#072028"/><stop offset="100%" stop-color="#041318"/>
-        </linearGradient>
-        <clipPath id="seaClip"><rect x="0" y="286" width="1440" height="104"/></clipPath>
-      </defs>
-
-      <!-- 구름 -->
-      <g fill="#ffffff" opacity=".07">
-        <ellipse cx="250" cy="86" rx="190" ry="15"/>
-        <ellipse cx="360" cy="118" rx="120" ry="10"/>
-        <ellipse cx="1180" cy="70" rx="150" ry="12"/>
-      </g>
-
-      <!-- 해 + 빛무리 -->
-      <circle cx="1142" cy="272" r="238" fill="url(#glow)"/>
-      <circle cx="1142" cy="272" r="62" fill="url(#sun)" opacity=".94"/>
-
-      <!-- 한라산 (완만한 순상화산) -->
-      <path d="M-60 292 C 150 286 300 258 430 204 C 470 187 502 176 534 176 C 566 176 596 188 632 206 C 760 268 920 290 1120 292 L 1120 300 L -60 300 Z"
-            fill="url(#farG)"/>
-
-      <!-- 바다 -->
-      <rect x="0" y="286" width="1440" height="104" fill="url(#seaG)"/>
-      <g clip-path="url(#seaClip)" stroke="#cbe9ef" stroke-opacity=".22" stroke-width="1.4" fill="none">
-        <path d="M40 316 q26 -6 52 0 t52 0 t52 0 t52 0"/>
-        <path d="M380 336 q26 -6 52 0 t52 0 t52 0"/>
-        <path d="M760 322 q26 -6 52 0 t52 0 t52 0 t52 0"/>
-        <path d="M180 358 q26 -6 52 0 t52 0 t52 0"/>
-        <path d="M980 352 q26 -6 52 0 t52 0 t52 0"/>
-      </g>
-
-      <!-- 성산일출봉 -->
-      <path d="M1192 292 C 1202 260 1222 238 1248 230 C 1258 233 1264 226 1272 220 C 1282 224 1288 232 1296 234
-               C 1306 226 1314 219 1324 222 C 1334 226 1340 234 1350 232 C 1382 242 1402 264 1410 292 Z"
-            fill="#07222a" opacity=".94"/>
-
-      <!-- 오름 (앞쪽 능선) -->
-      <path d="M-40 372 C 90 372 150 322 246 322 C 342 322 396 372 512 374 L 512 392 L -40 392 Z" fill="#0a2c34"/>
-      <path d="M470 380 C 600 380 660 330 762 330 C 866 330 918 380 1040 382 L 1040 400 L 470 400 Z" fill="#092830" opacity=".95"/>
-      <path d="M960 384 C 1064 384 1108 344 1196 344 C 1286 344 1330 384 1470 386 L 1470 404 L 960 404 Z" fill="#082630" opacity=".9"/>
-
-      <!-- 앞 들판 + 밭담 -->
-      <path d="M-40 414 C 220 394 460 408 720 400 C 980 392 1220 406 1480 396 L 1480 580 L -40 580 Z" fill="url(#landG)"/>
-      <g stroke="#a8cbd2" stroke-opacity=".22" stroke-width="1.7" fill="none">
-        <path d="M-20 462 C 240 444 520 456 780 448 C 1020 441 1240 452 1470 444"/>
-        <path d="M-20 508 C 260 490 540 502 800 494 C 1050 487 1250 498 1470 490"/>
-        <path d="M120 430 C 128 470 122 512 112 560"/>
-        <path d="M420 424 C 430 466 424 512 414 560"/>
-        <path d="M760 416 C 770 460 764 510 754 560"/>
-        <path d="M1090 420 C 1100 464 1094 512 1084 560"/>
-        <path d="M1330 414 C 1340 460 1334 510 1324 560"/>
-      </g>
-    </svg>
-  </div>
-  <div class="scrim" aria-hidden="true"></div>
-  <div class="hero-in">
-    <div class="eyebrow" data-t="eyebrow"></div>
+<header class="hero wrap" id="hero">
+  <div class="hero-txt">
+    <div class="eyebrow"><span class="lbl">01</span><i></i><span class="lbl" data-t="place"></span></div>
     <h1 data-t="h1"></h1>
     <p class="lede" data-t="lede"></p>
-    <div class="stats">
-      <div class="stat"><b>23</b><span data-t="s1"></span></div>
-      <div class="stat"><b>4.93</b><span data-t="s2"></span></div>
-      <div class="stat"><b>15</b><span data-t="s3"></span></div>
+    <div class="hero-act">
+      <a class="btn btn-auto" href="#collection" id="heroCta">
+        <span data-t="heroCta"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBF9F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </a>
+      <div class="avg" id="avgWrap" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#57534B" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>
+        <span><b id="avgVal"></b> <span data-t="avgLabel"></span></span>
+      </div>
     </div>
+    <div class="rule" style="max-width:520px"></div>
+    <div class="stats">
+      <div class="stat"><b id="statStays">—</b><span class="lbl" data-t="s1"></span></div>
+      <div class="stat"><b id="statVillages">—</b><span class="lbl" data-t="s2"></span></div>
+      <div class="stat"><b data-t="s3b"></b><span class="lbl" data-t="s3"></span></div>
+    </div>
+  </div>
+  <div class="hero-img">
+    <img id="heroImg" alt="" hidden>
+    <div class="hero-cap" id="heroCap" hidden><i></i><span id="heroCapTxt"></span></div>
   </div>
 </header>
 
-<main>
-  <div class="sec-head">
-    <div>
-      <h2 data-t="secTitle"></h2>
-      <p data-t="secSub"></p>
+<main class="coll" id="collection">
+  <div class="wrap">
+    <div class="coll-head">
+      <div style="display:flex; flex-direction:column; gap:16px">
+        <div class="eyebrow" style="margin:0"><span class="lbl">02</span><i></i><span class="lbl" data-t="secEyebrow"></span></div>
+        <h2 data-t="secTitle"></h2>
+      </div>
+      <p class="coll-note" data-t="secNote"></p>
     </div>
-    <div class="count" id="count"></div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="count-row">
+      <div class="n" id="countTxt"></div>
+    </div>
+    <div class="rule" style="background:var(--hairline-2); margin-bottom:40px"></div>
+
+    <div class="grid" id="grid"></div>
   </div>
-  <div class="grid" id="grid"></div>
 </main>
 
-<footer>
-  <div class="foot-in">
-    <div>
-      <div class="brand"><span class="dot"></span><span>Jeju Stay Collection</span></div>
-      <p data-t="footer"></p>
+<div class="dark">
+  <div class="wrap">
+    <div class="wall">
+      <div class="eyebrow"><span class="lbl">03</span><i></i><span class="lbl" data-t="wallEyebrow"></span></div>
+      <div class="wall-q" data-t="wallQ"></div>
+      <div class="wall-s" data-t="wallS"></div>
     </div>
-    <div><p data-t="contact"></p></div>
+    <hr>
+    <div class="foot">
+      <div>
+        <svg width="44" height="31" viewBox="0 0 40 28" fill="none" stroke="#F4F1EA" stroke-width="1.25" stroke-linecap="round" aria-hidden="true" style="margin-bottom:16px">
+          <path d="M3 26 C 9 4, 31 4, 37 26"/><path d="M10 26 C 14 12, 26 12, 30 26"/><path d="M16 26 C 18 19, 22 19, 24 26"/>
+        </svg>
+        <div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div>
+      </div>
+      <p data-t="footer"></p>
+      <div class="meta">
+        <div data-t="contact"></div>
+        <div>hello@jejustaycollection.com</div>
+      </div>
+    </div>
   </div>
-</footer>
+</div>
 
 <script>
-/* ==========================================================
-   1) 구글 시트 연결
-   시트를 "링크가 있는 모든 사용자 - 뷰어"로 공유한 뒤
-   아래 SHEET_ID 만 확인하면 됩니다. (이미 채워져 있습니다)
-   ========================================================== */
-/* 히어로 배경 사진: 아래에 이미지 주소를 넣으면 일러스트 대신 사진이 깔립니다.
-   비워두면 제주 풍경 일러스트가 표시됩니다. (가로로 넓은 사진, 1600px 이상 권장) */
-const HERO_PHOTO = "";
-
-/* 상단 배경 사진은 시트의 _hero 행에서 관리합니다.
-   아래 HERO_PHOTO는 시트에 값이 없을 때만 쓰이는 예비값입니다. */
-
-/* 사진을 사이트에 같이 올릴 경우의 폴더. 시트에 파일명만 적으면 여기서 찾습니다.
-   (Cloudinary 등 외부 주소를 시트에 통째로 붙여넣으면 이 값은 무시됩니다) */
-const IMG_DIR = "img";
-
-const SHEET_ID = "1HLiwPib_S6P4K5V3TzNWPu84y3D2Z_-nE3V7F87Hhfc";
-const SHEET_NAME = "";            // 시트 탭 이름이 다르면 여기에 입력
-/* headers=1 필수 — 없으면 구글이 머리글 줄 수를 자기 마음대로 판단해서
-   _hero 행을 머리글에 붙여버립니다 (2026.9 확인) */
+/* ============================================================
+   Jeju Stay Collection
+   데이터: 구글 시트 (링크가 있는 모든 사용자 - 뷰어)
+   열 순서로 값을 읽으므로 시트의 열을 사이에 끼워넣지 말 것.
+   A고정순서 B예약률 C노출 D숙소ID E배지 F숙소명KO G이름EN H이름ZH
+   I지역EN J지역ZH K소개EN L소개ZH M태그 N객실EN O객실ZH P최대인원
+   Q전체대관 R사진 S링크 T사진위치 U소개KO  V평점 W후기수
+   ============================================================ */
+const SHEET_ID   = "1HLiwPib_S6P4K5V3TzNWPu84y3D2Z_-nE3V7F87Hhfc";
+const SHEET_NAME = "";
+const IMG_DIR    = "img";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1${SHEET_NAME?`&sheet=${encodeURIComponent(SHEET_NAME)}`:""}`;
+
+/* 히어로 사진 —— 시트 _hero 행에 사진을 넣으면 그 사진이 고정으로 쓰이고,
+   비워두면 사진이 있는 숙소들 사이에서 주 단위로 자동 순환한다.
+   맨 아래로 고정된 숙소(고정순서 음수)는 순환에서 제외된다. */
 
 /* ---------- 문구 ---------- */
 const T = {
   en:{
-    eyebrow:"Handpicked stays on Jeju Island",
-    h1:'Jeju, the way<br>locals <em>actually</em> stay.',
-    lede:"Private pool villas, ocean-view retreats and quiet guesthouses — each one visited, photographed and looked after by a local team who lives here.",
-    s1:"Stays we manage", s2:"Average rating", s3:"Guest Favourites",
-    secTitle:"Where to stay",
-    secSub:"Tap any stay to see live dates and prices on Airbnb.",
-    count:n=>`${n} ${n===1?"stay":"stays"}`,
-    cta:"View on Airbnb",
-    ctaRooms:n=>`View ${n} rooms`,
-    ctaHide:"Hide rooms",
+    place:"Jeju Island",
+    h1:'Not every stay on Jeju.<br>Only the ones we would<br>send <em>a friend</em> to.',
+    lede:"Fifteen independent houses across the island — visited, photographed and looked after by a small team that lives here. Book each one directly on Airbnb; we take no commission.",
+    heroCta:"See the stays",
+    avgLabel:"average across the collection",
+    s1:"Stays", s2:"Villages", s3:"Visited in person", s3b:"All",
+    secEyebrow:"On the island", secTitle:"The Collection",
+    secNote:"Ratings come from Airbnb. Rates change by season — check them on the listing.",
+    fWhere:"Where", fWho:"Who for", fAll:"All Jeju", fAny:"Any size",
+    g1:"2 – 4 guests", g2:"5 – 8", g3:"9 or more",
+    count:(n,t)=> n===t ? `<b>${n} ${n===1?"stay":"stays"}</b> · showing all` : `<b>${n} of ${t}</b> stays match`,
+    cta:"Check dates &amp; prices",
+    ctaRooms:n=>`See ${n} houses`,
+    ctaHide:"Hide houses",
+    micro:"Opens Airbnb · we take no commission",
+    microRooms:n=>`or choose one of ${n} houses`,
+    book:"Check dates",
     whole:"Whole property",
-    sleeps:n=>`Sleeps up to ${n}`,
-    spec:(r,s)=>r===1 ? (s?`Sleeps up to ${s}`:"") : `${r} rooms${s?` · sleeps up to ${s}`:""}`,
-    book:"Book",
-    footer:"A curated collection of independent stays across Jeju Island, put together and looked after by a team that lives here. We take no booking commission — you book directly with your host on Airbnb.",
+    oneGroup:"One group at a time",
+    houses:n=>`${n} houses, or take them together`,
+    sleeps:n=>`Sleeps ${n}`,
+    sleepsUp:n=>`Sleeps up to ${n}`,
+    newListing:"New listing",
+    reviews:n=>`(${n})`,
+    wallEyebrow:"Why these fifteen",
+    wallQ:"Every house here is looked after by the same small team that lives on the island — before your booking, and long after it.",
+    wallS:"We take no booking commission. Every stay is booked directly with its host on Airbnb.",
+    footer:"A curated collection of independent stays across Jeju Island, put together and looked after by a team that lives here.",
     contact:"Jeju Island, Republic of Korea",
     empty:"<b>No stays loaded yet.</b><br>Fill in the Google Sheet and set its sharing to “Anyone with the link — Viewer”. This page will pick it up automatically.",
+    none:"<b>Nothing matches those filters.</b><br>Try widening the region or the party size.",
     error:"<b>Could not load the stay list.</b><br>Check that the Google Sheet is shared as “Anyone with the link — Viewer”."
   },
   zh:{
-    eyebrow:"濟州島精選住宿",
-    h1:'濟州島，<br>當地人<em>真正</em>住的地方。',
-    lede:"私人泳池別墅、面海度假屋與寧靜民宿 —— 每一間都由住在當地的團隊親自走訪、拍攝並長期照料。",
-    s1:"合作住宿", s2:"平均評分", s3:"旅客之選",
-    secTitle:"住宿選擇",
-    secSub:"點選任一住宿，即可在 Airbnb 查看即時房況與價格。",
-    count:n=>`共 ${n} 間`,
-    cta:"在 Airbnb 查看",
+    place:"濟州島",
+    h1:'不是濟州所有的住宿。<br>只有我們願意<br><em>推薦給朋友</em>的那幾間。',
+    lede:"島上十五間獨立住宿 —— 每一間都由住在這裡的小團隊親自走訪、拍攝並長期照顧。直接在 Airbnb 訂房，我們不收任何佣金。",
+    heroCta:"查看住宿",
+    avgLabel:"為本系列平均評分",
+    s1:"合作住宿", s2:"村落", s3:"親自走訪", s3b:"全部",
+    secEyebrow:"島上", secTitle:"住宿選輯",
+    secNote:"評分來自 Airbnb。房價隨季節變動，請於房源頁面確認。",
+    fWhere:"地區", fWho:"人數", fAll:"全濟州", fAny:"不限",
+    g1:"2 – 4 人", g2:"5 – 8 人", g3:"9 人以上",
+    count:(n,t)=> n===t ? `<b>共 ${n} 間</b> · 顯示全部` : `<b>${t} 間中 ${n} 間</b>符合`,
+    cta:"查看日期與房價",
     ctaRooms:n=>`查看 ${n} 間客房`,
     ctaHide:"收合客房",
+    micro:"前往 Airbnb · 我們不收佣金",
+    microRooms:n=>`或從 ${n} 間中挑選`,
+    book:"查看日期",
     whole:"整棟包棟",
-    sleeps:n=>`最多 ${n} 人`,
-    spec:(r,s)=>r===1 ? (s?`最多 ${s} 人`:"") : `${r} 間客房${s?` · 最多 ${s} 人`:""}`,
-    book:"預訂",
-    footer:"由住在濟州島的在地團隊親自挑選並長期照料的獨立住宿精選。我們不收取任何訂房佣金 —— 您直接在 Airbnb 向房東預訂。",
+    oneGroup:"一天只接待一組",
+    houses:n=>`${n} 棟，也可整區包下`,
+    sleeps:n=>`可住 ${n} 人`,
+    sleepsUp:n=>`最多 ${n} 人`,
+    newListing:"新上架",
+    reviews:n=>`(${n})`,
+    wallEyebrow:"為什麼是這十五間",
+    wallQ:"這裡的每一棟房子，都由同一組住在島上的人照顧 —— 在您訂房之前，也在很久之後。",
+    wallS:"我們不收訂房佣金。每一間都直接在 Airbnb 向房東預訂。",
+    footer:"由住在濟州島的團隊親自挑選並長期照顧的獨立住宿選輯。",
     contact:"大韓民國 濟州島",
     empty:"<b>尚未載入住宿資料。</b><br>請填寫 Google 試算表，並將共用設定改為「知道連結的任何人 — 檢視者」。",
+    none:"<b>沒有符合條件的住宿。</b><br>請放寬地區或人數條件。",
     error:"<b>無法載入住宿清單。</b><br>請確認 Google 試算表已設為「知道連結的任何人 — 檢視者」。"
   }
 };
 
 /* ---------- 태그 사전 (시트에는 영문 코드만 입력) ---------- */
 const TAGS = {
-  POOL:{en:"Private pool",zh:"私人泳池"},     OCEAN:{en:"Ocean view",zh:"海景"},
-  BEACH:{en:"Near beach",zh:"鄰近海灘"},      MOUNTAIN:{en:"Mountain view",zh:"山景"},
-  PET:{en:"Pet friendly",zh:"寵物友善"},      BBQ:{en:"BBQ",zh:"烤肉"},
-  SPA:{en:"Spa",zh:"水療"},                   JACUZZI:{en:"Jacuzzi",zh:"按摩浴缸"},
-  KITCHEN:{en:"Full kitchen",zh:"完整廚房"},  PARKING:{en:"Free parking",zh:"免費停車"},
-  FAMILY:{en:"Family friendly",zh:"適合家庭"},COUPLE:{en:"For couples",zh:"適合情侶"},
-  PRIVATE:{en:"Entire place",zh:"獨棟包棟"},  CINEMA:{en:"Home cinema",zh:"家庭劇院"},
-  SUNRISE:{en:"Sunrise view",zh:"日出景觀"},  SUNSET:{en:"Sunset view",zh:"日落景觀"},
-  GARDEN:{en:"Garden",zh:"庭園"},             CAMPING:{en:"Camping",zh:"露營"},
-  /* 2026.9 추가 */
-  GROUP:{en:"Group friendly",zh:"適合團體"},  HEATED:{en:"Heated pool",zh:"溫水泳池"},
-  INDOOR:{en:"Indoor pool",zh:"室內泳池"},    DESIGN:{en:"Design stay",zh:"設計旅宿"},
-  KARAOKE:{en:"Karaoke",zh:"卡拉OK"},         FOREST:{en:"Forest setting",zh:"森林環繞"},
-  STONE:{en:"Jeju stone house",zh:"濟州石屋"},SAUNA:{en:"Finnish sauna",zh:"芬蘭浴"},
-  ORCHARD:{en:"Tangerine grove",zh:"橘園景觀"},PHOTO:{en:"Instagrammable",zh:"網美打卡"}
+  POOL:{en:"Private pool",zh:"私人泳池"},      HEATED:{en:"Heated pool",zh:"溫水泳池"},
+  INDOOR:{en:"Indoor pool",zh:"室內泳池"},     OCEAN:{en:"Ocean view",zh:"海景"},
+  BEACH:{en:"Near beach",zh:"鄰近海灘"},       MOUNTAIN:{en:"Mountain view",zh:"山景"},
+  SUNRISE:{en:"Sunrise view",zh:"日出景觀"},   SUNSET:{en:"Sunset view",zh:"日落景觀"},
+  JACUZZI:{en:"Jacuzzi",zh:"按摩浴缸"},        SPA:{en:"Spa",zh:"水療"},
+  SAUNA:{en:"Finnish sauna",zh:"芬蘭浴"},      CINEMA:{en:"Home cinema",zh:"家庭劇院"},
+  KARAOKE:{en:"Karaoke",zh:"卡拉OK"},          BBQ:{en:"BBQ",zh:"烤肉"},
+  KITCHEN:{en:"Full kitchen",zh:"完整廚房"},   PARKING:{en:"Free parking",zh:"免費停車"},
+  GARDEN:{en:"Garden",zh:"庭園"},              ORCHARD:{en:"Tangerine grove",zh:"橘園景觀"},
+  FOREST:{en:"Forest setting",zh:"森林環繞"},  CAMPING:{en:"Camping",zh:"露營"},
+  STONE:{en:"Jeju stone house",zh:"濟州石屋"}, DESIGN:{en:"Design stay",zh:"設計旅宿"},
+  PHOTO:{en:"Instagrammable",zh:"網美打卡"},   PRIVATE:{en:"Entire place",zh:"獨棟包棟"},
+  GROUP:{en:"Group friendly",zh:"適合團體"},   FAMILY:{en:"Family friendly",zh:"適合家庭"},
+  COUPLE:{en:"For couples",zh:"適合情侶"},     PET:{en:"Pet friendly",zh:"寵物友善"}
 };
 const BADGES = {
-  FEATURED:{en:"Featured",zh:"精選",cls:""},
-  NEW:{en:"New",zh:"新上架",cls:"new"},
-  POPULAR:{en:"Popular",zh:"熱門",cls:""}
+  FEATURED:{en:"Featured",zh:"精選"},
+  NEW:{en:"New",zh:"新上架"},
+  POPULAR:{en:"Popular",zh:"熱門"}
 };
 
-let lang = "en";
-let props = [];   // 숙소 단위로 묶인 목록
-let SITE  = {};   // 시트의 _hero 행에서 가져온 상단 영역 설정
-
-/* ---------- CSV 파서 ---------- */
+/* ---------- 유틸 ---------- */
 function parseCSV(text){
   const out=[]; let row=[], cell="", q=false;
   for(let i=0;i<text.length;i++){
@@ -469,67 +406,67 @@ function parseCSV(text){
   if(cell!==""||row.length){ row.push(cell); out.push(row); }
   return out;
 }
-
-function isUrl(s){ const v=(s||"").trim(); return /^https?:\/\/\S+\.\S+/.test(v) && !v.startsWith("https://..."); }
-
-/* 사진 값 해석 — 전체 URL이면 그대로, 파일명이면 IMG_DIR 안에서 찾음 */
+const esc = s => String(s??"").replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const fmt = s => esc(s).replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/\r?\n/g,"<br>");
+const num = s => { const v=parseFloat(String(s).replace(/[^\d.\-]/g,"")); return Number.isFinite(v)?v:null; };
+const isUrl = s => { const v=(s||"").trim(); return /^https?:\/\/\S+\.\S+/.test(v) && !v.startsWith("https://..."); };
 function photoSrc(v){
   const s=(v||"").trim();
   if(!s || s.startsWith("https://...")) return "";
   if(/^https?:\/\//.test(s)) return s;
-  if(s.startsWith("/") || s.startsWith("./")) return s;
+  if(s.startsWith("/")||s.startsWith("./")) return s;
   if(/\.(jpe?g|png|webp|avif)$/i.test(s)) return IMG_DIR.replace(/\/$/,"") + "/" + s;
   return "";
 }
-function num(s){ const v=parseFloat(String(s).replace(/[^\d.\-]/g,"")); return Number.isFinite(v)?v:null; }
-const esc = s => String(s??"").replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-/* 시트에서 온 문구: 줄바꿈 → <br>, *강조* → 색상 강조 */
-const fmt = s => esc(s).replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/\r?\n/g, "<br>");
+const FOCUS = {top:"center top",bottom:"center bottom",left:"left center",right:"right center",center:"center"};
+const PH = ["#1c6b7a","#0d3b45","#2F4A43","#6E6558","#3d5058","#134f5c"];
+const shortRegion = r => (r||"").split(/[-,]/)[0].trim();
 
-const PH = ["#1c6b7a","#0d3b45","#e07a33","#b98b34","#3d5058","#134f5c"];
+/* ---------- 상태 ---------- */
+let lang="en", props=[], SITE={}, HERO=null;
+let filt={region:"all", guests:"all", tag:"all"};
 
-/* 시트 T열 "사진위치" — 비워두면 center. 세로 사진에서 위/아래가 잘릴 때만 쓰세요. */
-const FOCUS = { top:"center top", bottom:"center bottom", left:"left center", right:"right center", center:"center" };
+/* ---------- 행 → 숙소 ---------- */
+const CARRY = ["badge","badgeRaw","nameKo","nameEn","nameZh","regionEn","regionZh",
+               "introEn","introZh","tagsRaw","photo","focus","rating","reviews"];
 
-/* ---------- 행 → 숙소 그룹 ---------- */
-const PROP_FIELDS = ["badge","badgeRaw","nameKo","nameEn","nameZh","regionEn","regionZh","introEn","introZh","tagsRaw","photo","focus"];
-
-function buildProps(table){
+function build(table){
   const body = table.slice(1).filter(r=>r.some(c=>c&&c.trim()));
-  const map = new Map();
+  const map = new Map(); const site = {};
 
-  const site = {};
   for(const c of body){
-    const id = (c[3]||"").trim();
-    if(!id || id === "숙소ID") continue;      // 머리글 줄 방어
+    const id=(c[3]||"").trim();
+    if(!id || id==="숙소ID") continue;
 
-    if(id.startsWith("_")){                       // 설정 행 (_hero 등)
+    if(id.startsWith("_")){
       site[id.toLowerCase()] = {
-        h1:{ en:(c[6]||"").trim(),  zh:(c[7]||"").trim()  },
-        lede:{ en:(c[10]||"").trim(), zh:(c[11]||"").trim() },
+        h1:{en:(c[6]||"").trim(), zh:(c[7]||"").trim()},
+        lede:{en:(c[10]||"").trim(), zh:(c[11]||"").trim()},
         photo:(c[17]||"").trim(), focus:(c[19]||"").trim().toLowerCase()
       };
       continue;
     }
 
-    if(!map.has(id)) map.set(id, {id, pin:null, occ:null, badge:"", badgeRaw:"", nameKo:"", nameEn:"", nameZh:"",
-      regionEn:"", regionZh:"", introEn:"", introZh:"", tagsRaw:"", photo:"", rooms:[]});
-    const g = map.get(id);
+    if(!map.has(id)) map.set(id,{id,pin:null,occ:null,rooms:[],
+      badge:"",badgeRaw:"",nameKo:"",nameEn:"",nameZh:"",regionEn:"",regionZh:"",
+      introEn:"",introZh:"",tagsRaw:"",photo:"",focus:"",rating:null,reviews:null});
+    const g=map.get(id);
+    if(g.pin===null) g.pin=num(c[0]);
+    if(g.occ===null) g.occ=num(c[1]);
 
-    if(g.pin === null) g.pin = num(c[0]);
-    if(g.occ === null) g.occ = num(c[1]);
-
-    const row = {
-      badge:(c[4]||"").trim().toUpperCase(), nameKo:(c[5]||"").trim(),
-      nameEn:(c[6]||"").trim(), nameZh:(c[7]||"").trim(),
+    const row={
+      badge:(c[4]||"").trim().toUpperCase(), badgeRaw:(c[4]||"").trim(),
+      nameKo:(c[5]||"").trim(), nameEn:(c[6]||"").trim(), nameZh:(c[7]||"").trim(),
       regionEn:(c[8]||"").trim(), regionZh:(c[9]||"").trim(),
       introEn:(c[10]||"").trim(), introZh:(c[11]||"").trim(),
-      tagsRaw:(c[12]||"").trim(), photo:(c[17]||"").trim(), focus:(c[19]||"").trim().toLowerCase()
+      tagsRaw:(c[12]||"").trim(), photo:(c[17]||"").trim(),
+      focus:(c[19]||"").trim().toLowerCase(),
+      rating:num(c[21]), reviews:num(c[22])
     };
-    for(const k of PROP_FIELDS) if(!g[k] && row[k]) g[k] = row[k];   // 첫 값 상속
+    for(const k of CARRY) if(!g[k] && row[k]) g[k]=row[k];
 
-    const show = (c[2]||"Y").trim().toUpperCase() !== "N";
-    const link = (c[18]||"").trim();
+    const show=(c[2]||"Y").trim().toUpperCase()!=="N";
+    const link=(c[18]||"").trim();
     if(show && isUrl(link)){
       g.rooms.push({
         nameEn:(c[13]||"").trim(), nameZh:(c[14]||"").trim(),
@@ -539,193 +476,266 @@ function buildProps(table){
     }
   }
 
-  const list = [...map.values()].filter(g=>g.rooms.length);
+  const list=[...map.values()].filter(g=>g.rooms.length);
   list.forEach(g=>{
     g.tags = g.tagsRaw.split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
-    g.rooms.sort((a,b)=> (b.whole?1:0)-(a.whole?1:0));           // 전체대관을 맨 위로
+    g.rooms.sort((a,b)=>(b.whole?1:0)-(a.whole?1:0));
     if(!photoSrc(g.photo)){
-      const src = g.rooms.find(r=>photoSrc(r.photo));
-      if(src){ g.photo = src.photo; if(!g.focus) g.focus = src.focus; }
+      const src=g.rooms.find(r=>photoSrc(r.photo));
+      if(src){ g.photo=src.photo; if(!g.focus) g.focus=src.focus; }
     }
     g.photo = photoSrc(g.photo) || "";
     g.maxSleeps = Math.max(0, ...g.rooms.map(r=>r.sleeps||0));
+    g.minSleeps = Math.min(...g.rooms.map(r=>r.sleeps||g.maxSleeps||0));
+    g.anyWhole  = g.rooms.some(r=>r.whole);
+    g.region    = shortRegion(g.regionEn);
+    g.bottom    = g.pin!==null && g.pin<0;
   });
 
-  /* 정렬 규칙
-     고정순서(A열) 양수  1,2,3…  → 맨 위로 고정 (작은 수가 먼저)
-     고정순서(A열) 음수  -1,-2…   → 맨 아래로 고정 (-1이 제일 마지막)
-     비어 있으면        → 예약률 낮은 순, 동점이면 이름순 */
+  /* 정렬: 고정(양수) → 예약률 낮은 순 → 이름 / 음수 고정은 맨 아래 */
   list.sort((a,b)=>{
-    const aBot = a.pin!==null && a.pin<0, bBot = b.pin!==null && b.pin<0;
-    if(aBot !== bBot) return aBot ? 1 : -1;
-    if(aBot && bBot) return a.pin - b.pin;          // -2 가 -1 보다 앞
-    const aTop = a.pin!==null, bTop = b.pin!==null;
-    if(aTop !== bTop) return aTop ? -1 : 1;
-    if(aTop) return a.pin - b.pin;
+    if(a.bottom!==b.bottom) return a.bottom?1:-1;
+    if(a.bottom&&b.bottom) return a.pin-b.pin;
+    const aT=a.pin!==null, bT=b.pin!==null;
+    if(aT!==bT) return aT?-1:1;
+    if(aT) return a.pin-b.pin;
     const ao=a.occ===null?9999:a.occ, bo=b.occ===null?9999:b.occ;
     if(ao!==bo) return ao-bo;
     return (a.nameEn||"").localeCompare(b.nameEn||"");
   });
-  return { list, site };
+  return {list, site};
 }
 
-/* 상단 영역에 시트 설정 적용 */
+/* ---------- 히어로 ---------- */
+function pickHero(cfg){
+  if(cfg && photoSrc(cfg.photo)) return {src:photoSrc(cfg.photo), focus:cfg.focus, stay:null};
+  const pool = props.filter(g=>g.photo && !g.bottom);   /* 최하단 고정 숙소는 제외 */
+  if(!pool.length) return null;
+  const week = Math.floor(Date.now()/6048e5);           /* 주 단위 순환 */
+  const g = pool[week % pool.length];
+  return {src:g.photo, focus:g.focus, stay:g};
+}
 function applyHero(cfg){
-  SITE = {};
-  const src = photoSrc(cfg?.photo) || HERO_PHOTO;
-  const hero = document.getElementById("hero");
-  if(src){
-    const el = document.getElementById("heroPhoto");
-    el.style.backgroundImage = `url("${src}")`;
-    el.style.setProperty("--hero-pos", FOCUS[cfg?.focus] || "center");
-    hero.classList.add("photo");
-  }else{
-    hero.classList.remove("photo");
+  SITE={};
+  if(cfg?.h1?.en || cfg?.h1?.zh)   SITE.h1   = {en:fmt(cfg.h1.en),   zh:fmt(cfg.h1.zh || cfg.h1.en)};
+  if(cfg?.lede?.en || cfg?.lede?.zh) SITE.lede = {en:fmt(cfg.lede.en), zh:fmt(cfg.lede.zh || cfg.lede.en)};
+  HERO = pickHero(cfg);
+  const img=document.getElementById("heroImg"), cap=document.getElementById("heroCap");
+  if(HERO){
+    img.src=HERO.src; img.style.objectPosition=FOCUS[HERO.focus]||"center"; img.hidden=false;
+    if(HERO.stay){ cap.hidden=false; } else { cap.hidden=true; }
   }
-  if(cfg?.h1?.en || cfg?.h1?.zh)     SITE.h1   = { en: fmt(cfg.h1.en),   zh: fmt(cfg.h1.zh || cfg.h1.en) };
-  if(cfg?.lede?.en || cfg?.lede?.zh) SITE.lede = { en: fmt(cfg.lede.en), zh: fmt(cfg.lede.zh || cfg.lede.en) };
 }
 
-/* ---------- 렌더 ---------- */
-const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
-const CHEV  = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+/* ---------- 필터 ---------- */
+function topTags(){
+  const n={};
+  props.forEach(g=>g.tags.forEach(t=>{ if(TAGS[t]) n[t]=(n[t]||0)+1; }));
+  return Object.entries(n).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
+}
+function matches(g){
+  if(filt.region!=="all" && g.region!==filt.region) return false;
+  if(filt.tag!=="all" && !g.tags.includes(filt.tag)) return false;
+  if(filt.guests!=="all"){
+    const m=g.maxSleeps;
+    if(filt.guests==="g1" && !(m>=2&&m<=4)) return false;
+    if(filt.guests==="g2" && !(m>=5&&m<=8)) return false;
+    if(filt.guests==="g3" && !(m>=9))       return false;
+  }
+  return true;
+}
+function renderFilters(){
+  const t=T[lang];
+  const regions=[...new Set(props.map(g=>g.region).filter(Boolean))];
+  const tags=topTags();
+  const chip=(label,key,val,on)=>
+    `<button type="button" class="chip" data-f="${key}" data-v="${val}" aria-pressed="${on}">${esc(label)}</button>`;
+  document.getElementById("filters").innerHTML = `
+    <div class="frow">
+      <span class="lbl">${esc(t.fWhere)}</span>
+      ${chip(t.fAll,"region","all",filt.region==="all")}
+      ${regions.map(r=>chip(r,"region",r,filt.region===r)).join("")}
+    </div>
+    <div class="frow">
+      <span class="lbl">${esc(t.fWho)}</span>
+      ${chip(t.fAny,"guests","all",filt.guests==="all")}
+      ${chip(t.g1,"guests","g1",filt.guests==="g1")}
+      ${chip(t.g2,"guests","g2",filt.guests==="g2")}
+      ${chip(t.g3,"guests","g3",filt.guests==="g3")}
+      ${tags.map(k=>chip(TAGS[k][lang],"tag",k,filt.tag===k)).join("")}
+    </div>`;
+}
 
-function render(){
-  const t = T[lang];
-  document.documentElement.lang = lang==="zh" ? "zh-Hant" : "en";
-  document.querySelectorAll("[data-t]").forEach(el=>{
-    const k = el.dataset.t;
-    const v = (SITE[k] && SITE[k][lang]) || t[k];
-    if(typeof v === "string") el.innerHTML = v;
-  });
-  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.lang===lang)));
+/* ---------- 카드 ---------- */
+const ARROW='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+const CHEV ='<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const STAR ='<svg width="13" height="13" viewBox="0 0 24 24" fill="#57534B" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>';
 
-  const grid = document.getElementById("grid");
-  document.getElementById("count").textContent = props.length ? t.count(props.length) : "";
+function badgeHtml(g){
+  if(!g.badge) return "";
+  const raw=g.badgeRaw||g.badge;
+  const m=/^DEAL:?(\d+)?$/.exec(g.badge);
+  let txt="";
+  if(m) txt = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"off"}` : (lang==="zh"?"優惠":"Deal");
+  else if(BADGES[g.badge]) txt = BADGES[g.badge][lang];
+  else if(raw.includes("|")){ const p=raw.split("|"); txt=(lang==="zh"?p[1]:p[0])||p[0]; }
+  else return "";
+  return `<span class="flag">${esc(txt.trim())}</span>`;
+}
+function availLine(g,t){
+  if(g.rooms.length>1) return t.houses(g.rooms.length);
+  if(g.anyWhole)       return t.oneGroup;
+  return t.sleepsUp(g.maxSleeps);
+}
 
-  if(!props.length){ grid.innerHTML = `<div class="note" style="grid-column:1/-1">${t.empty}</div>`; return; }
+function renderCards(){
+  const t=T[lang], grid=document.getElementById("grid");
+  const shown=props.filter(matches);
+  document.getElementById("countTxt").innerHTML = props.length ? t.count(shown.length, props.length) : "";
 
-  grid.innerHTML = props.map((g,i)=>{
-    const name   = (lang==="zh" ? g.nameZh : g.nameEn) || g.nameEn || g.nameKo;
-    const region = (lang==="zh" ? g.regionZh : g.regionEn) || g.regionEn;
-    const intro  = (lang==="zh" ? g.introZh : g.introEn) || g.introEn || "";
-    const tags   = g.tags.map(k=>TAGS[k]?.[lang]).filter(Boolean).slice(0,4);
-    const single = g.rooms.length === 1;
+  if(!props.length){ grid.innerHTML=`<div class="note">${t.empty}</div>`; return; }
+  if(!shown.length){ grid.innerHTML=`<div class="note">${t.none}</div>`;  return; }
 
-    let badgeHtml = "";
-    if(g.badge){
-      const raw = g.badgeRaw || g.badge;
-      const m = /^DEAL:?(\d+)?$/.exec(g.badge);
-      if(m){
-        const txt = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"OFF"}` : (lang==="zh"?"優惠":"Deal");
-        badgeHtml = `<span class="badge deal">${txt}</span>`;
-      }else if(BADGES[g.badge]){
-        badgeHtml = `<span class="badge ${BADGES[g.badge].cls}">${BADGES[g.badge][lang]}</span>`;
-      }else if(raw.includes("|")){                 // 자유 문구: "Free BBQ|免費烤肉"
-        const parts = raw.split("|");
-        const txt = (lang==="zh" ? parts[1] : parts[0]) || parts[0];
-        badgeHtml = `<span class="badge deal">${esc(txt.trim())}</span>`;
-      }
-    }
+  grid.innerHTML = shown.map((g,i)=>{
+    const name   = (lang==="zh"?g.nameZh:g.nameEn) || g.nameEn || g.nameKo;
+    const region = (lang==="zh"?g.regionZh:g.regionEn) || g.regionEn;
+    const intro  = (lang==="zh"?g.introZh:g.introEn) || g.introEn || "";
+    const tags   = g.tags.map(k=>TAGS[k]?.[lang]).filter(Boolean).slice(0,3);
+    const multi  = g.rooms.length>1;
 
-    const grad = `linear-gradient(150deg, ${PH[i%PH.length]}, ${PH[(i+3)%PH.length]})`;
-    const initial = esc((name||"?").trim()[0]);
-    const thumb =
-      `<div class="ph" style="background:${grad}">${initial}</div>` +
-      (g.photo ? `<img src="${esc(g.photo)}" alt="${esc(name)}" loading="lazy" decoding="async"
-            style="object-position:${esc(FOCUS[g.focus] || "center")}" onerror="this.remove()">` : "");
+    const thumb = g.photo
+      ? `<img src="${esc(g.photo)}" alt="${esc(name)}" loading="lazy" decoding="async"
+             style="object-position:${esc(FOCUS[g.focus]||"center")}" onerror="this.remove()">`
+      : `<div class="ph" style="background:${PH[i%PH.length]}">${esc((name||"?").trim()[0])}</div>`;
 
-    const roomsHtml = g.rooms.map(r=>{
-      const rn = (lang==="zh" ? r.nameZh : r.nameEn) || r.nameEn || (r.whole ? t.whole : "");
-      return `<a class="room${r.whole?" whole":""}" href="${esc(r.link)}" target="_blank" rel="noopener"
-        data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(rn||t.whole)}">
-        <span class="room-l">
-          <span class="room-n">${esc(rn || t.whole)}</span>
-          ${r.sleeps?`<span class="room-s">${t.sleeps(r.sleeps)}</span>`:""}
-        </span>
-        <span class="room-go">${t.book} ${ARROW}</span>
-      </a>`;
+    const rating = g.rating!==null
+      ? `<span class="stars">${STAR}<b>${g.rating.toFixed(2)}</b>${g.reviews!==null?` <span>${t.reviews(g.reviews)}</span>`:""}</span>`
+      : `<span class="stars" style="color:var(--clay)">${esc(t.newListing)}</span>`;
+
+    const rooms = g.rooms.map(r=>{
+      const rn=(lang==="zh"?r.nameZh:r.nameEn) || r.nameEn || (r.whole?t.whole:"");
+      return `<a class="room" href="${esc(r.link)}" target="_blank" rel="noopener"
+                 data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(rn||t.whole)}">
+        <span><span class="room-n">${esc(rn||t.whole)}</span>${r.sleeps?`<span class="room-s">${esc(t.sleeps(r.sleeps))}</span>`:""}</span>
+        <span class="room-go">${esc(t.book)} ${ARROW}</span></a>`;
     }).join("");
 
-    const action = single
-      ? `<a class="cta" href="${esc(g.rooms[0].link)}" target="_blank" rel="noopener"
-           data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(g.rooms[0].nameEn||t.whole)}">${t.cta} ${ARROW}</a>`
-      : `<button class="cta" type="button" aria-expanded="false" data-toggle="${esc(g.id)}">
-           <span class="lbl">${t.ctaRooms(g.rooms.length)}</span> ${CHEV}
-         </button>
-         <div class="rooms" id="rooms-${esc(g.id)}">${roomsHtml}</div>`;
+    const primary = g.rooms[0];
+    const action = `
+      <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"
+         data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}"
+         data-room="${esc((lang==="zh"?primary.nameZh:primary.nameEn)||t.whole)}">${t.cta} ${ARROW}</a>
+      ${multi
+        ? `<div class="micro micro-a"><button type="button" data-toggle="${esc(g.id)}">${esc(t.microRooms(g.rooms.length))}</button></div>
+           <div class="rooms" id="rooms-${esc(g.id)}">${rooms}</div>`
+        : `<div class="micro">${esc(t.micro)}</div>`}`;
 
     return `<article class="card">
-      <div class="thumb">${badgeHtml}${thumb}</div>
-      <div class="body">
-        ${region?`<div class="region">${esc(region)}</div>`:""}
-        <h3 class="name">${esc(name)}</h3>
-        ${t.spec(g.rooms.length, g.maxSleeps)?`<div class="spec">${t.spec(g.rooms.length, g.maxSleeps)}</div>`:""}
-        ${intro?`<p class="intro">${esc(intro)}</p>`:""}
-        <div class="fill"></div>
-        ${tags.length?`<div class="meta">${tags.map(x=>`<span class="tag">${x}</span>`).join("")}</div>`:""}
+      <div class="thumb">${badgeHtml(g)}${thumb}</div>
+      <div class="c-top"><span class="lbl">${esc(region)}</span>${rating}</div>
+      <h3>${esc(name)}</h3>
+      ${intro?`<p>${esc(intro)}</p>`:""}
+      ${tags.length?`<div class="tags">${tags.map((x,j)=>`<span>${esc(x)}</span>${j<tags.length-1?"<span>·</span>":""}`).join("")}</div>`:""}
+      <div class="c-foot">
+        <div class="avail">${esc(availLine(g,t))}</div>
         ${action}
       </div>
     </article>`;
   }).join("");
+}
 
-  grid.querySelectorAll("[data-toggle]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const box = document.getElementById("rooms-"+btn.dataset.toggle);
-      const open = box.classList.toggle("open");
-      btn.setAttribute("aria-expanded", String(open));
-      btn.querySelector(".lbl").textContent = open ? T[lang].ctaHide : T[lang].ctaRooms(box.children.length);
-    });
+/* ---------- 전체 렌더 ---------- */
+function render(){
+  const t=T[lang];
+  document.documentElement.lang = lang==="zh" ? "zh-Hant" : "en";
+  document.querySelectorAll("[data-t]").forEach(el=>{
+    const k=el.dataset.t;
+    const v=(SITE[k] && SITE[k][lang]) || t[k];
+    if(typeof v==="string") el.innerHTML=v;
   });
+  document.querySelectorAll(".lang button").forEach(b=>
+    b.setAttribute("aria-pressed", String(b.dataset.lang===lang)));
+
+  document.getElementById("statStays").textContent = props.length || "—";
+  document.getElementById("statVillages").textContent =
+    new Set(props.map(g=>g.region).filter(Boolean)).size || "—";
+
+  const rated = props.filter(g=>g.rating!==null && g.reviews);
+  const wrap = document.getElementById("avgWrap");
+  if(rated.length){
+    const w = rated.reduce((s,g)=>s+g.rating*g.reviews,0) / rated.reduce((s,g)=>s+g.reviews,0);
+    document.getElementById("avgVal").textContent = w.toFixed(2);
+    wrap.hidden=false;
+  } else wrap.hidden=true;
+
+  if(HERO?.stay){
+    const s=HERO.stay;
+    document.getElementById("heroCapTxt").textContent =
+      `${(lang==="zh"?s.nameZh:s.nameEn)||s.nameEn} · ${shortRegion(lang==="zh"?s.regionZh:s.regionEn)}`;
+  }
+
+  renderFilters();
+  renderCards();
 }
 
-function showSkeleton(){
+function skeleton(){
   document.getElementById("grid").innerHTML =
-    Array.from({length:6}).map(()=>`<div class="sk-card"><div class="a skeleton"></div><div class="b skeleton"></div><div class="c skeleton"></div></div>`).join("");
+    Array.from({length:6}).map(()=>
+      `<div class="sk"><div class="a shim"></div><div class="b shim"></div><div class="c shim"></div></div>`).join("");
 }
 
+/* ---------- 로드 ---------- */
 async function load(){
-  showSkeleton();
+  skeleton();
   try{
-    const res = await fetch(CSV_URL, {cache:"no-store"});
+    const res=await fetch(CSV_URL,{cache:"no-store"});
     if(!res.ok) throw new Error(res.status);
-    const built = buildProps(parseCSV(await res.text()));
-    props = built.list;
+    const built=build(parseCSV(await res.text()));
+    props=built.list;
     applyHero(built.site["_hero"]);
     render();
   }catch(e){
-    props = []; render();
-    document.getElementById("grid").innerHTML =
-      `<div class="note" style="grid-column:1/-1">${T[lang].error}</div>`;
+    props=[]; render();
+    document.getElementById("grid").innerHTML=`<div class="note">${T[lang].error}</div>`;
   }
 }
 
+/* ---------- 이벤트 ---------- */
+function track(name, params){
+  try{ if(typeof gtag==="function") gtag("event", name, params); }catch(e){}
+}
 document.querySelectorAll(".lang button").forEach(b=>{
   b.addEventListener("click",()=>{
     lang=b.dataset.lang;
-    try{localStorage.setItem("mm_lang",lang)}catch(e){}
-    track("language_switch", {language: lang});
+    try{ localStorage.setItem("mm_lang", lang); }catch(e){}
+    track("language_switch",{language:lang});
     render();
   });
 });
 try{ const s=localStorage.getItem("mm_lang"); if(s&&T[s]) lang=s; }catch(e){}
 
-/* ---------- GA4 이벤트 ----------
-   airbnb_click   : 에어비앤비로 나간 클릭 (숙소·객실별) ← 사장님별 정산 근거
-   rooms_open     : 객실 목록을 펼친 클릭 (관심 신호)
-   language_switch: 번체중문 전환                                    */
-function track(name, params){
-  try{ if(typeof gtag === "function") gtag("event", name, params); }catch(e){}
-}
+document.getElementById("filters").addEventListener("click", e=>{
+  const b=e.target.closest("button[data-f]"); if(!b) return;
+  filt[b.dataset.f] = b.dataset.v;
+  track("filter_change",{filter_type:b.dataset.f, filter_value:b.dataset.v, language:lang});
+  renderFilters(); renderCards();
+});
+
 document.getElementById("grid").addEventListener("click", e=>{
-  const a = e.target.closest("a[data-prop]");
+  const a=e.target.closest("a[data-prop]");
   if(a){
-    track("airbnb_click", {stay:a.dataset.prop, stay_name:a.dataset.name, room:a.dataset.room, language:lang});
+    track("airbnb_click",{stay:a.dataset.prop, stay_name:a.dataset.name, room:a.dataset.room, language:lang});
     return;
   }
-  const b = e.target.closest("button[data-toggle]");
-  if(b) track("rooms_open", {stay:b.dataset.toggle, language:lang});
+  const b=e.target.closest("button[data-toggle]");
+  if(b){
+    const box=document.getElementById("rooms-"+b.dataset.toggle);
+    const open=box.classList.toggle("open");
+    b.textContent = open ? T[lang].ctaHide : T[lang].microRooms(box.children.length);
+    if(open) track("rooms_open",{stay:b.dataset.toggle, language:lang});
+  }
 });
+document.getElementById("heroCta").addEventListener("click",()=>track("hero_cta",{language:lang}));
 
 load();
 </script>
