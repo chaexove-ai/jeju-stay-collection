@@ -18,6 +18,7 @@
     --pad:72px;
   }
   *{box-sizing:border-box}
+  [hidden]{display:none !important}
   html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
   body{
     margin:0; background:var(--paper); color:var(--basalt);
@@ -311,11 +312,12 @@ const T = {
     ctaRooms:n=>`See ${n} houses`,
     ctaHide:"Hide houses",
     micro:"Opens Airbnb · we take no commission",
-    microRooms:n=>`or choose one of ${n} houses`,
+    microRooms:n=>`See the ${n} rooms`,
     book:"Check dates",
     whole:"Whole property",
     oneGroup:"One group at a time",
-    houses:n=>`${n} houses, or take them together`,
+    optWhole:n=>`The whole property, or ${n} rooms`,
+    optPlain:n=>`${n} rooms to choose from`,
     sleeps:n=>`Sleeps ${n}`,
     sleepsUp:n=>`Sleeps up to ${n}`,
     newListing:"New listing",
@@ -345,11 +347,12 @@ const T = {
     ctaRooms:n=>`查看 ${n} 間客房`,
     ctaHide:"收合客房",
     micro:"前往 Airbnb · 我們不收佣金",
-    microRooms:n=>`或從 ${n} 間中挑選`,
+    microRooms:n=>`查看 ${n} 間客房`,
     book:"查看日期",
     whole:"整棟包棟",
     oneGroup:"一天只接待一組",
-    houses:n=>`${n} 棟，也可整區包下`,
+    optWhole:n=>`整棟包棟，或 ${n} 間客房`,
+    optPlain:n=>`${n} 間客房可選`,
     sleeps:n=>`可住 ${n} 人`,
     sleepsUp:n=>`最多 ${n} 人`,
     newListing:"新上架",
@@ -382,11 +385,10 @@ const TAGS = {
   GROUP:{en:"Group friendly",zh:"適合團體"},   FAMILY:{en:"Family friendly",zh:"適合家庭"},
   COUPLE:{en:"For couples",zh:"適合情侶"},     PET:{en:"Pet friendly",zh:"寵物友善"}
 };
-const BADGES = {
-  FEATURED:{en:"Featured",zh:"精選"},
-  NEW:{en:"New",zh:"新上架"},
-  POPULAR:{en:"Popular",zh:"熱門"}
-};
+/* 화면에 알약으로 나가는 배지는 두 개뿐 —— 신규 등록, 그리고 할인.
+   그 밖의 「영문|繁體」 자유 문구(무료 자쿠지 등)는 설명 아래 이탤릭 한 줄로 나간다.
+   FEATURED / POPULAR 는 정보가 아니라 자기 선언이라 표시하지 않는다. */
+const BADGES = { NEW:{en:"Newly added",zh:"新上架"} };
 
 /* ---------- 유틸 ---------- */
 function parseCSV(text){
@@ -571,19 +573,22 @@ const ARROW='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=
 const CHEV ='<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 const STAR ='<svg width="13" height="13" viewBox="0 0 24 24" fill="#57534B" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>';
 
-function badgeHtml(g){
-  if(!g.badge) return "";
+function badgeParts(g){
+  const out={flag:"", incl:""};
+  if(!g.badge) return out;
   const raw=g.badgeRaw||g.badge;
   const m=/^DEAL:?(\d+)?$/.exec(g.badge);
-  let txt="";
-  if(m) txt = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"off"}` : (lang==="zh"?"優惠":"Deal");
-  else if(BADGES[g.badge]) txt = BADGES[g.badge][lang];
-  else if(raw.includes("|")){ const p=raw.split("|"); txt=(lang==="zh"?p[1]:p[0])||p[0]; }
-  else return "";
-  return `<span class="flag">${esc(txt.trim())}</span>`;
+  if(m){
+    out.flag = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"off"}` : (lang==="zh"?"優惠":"Deal");
+  }else if(BADGES[g.badge]){
+    out.flag = BADGES[g.badge][lang];
+  }else if(raw.includes("|")){
+    const p=raw.split("|"); out.incl=((lang==="zh"?p[1]:p[0])||p[0]).trim();
+  }
+  return out;
 }
 function availLine(g,t){
-  if(g.rooms.length>1) return t.houses(g.rooms.length);
+  if(g.rooms.length>1) return g.anyWhole ? t.optWhole(g.rooms.length-1) : t.optPlain(g.rooms.length);
   if(g.anyWhole)       return t.oneGroup;
   return t.sleepsUp(g.maxSleeps);
 }
@@ -603,6 +608,7 @@ function renderCards(){
     const tags   = g.tags.map(k=>TAGS[k]?.[lang]).filter(Boolean).slice(0,3);
     const multi  = g.rooms.length>1;
 
+    const bp = badgeParts(g);
     const thumb = g.photo
       ? `<img src="${esc(g.photo)}" alt="${esc(name)}" loading="lazy" decoding="async"
              style="object-position:${esc(FOCUS[g.focus]||"center")}" onerror="this.remove()">`
@@ -631,10 +637,11 @@ function renderCards(){
         : `<div class="micro">${esc(t.micro)}</div>`}`;
 
     return `<article class="card">
-      <div class="thumb">${badgeHtml(g)}${thumb}</div>
+      <div class="thumb">${bp.flag?`<span class="flag">${esc(bp.flag)}</span>`:""}${thumb}</div>
       <div class="c-top"><span class="lbl">${esc(region)}</span>${rating}</div>
       <h3>${esc(name)}</h3>
       ${intro?`<p>${esc(intro)}</p>`:""}
+      ${bp.incl?`<div class="incl">${esc(bp.incl)}</div>`:""}
       ${tags.length?`<div class="tags">${tags.map((x,j)=>`<span>${esc(x)}</span>${j<tags.length-1?"<span>·</span>":""}`).join("")}</div>`:""}
       <div class="c-foot">
         <div class="avail">${esc(availLine(g,t))}</div>
