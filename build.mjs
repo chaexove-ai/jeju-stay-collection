@@ -238,6 +238,13 @@ document.getElementById("filters").addEventListener("click",e=>{
   track("filter_change",{filter_type:b.dataset.f,filter_value:b.dataset.v,language:lang});
   paint();
 });
+document.getElementById("grid").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-toggle]"); if(!b) return;
+  const box=document.getElementById("rooms-"+b.dataset.toggle);
+  const open=box.classList.toggle("open");
+  b.textContent = open ? T[lang].ctaHide : T[lang].microRooms(box.children.length);
+  if(open) track("rooms_open",{stay:b.dataset.toggle, language:lang});
+});
 document.getElementById("heroCta").addEventListener("click",()=>track("hero_cta",{language:lang}));
 paint();`;
 

@@ -87,7 +87,19 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
         <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"
            data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}"
            data-room="${esc((lang==="zh"?primary.nameZh:primary.nameEn)||t.whole)}">${t.cta} ${ARROW}</a>
-        <div class="micro micro-a"><a href="${stayUrl(g)}" data-detail="${esc(g.id)}">${esc(multi?t.microRooms(g.rooms.length):t.detail)}</a></div>
+        ${multi
+          /* 객실이 여럿이면 카드 안에서 바로 펼친다 —— 방을 고르러 다른 페이지로
+             넘어가게 하지 않는다. 상세 페이지는 사진과 제목으로만 간다. */
+          ? `<div class="micro micro-a"><button type="button" data-toggle="${esc(g.id)}">${esc(t.microRooms(g.rooms.length))}</button></div>
+             <div class="rooms" id="rooms-${esc(g.id)}">${
+               g.rooms.map(rm=>{
+                 const rn=(lang==="zh"?rm.nameZh:rm.nameEn) || rm.nameEn || (rm.whole?t.whole:n);
+                 return `<a class="room" href="${esc(rm.link)}" target="_blank" rel="noopener"
+                            data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="${esc(rn)}">
+                   <span class="room-t"><span class="room-n">${esc(rn)}</span>${rm.sleeps?`<span class="room-s">${esc(t.sleeps(rm.sleeps))}</span>`:""}</span>
+                   <span class="room-go">${esc(t.book)} ${ARROW}</span></a>`;
+               }).join("")}</div>`
+          : `<div class="micro">${esc(t.micro)}</div>`}
       </div>
     </article>`;
   }

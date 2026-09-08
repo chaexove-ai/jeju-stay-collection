@@ -68,6 +68,24 @@ console.log("\n[목록 페이지]");
   const links = await p.$$eval(".card h3 a", a=>a.map(x=>x.getAttribute("href")));
   links.every(h=>h.startsWith("/stay/")) ? ok("카드 제목 → /stay/*") : bad("카드 제목 링크 이상");
 
+  const tog = await p.$$eval("button[data-toggle]", b=>b.length);
+  tog>0 ? ok(`인라인 객실 펼치기 ${tog}곳`) : bad("인라인 객실 펼치기 없음");
+  {
+    const b = await p.$("button[data-toggle]");
+    const id = await b.getAttribute("data-toggle");
+    await b.click();
+    const open = await p.$eval("#rooms-"+id, e=>getComputedStyle(e).display!=="none");
+    open ? ok("펼치기 동작") : bad("펼쳐지지 않음");
+    const gap = await p.$eval("#rooms-"+id+" .room-n", e=>{
+      const n=e.getBoundingClientRect(), s=e.parentElement.querySelector(".room-s");
+      return s ? s.getBoundingClientRect().top - n.bottom : 99;
+    });
+    gap>=0 ? ok(`객실명/인원 줄바꿈 (간격 ${gap.toFixed(1)}px)`) : bad(`객실명과 인원이 겹침 (${gap.toFixed(1)}px)`);
+    const rl = await p.$$eval("#rooms-"+id+" .room", a=>a.map(x=>x.getAttribute("href")));
+    rl.every(h=>/airbnb\./i.test(h)) ? ok("객실 각각 에어비앤비 직결") : bad("객실 링크 이상");
+    await b.click();
+  }
+
   const btns = await p.$$eval(".card .btn", a=>a.map(x=>x.getAttribute("href")));
   btns.every(h=>/airbnb\./i.test(h)) ? ok("카드 CTA → 에어비앤비 직결") : bad("카드 CTA 링크 이상");
 
