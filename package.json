@@ -1,0 +1,9 @@
+{
+  "name": "jeju-stay-collection",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:fixture": "node build.mjs --fixture"
+  }
+}
