@@ -130,6 +130,7 @@ h1 em{font-style:italic}
 .c-top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 6px 8px}
 .stars{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--stone); white-space:nowrap}
 .star{color:var(--tangerine); flex:none}
+.stars.new{color:var(--tangerine); font-weight:500}
 .stars b{color:var(--basalt); font-weight:500}
 .card h3{margin:0 6px 10px; font-family:var(--serif); font-weight:var(--display-w); font-size:26px; line-height:1.2}
 .card p{margin:0 6px 14px; font-size:14.5px; line-height:1.7; color:var(--stone)}
@@ -182,6 +183,17 @@ h1 em{font-style:italic}
 .foot .brand-txt b{color:var(--limestone)}
 .foot .brand-txt span{color:var(--linen)}
 .credit{margin-top:34px; font-size:11px; line-height:1.7; color:#6F6A62}
+
+/* 맨 위로 —— 화면 오른쪽 아래에 떠 있는 동그라미.
+   히어로를 지난 뒤에만 나타나므로 첫 화면은 가리지 않는다. */
+.totop{position:fixed; right:26px; bottom:26px; z-index:30;
+  width:50px; height:50px; border-radius:50%; display:grid; place-items:center;
+  background:var(--pine); color:var(--paper);
+  /* 종이색 테두리 한 겹 —— 카드의 초록 CTA 위를 지날 때 같은 색끼리
+     붙어버려서 원이 사라진다. 링이 있어야 늘 떠 있는 것으로 읽힌다. */
+  box-shadow:0 0 0 3px var(--paper), 0 6px 20px rgba(25,24,23,.26);
+  transition:background .16s ease, transform .16s ease}
+.totop:focus-visible{outline:2px solid var(--basalt); outline-offset:3px}
 
 
 /* ══════════════════════════════════════════════════════════
@@ -409,6 +421,8 @@ h1 em{font-style:italic}
 
   /* 목록/지도 탭을 켜고, 헤더의 작은 지도와 「목록으로」 버튼은 내린다 ——
      탭 하나가 둘을 다 대신한다. */
+  /* 휴대폰에서는 브라우저 아래 막대를 피해 한 칸 더 올린다 */
+  .totop{right:16px; bottom:20px; width:46px; height:46px}
   .vtabs{display:flex}
   .mmap{display:none}
   .count-row .views{display:none}
@@ -544,6 +558,7 @@ h1 em{font-style:italic}
   .book .rrow-go:hover svg{stroke:var(--pine)}
 
   .hcell:hover img{transform:scale(1.045)}
+  .totop:hover{background:var(--pine-dark); transform:translateY(-2px)}
 
   /* 헤더의 작은 지도 */
   .mmap{transition:border-color .16s ease, box-shadow .16s ease}

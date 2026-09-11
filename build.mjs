@@ -249,11 +249,14 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
         세 곳은 히어로 순환과 같은 규칙으로 매주 같이 바뀌고,
         맨 아래로 고정된 숙소는 여기 올라오지 않는다. */""}
   <div class="hero-img">
-    ${heroes.length?heroes.map((h,i)=>`<a class="hcell" href="/stay/${encodeURIComponent(h.id)}" data-detail="${R.esc(h.id)}">
+    ${/* 누를 수 없게 둔다 —— 여기 걸린 세 곳만 상세로 가는 지름길이 생기면
+          매주 바뀐다 해도 그 주의 세 곳이 유리해진다. 열다섯 곳을 같은
+          조건으로 소개하는 자리라, 사진은 보여주기만 한다. */""}
+    ${heroes.length?heroes.map((h,i)=>`<div class="hcell">
       <img src="${R.esc(R.photoAt(h.photo, i?600:1200))}" alt="" loading="${i?"lazy":"eager"}"
            style="object-position:${R.esc(R.FOCUS[h.focus]||"center")}">
       <span class="hc" data-hid="${R.esc(h.id)}">${R.esc(R.name(h,"en"))}${i?"":" · "+R.esc(R.shortRegion(R.region(h,"en")))}</span>
-    </a>`).join(""):""}
+    </div>`).join(""):""}
   </div>
 </header>
 
@@ -303,7 +306,11 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
     </div>
   </div>
 </main>
-${darkFoot}`;
+${darkFoot}
+<button type="button" class="totop" id="toTop" aria-label="Back to top" hidden>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>`;
 
   const script = `${preamble(renderSrc, `
 const DATA=${JSON.stringify(list)};
@@ -513,6 +520,26 @@ document.querySelectorAll("#vtabs button").forEach(function(b){
     if(toMap) track("map_open", { language: lang, from: "tab" });
   });
 });
+/* 맨 위로 —— 랜딩이 길어서 아래까지 내려간 사람이 돌아올 길이 없었다.
+   히어로를 지나야 나타나고, 그 전에는 화면을 가리지 않는다. */
+var toTop = document.getElementById("toTop");
+if(toTop){
+  var showAt = 900, shown = false, ticking = false;
+  var sync = function(){
+    var want = window.scrollY > showAt;
+    if(want !== shown){ shown = want; toTop.hidden = !want; }
+    ticking = false;
+  };
+  window.addEventListener("scroll", function(){
+    if(!ticking){ ticking = true; requestAnimationFrame(sync); }
+  }, {passive:true});
+  sync();
+  toTop.addEventListener("click", function(){
+    var soft = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top:0, behavior: soft ? "auto" : "smooth" });
+  });
+}
+
 var mmapBtn = document.getElementById("mmap");
 if(mmapBtn) mmapBtn.addEventListener("click", function(){
   showMap(true);

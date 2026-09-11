@@ -85,21 +85,50 @@ console.log("\n[목록 페이지]");
     ? ok("도틀왓 마지막") : bad(`마지막 카드가 도틀왓이 아님: ${cards[cards.length-1]}`);
   cards.indexOf("dotlwat")===14 ? ok("도틀왓 단 한 번, 맨 끝") : bad("도틀왓 위치 이상");
 
-  /* 히어로는 세 칸 —— 서로 다른 숙소여야 하고, 도틀왓은 절대 올라오면 안 된다 */
+  /* 히어로는 세 칸 —— 서로 다른 숙소여야 하고, 도틀왓은 절대 올라오면 안 된다.
+     그리고 누를 수 없어야 한다: 여기 걸린 세 곳만 지름길을 얻으면 불공평해진다. */
   const hero = await p.$$eval(".hero-img .hcell", els=>els.map(e=>({
-    id:e.dataset.detail, href:e.getAttribute("href"), cap:e.querySelector(".hc").textContent.trim()
+    id:e.querySelector(".hc").dataset.hid, tag:e.tagName,
+    cap:e.querySelector(".hc").textContent.trim(),
+    link:!!e.closest("a") || !!e.querySelector("a")
   })));
   const ids = hero.map(h=>h.id);
   hero.length===3 && new Set(ids).size===3
     ? ok(`히어로 3곳 (${hero.map(h=>h.cap).join(" / ")})`) : bad(`히어로 ${hero.length}칸 [${ids}]`);
   !ids.includes("dotlwat") ? ok("히어로에 도틀왓 없음") : bad("도틀왓이 히어로에 올라옴");
-  hero.every(h=>h.href && h.href.startsWith("/stay/"))
-    ? ok("히어로 각 칸 → 상세 페이지") : bad("히어로 링크 이상");
+  hero.every(h=>h.tag!=="A" && !h.link)
+    ? ok("히어로 사진은 링크 아님 (공정)") : bad("히어로 사진에 링크가 걸려 있음");
 
   const links = await p.$$eval(".card h3 a", a=>a.map(x=>x.getAttribute("href")));
   links.every(h=>h.startsWith("/stay/")) ? ok("카드 제목 → /stay/*") : bad("카드 제목 링크 이상");
 
   await checkBar(p, "데스크톱");
+
+  /* 맨 위로 —— 히어로를 지나기 전에는 안 보이고, 지나면 나타나고, 누르면 올라간다 */
+  {
+    const before = await p.$eval("#toTop", e=>e.hidden);
+    /* 부드러운 스크롤이 켜져 있으면 2000px 에 닿기까지 시간이 걸린다 —— 끄고 잰다 */
+    await p.addStyleTag({content:"html{scroll-behavior:auto !important}"});
+    await p.evaluate(()=>window.scrollTo(0,2000));
+    await p.waitForFunction(()=>window.scrollY>1900, null, {timeout:3000});
+    await p.waitForTimeout(150);
+    const after = await p.$eval("#toTop", e=>e.hidden);
+    before && !after ? ok("맨 위로 버튼: 처음 숨김 → 내려가면 노출") : bad(`처음 ${before} / 스크롤 후 ${after}`);
+    await p.click("#toTop");
+    await p.waitForTimeout(900);
+    const y = await p.evaluate(()=>window.scrollY);
+    y < 40 ? ok(`맨 위로 동작 (${Math.round(y)}px)`) : bad(`눌러도 ${Math.round(y)}px`);
+  }
+
+  /* 후기가 아직 없는 곳 —— 별과 같은 색으로 */
+  {
+    const nl = await p.$eval(".stars.new", e=>{
+      const s=getComputedStyle(e); return {c:s.color, w:s.fontWeight, t:e.textContent.trim()};
+    }).catch(()=>null);
+    const star = await p.$eval(".star", e=>getComputedStyle(e).color);
+    nl && nl.c===star && +nl.w>=500
+      ? ok(`${nl.t} 이 별과 같은 색 (${nl.c})`) : bad(`Newly listed ${JSON.stringify(nl)} / 별 ${star}`);
+  }
 
   /* 카드 호버 —— 얹으면 눈에 띄게 달라져야 한다. 버튼 배경이 어두워지고
      카드가 떠오르는지, 실제 계산된 값으로 확인한다. */

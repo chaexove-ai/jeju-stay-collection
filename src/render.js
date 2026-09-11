@@ -44,7 +44,9 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
   function ratingHTML(g,lang,t){
     if(hasRating(g))
       return `<span class="stars">${STAR}<b>${g.rating.toFixed(2)}</b> <span>${esc(t.reviews(g.reviews))}</span></span>`;
-    return `<span class="stars" style="color:var(--clay)">${esc(t.newListing)}</span>`;
+    /* 평점 대신 나가는 줄 —— 회색으로 흘리면 「없는 것」처럼 보인다.
+       별과 같은 색, 같은 굵기로 두어 후기가 아직 없다는 사실을 그대로 말한다. */
+    return `<span class="stars new">${esc(t.newListing)}</span>`;
   }
 
   /* 알약 배지는 두 개뿐 —— 신규 등록, 그리고 할인.
