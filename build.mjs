@@ -403,6 +403,15 @@ function mapped(){ return GEO.filter(function(g){ return R.matches(g, filt); });
 function ratingTxt(g){
   return R.hasRating(g) ? g.rating.toFixed(2) + " (" + g.reviews + ")" : T[lang].newListing;
 }
+/* 지도 옆 목록·핀 카드의 평점 —— 카드와 같은 별, 같은 감귤색.
+   숫자만 두면 무슨 숫자인지 모르고, 후기가 없는 곳은 회색으로 흘러 사라진다. */
+var STAR_S = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true">'
+           + '<path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>';
+function ratingMark(g){
+  return R.hasRating(g)
+    ? STAR_S + "<b>" + g.rating.toFixed(2) + "</b> <span>(" + g.reviews + ")</span>"
+    : '<span class="new">' + R.esc(T[lang].newListing) + "</span>";
+}
 function areaOf(g){
   var la = g.geo.lat, ln = g.geo.lng;
   if(la < 33.32 && ln > 126.35) return "S";     /* 남쪽 해안 */
@@ -487,7 +496,7 @@ function paintSide(list){
       v.map(function(g){
         return '<button type="button" class="item" data-go="' + R.esc(g.id) + '">' +
           '<span class="nm">' + R.esc(R.name(g, lang)) + '</span>' +
-          '<span class="rt">' + R.esc(ratingTxt(g)) + "</span></button>";
+          '<span class="rt">' + ratingMark(g) + "</span></button>";
       }).join("");
   }).filter(Boolean).join('<div class="rule"></div>');
 }
@@ -512,7 +521,8 @@ function openCard(id){
   var p = [q.x, q.y], n = R.name(g, lang);
   c.innerHTML = '<button type="button" class="x" data-close="1" aria-label="close">&times;</button>' +
     (g.photo ? '<div class="pop-img"><img src="' + R.esc(g.photo) + '" alt="' + R.esc(n) + '"></div>' : "") +
-    '<div class="pop-b"><span class="lbl">' + R.esc(R.region(g, lang)) + " · " + R.esc(ratingTxt(g)) + "</span>" +
+    '<div class="pop-b"><span class="pop-meta"><span class="lbl">' + R.esc(R.region(g, lang)) + "</span>" +
+    '<span class="rt">' + ratingMark(g) + "</span></span>" +
     "<h4>" + R.esc(n) + "</h4>" +
     '<div class="meta">' + R.esc(R.availLine(g, t)) + "</div>" +
     '<a class="btn" href="' + R.stayUrl(g) + '" data-detail="' + R.esc(g.id) + '">' + R.esc(t.detail) + "</a></div>";
