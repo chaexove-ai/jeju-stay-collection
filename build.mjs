@@ -536,6 +536,12 @@ function openCard(id){
   if(top + ch > H - 8) top = Math.max(8, H - 8 - ch);
   c.style.left = left + "px"; c.style.top = top + "px";
   highlight(id);
+  /* 휴대폰에서는 카드가 지도 아래에 붙는다 —— 지도 아래쪽 핀을 누르면
+     카드가 화면 밖에 생겨서 「아무 일도 안 일어났다」로 보인다. */
+  if(window.matchMedia("(max-width:760px)").matches){
+    var soft = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    c.scrollIntoView({ block:"nearest", behavior: soft ? "smooth" : "auto" });
+  }
 }
 
 /* 말풍선 사진을 처음 볼 때 한 번만 받아온다. 두 번째부터는 data-src 가
@@ -595,6 +601,27 @@ if(mmapBtn) mmapBtn.addEventListener("click", function(){
 });
 var backBtn = document.getElementById("backList");
 if(backBtn) backBtn.addEventListener("click", function(){ showMap(false); });
+
+/* 핀 카드 닫기.
+   카드(#mapCard)는 지도 칸(#mapStage) 밖, 지도 상자(.mapbox) 안에 있다 ——
+   좁은 화면에서 카드가 지도에 잘리던 걸 고치며 옮겼다. 그런데 닫기 위임은
+   지도 칸에 그대로 남아 있어서, × 를 눌러도 아무 일도 일어나지 않았다.
+   닫는 길은 셋이다: × 를 누르거나, 카드 바깥을 누르거나, Esc. */
+var cardEl = document.getElementById("mapCard");
+if(cardEl){
+  cardEl.addEventListener("click", function(e){
+    if(e.target.closest("[data-close]")) closeCard();
+  });
+  document.addEventListener("click", function(e){
+    if(cardEl.hidden) return;
+    /* 지도 칸 안의 클릭은 지도 쪽 처리기가 알아서 한다 (가까운 핀 / 닫기) */
+    if(e.target.closest("#mapCard") || e.target.closest("#mapStage")) return;
+    closeCard();
+  });
+  document.addEventListener("keydown", function(e){
+    if((e.key === "Escape" || e.key === "Esc") && !cardEl.hidden) closeCard();
+  });
+}
 
 var stageEl = document.getElementById("mapStage");
 if(stageEl){

@@ -536,6 +536,29 @@ console.log("\n[모바일 390px]");
   !card.clipped ? ok(`핀 카드가 지도 상자 안에 (높이 ${card.h}px)`) : bad("카드가 잘림");
   card.xInside ? ok("닫기 버튼이 카드 안") : bad("닫기 버튼이 카드 밖으로 날아감");
   card.tip==="0" ? ok("터치 기기에서 호버 말풍선 안 뜸") : bad(`말풍선 opacity ${card.tip}`);
+  /* 닫는 길 세 가지 —— × / 바깥 / Esc.
+     카드가 지도 칸 밖으로 옮겨간 뒤로 × 위임이 끊겨 한동안 눌리지 않았다. */
+  {
+    const tap = async () => { await p.click('.mpin[data-pin="andostay"]'); await p.waitForTimeout(260); };
+    const shut = () => p.$eval("#mapCard", e=>e.hidden);
+    const xSize = await p.$eval("#mapCard .x", e=>{const r=e.getBoundingClientRect();
+      return Math.round(Math.min(r.width, r.height));});
+    await p.click("#mapCard .x"); await p.waitForTimeout(240);
+    const byX = await shut();
+    await tap(); await p.keyboard.press("Escape"); await p.waitForTimeout(240);
+    const byEsc = await shut();
+    await tap(); await p.click("#side"); await p.waitForTimeout(240);
+    const byOut = await shut();
+    byX && byEsc && byOut && xSize>=44
+      ? ok(`카드 닫기 세 가지 동작 (× ${xSize}px · 바깥 · Esc)`)
+      : bad(`× ${byX} (${xSize}px) / Esc ${byEsc} / 바깥 ${byOut}`);
+    await tap();
+    /* 지도 아래쪽 핀을 눌렀을 때 카드가 화면 밖에 생기면 안 된다 */
+    const seen = await p.$eval("#mapCard", e=>{const r=e.getBoundingClientRect();
+      return r.top < innerHeight && r.bottom > 0;});
+    seen ? ok("핀을 누르면 카드가 화면 안으로") : bad("카드가 화면 밖에 생김");
+    await p.click("#mapCard .x"); await p.waitForTimeout(200);
+  }
   await p.click('#vtabs button[data-view="list"]');
   await p.waitForTimeout(250);
   await p.click('#vtabs button[data-view="map"]');
