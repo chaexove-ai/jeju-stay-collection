@@ -1,0 +1,12 @@
+{
+  "name": "Jeju Stay Collection",
+  "short_name": "Jeju Stay",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#2F4A43",
+  "background_color": "#FBF9F5",
+  "display": "browser",
+  "start_url": "/"
+}

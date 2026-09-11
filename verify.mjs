@@ -104,6 +104,24 @@ console.log("\n[목록 페이지]");
 
   await checkBar(p, "데스크톱");
 
+  /* 파비콘 —— 태그가 있고, 파일이 실제로 응답해야 한다.
+     head 에 링크만 걸어두고 파일을 안 올리는 게 가장 흔한 실수다. */
+  {
+    const icons = await p.$$eval('link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]',
+      e=>e.map(x=>x.getAttribute("href")));
+    const theme = await p.$eval('meta[name="theme-color"]', e=>e.content).catch(()=>null);
+    const want = ["/favicon.ico","/favicon.svg","/apple-touch-icon.png","/site.webmanifest"];
+    want.every(w=>icons.includes(w)) && theme==="#2F4A43"
+      ? ok(`파비콘 태그 ${icons.length}개 · theme-color ${theme}`) : bad(`아이콘 [${icons}] / theme ${theme}`);
+    const codes = [];
+    for(const f of [...want,"/icon-192.png","/icon-512.png"]){
+      const r = await p.request.get(BASE+f);
+      codes.push(f+":"+r.status());
+    }
+    codes.every(c=>c.endsWith(":200"))
+      ? ok(`아이콘 파일 ${codes.length}개 응답 200`) : bad(`아이콘 응답 ${codes.join(" ")}`);
+  }
+
   /* 맨 위로 —— 히어로를 지나기 전에는 안 보이고, 지나면 나타나고, 누르면 올라간다 */
   {
     const before = await p.$eval("#toTop", e=>e.hidden);
