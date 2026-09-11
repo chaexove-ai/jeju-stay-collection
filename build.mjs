@@ -123,6 +123,7 @@ const darkFoot = `<div class="dark">
         <div><a href="mailto:hello@jejustaycollection.com">hello@jejustaycollection.com</a></div>
       </div>
     </div>
+    <div class="credit">Map data &copy; OpenStreetMap contributors, ODbL &middot; Administrative boundaries from South Korean public geospatial data.</div>
   </div>
 </div>`;
 
@@ -144,6 +145,10 @@ function applyText(){
   document.querySelectorAll("[data-t]").forEach(el=>{
     const v=(typeof SITE_TXT!=="undefined" && SITE_TXT[el.dataset.t] && SITE_TXT[el.dataset.t][lang]) || t[el.dataset.t];
     if(typeof v==="string") el.innerHTML=v;
+  });
+  /* 사전(T)에 없는 고정 문구 —— 지도 라벨처럼 두 언어를 요소가 직접 들고 있는 것 */
+  document.querySelectorAll("[data-en]").forEach(el=>{
+    el.textContent = (lang==="zh" && el.dataset.zh) ? el.dataset.zh : el.dataset.en;
   });
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
 }
@@ -172,6 +177,22 @@ function project(lat, lng){
            ((my(lat) - JEJU.y0) / (JEJU.y1 - JEJU.y0)) * 100 ];   /* 백분율 */
 }
 const ISLE = `<svg class="sea" viewBox="0 0 ${JEJU.w} ${JEJU.h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="isle" d="${JEJU.d}"/></svg>`;
+
+/* 펼친 지도에만 읍·면 경계선을 얹는다. 372px 짜리 작은 지도에서는
+   같은 선이 정보가 아니라 잡음이 되므로 ISLE 을 그대로 쓴다.
+   경계선은 해안선과 출처가 달라 바다 쪽으로 몇 px 씩 삐져나가는데,
+   해안선 path 로 clip 해서 잘라낸다. */
+const ISLE_BIG = `<svg class="sea" viewBox="0 0 ${JEJU.w} ${JEJU.h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <defs><clipPath id="isleClip"><path d="${JEJU.d}"/></clipPath></defs>
+  <path class="isle" d="${JEJU.d}"/>
+  <path class="adm" d="${JEJU.adm}" clip-path="url(#isleClip)"/>
+</svg>`;
+
+/* 라벨은 숙소가 있는 읍·면만. 지역 이름을 13개 다 띄우면
+   사이트가 쓰는 West / South / East 세 구분과 층이 겹친다. */
+const MAPLBL = `<div class="maplbl" aria-hidden="true">${
+  JEJU.labels.map(l => `<u class="a-${l.a}" style="left:${l.x}%;top:${l.y}%" data-en="${l.en}" data-zh="${l.zh}">${l.en}</u>`).join("")
+}</div>`;
 
 function miniMap(list, R, t){
   const geo = list.filter(g => g.geo);
@@ -252,7 +273,8 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
     <div class="mapwrap" id="mapwrap" hidden>
       <div class="mapbox">
         <div class="mapstage" id="mapStage">
-          ${ISLE}
+          ${ISLE_BIG}
+          ${MAPLBL}
           <div class="mappins" id="mapPins"></div>
           <div class="mapcard" id="mapCard" hidden></div>
         </div>
@@ -282,7 +304,10 @@ function paint(){
   document.getElementById("grid").innerHTML=R.gridHTML(DATA,lang,filt);
   const shown=DATA.filter(g=>R.matches(g,filt));
   document.getElementById("countTxt").innerHTML=T[lang].count(shown.length,DATA.length);
-  if(typeof paintMini==="function"){ paintMini(); if(view==="map" && window.L) paintMap(); }
+  /* 지도가 열려 있으면 같이 다시 그린다 —— 핀 이름과 옆 목록, 캡션이 언어를 따라간다.
+     예전엔 여기 window.L(Leaflet) 조건이 붙어 있었는데, Leaflet 을 걷어낸 뒤로
+     그 값이 영영 undefined 라 지도가 열린 채 언어를 바꾸면 지도만 옛 언어로 남았다. */
+  if(typeof paintMini==="function"){ paintMini(); if(view==="map") paintMap(); }
   const cap=document.getElementById("heroCap");
   if(cap&&HERO){
     const h=DATA.find(g=>g.id===HERO.id);
@@ -336,7 +361,7 @@ function paintMini(){
    밀어내는 거리는 섬 폭의 2% 미만 —— 「어느 쪽 마을인가」라는
    이 지도의 목적에는 영향이 없고, 대신 두 곳이라는 사실이 보인다. */
 var SEP = 0.019;              /* 지도 폭 기준 최소 간격 */
-var ASPECT = 554 / 1000;      /* 세로 %를 가로 %와 같은 척도로 맞추는 비 */
+var ASPECT = ${JEJU.h} / ${JEJU.w};      /* 세로 %를 가로 %와 같은 척도로 맞추는 비 */
 function spread(pts){
   for(var pass = 0; pass < 24; pass++){
     var moved = false;
@@ -526,7 +551,10 @@ paint();`;
 
 /* ---------- 실행 ---------- */
 async function main(){
-  const css       = await readFile(path.join(SRC,"theme.css"), "utf8");
+  /* 지도 비율은 해안선 데이터에서 나온다 —— 좌표를 다시 뽑으면
+     뷰박스가 달라지므로 CSS 에 숫자를 박아두면 조용히 어긋난다. */
+  const css       = await readFile(path.join(SRC,"theme.css"), "utf8")
+                  + `\n:root{--map-ar:${JEJU.w}/${JEJU.h}}\n`;
   const renderSrc = await readFile(path.join(SRC,"render.js"), "utf8");
   const R         = new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS);
 

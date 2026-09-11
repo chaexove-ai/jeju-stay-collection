@@ -144,6 +144,7 @@ h1 em{font-style:italic}
 .foot .meta a:hover{border-bottom-color:var(--linen)}
 .foot .brand-txt b{color:var(--limestone)}
 .foot .brand-txt span{color:var(--linen)}
+.credit{margin-top:34px; font-size:11px; line-height:1.7; color:#6F6A62}
 
 
 /* ══════════════════════════════════════════════════════════
@@ -156,12 +157,15 @@ h1 em{font-style:italic}
    1.4:1 정도면 흑백으로 봐도 물과 뭍이 갈린다. */
 .sea{background:#D9D3C6}
 .isle{fill:var(--paper); stroke:var(--linen); stroke-width:1.2; stroke-linejoin:round; vector-effect:non-scaling-stroke}
+/* 읍·면 경계 —— 해안선보다 확실히 약해야 한다. 이 선은 읽으라고 있는 게
+   아니라 섬을 덩어리가 아니라 지역으로 보이게 하려고 있는 것. */
+.adm{fill:none; stroke:#E3DDD1; stroke-width:1; vector-effect:non-scaling-stroke}
 
 /* 헤더의 작은 지도 */
 .mmap{display:block; width:372px; flex:none; text-align:left; padding:0;
       border:1px solid var(--control); background:var(--paper); transition:border-color .16s}
 .mmap:hover{border-color:var(--stone)}
-.mmap-canvas{display:block; position:relative; width:100%; aspect-ratio:1000/554; overflow:hidden}
+.mmap-canvas{display:block; position:relative; width:100%; aspect-ratio:var(--map-ar); overflow:hidden}
 .mmap-canvas svg{display:block; width:100%; height:100%}
 .mmap-dots{position:absolute; inset:0}
 .mmap-dots i{position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%;
@@ -179,12 +183,20 @@ h1 em{font-style:italic}
 /* 펼친 지도 */
 .mapwrap{display:grid; grid-template-columns:1fr 332px; gap:24px; align-items:start}
 .mapbox{position:relative; border:1px solid var(--control); overflow:hidden}
-.mapstage{position:relative; width:100%; aspect-ratio:1000/554}
+.mapstage{position:relative; width:100%; aspect-ratio:var(--map-ar)}
 .mapstage svg{display:block; width:100%; height:100%}
 .map-cap{position:absolute; left:0; bottom:0; z-index:3; background:var(--paper); padding:11px 20px;
          display:flex; align-items:center; gap:12px; font-size:11px; font-weight:500;
          letter-spacing:.2em; text-transform:uppercase; color:var(--stone)}
 .map-cap i{width:20px; height:1px; background:var(--hairline-2); display:block}
+
+/* 지역 이름 —— 핀보다 아래 층. 핀과 카드가 항상 이 위로 올라온다. */
+.maplbl{position:absolute; inset:0; pointer-events:none}
+.maplbl u{position:absolute; transform:translate(-50%,-50%); text-decoration:none; white-space:nowrap;
+          font-size:11px; font-weight:500; letter-spacing:.08em; color:var(--clay)}
+/* 섬 가장자리 구역은 가운데 정렬하면 글자 절반이 바다로 나간다 —— 바깥쪽 끝을 고정한다 */
+.maplbl u.a-l{transform:translate(0,-50%)}
+.maplbl u.a-r{transform:translate(-100%,-50%)}
 
 .mappins{position:absolute; inset:0}
 /* 좌표 위에 정확히 얹히도록 22px 사각형을 음수 마진으로 중앙 정렬한다.

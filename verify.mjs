@@ -106,6 +106,10 @@ console.log("\n[목록 페이지]");
   /住宿/.test(zh) ? ok(`언어 전환 (${zh})`) : bad(`언어 전환 실패: ${zh}`);
   const zhCards = await p.$$eval(".card", e=>e.length);
   zhCards===15 ? ok("전환 후에도 15장") : bad(`전환 후 ${zhCards}장`);
+  /* 지도 라벨도 같이 한자로 바뀌어야 한다 —— 사전(T)에 없는 문구라 따로 걸린다 */
+  const zhLbl = await p.$$eval(".maplbl u", e=>e.map(x=>x.textContent));
+  zhLbl.includes("舊左邑") && zhLbl.includes("涯月邑")
+    ? ok("지도 라벨 繁體中文 전환") : bad(`라벨 [${zhLbl}]`);
   await p.click('.lang button[data-lang="en"]');
 
   /* 지도 */
@@ -118,6 +122,9 @@ console.log("\n[목록 페이지]");
     ext===0 ? ok("외부 지도 서버 요청 0") : bad(`외부 지도 요청 ${ext}건`);
     const dots = await p.$$eval(".mmap-dots i", e=>e.length);
     dots===15 ? ok("작은 지도 점 15개") : bad(`점 ${dots}개`);
+    /* 작은 지도에는 읍면 경계선이 없어야 한다 —— 372px 에서는 잡음이다 */
+    const miniAdm = await p.$$eval(".mmap-canvas path.adm", e=>e.length);
+    miniAdm===0 ? ok("작은 지도에 경계선 없음") : bad(`작은 지도 경계선 ${miniAdm}개`);
     await p.click("#mmap");
     await p.waitForTimeout(300);
     const hid = await p.$eval("#grid", e=>e.hidden);
@@ -127,6 +134,31 @@ console.log("\n[목록 페이지]");
     pins===15 ? ok("지도 핀 15개") : bad(`핀 ${pins}개`);
     const dup = await p.$$eval(".mpin", e=>e.filter(x=>x.hasAttribute("title")).length);
     dup===0 ? ok("브라우저 기본 툴팁 없음") : bad(`title 속성 ${dup}개`);
+    /* 펼친 지도에는 경계선이 있어야 하고, 해안선 밖으로 새지 않게 clip 이 걸려 있어야 한다 */
+    const admClip = await p.$eval("#mapStage path.adm", e=>e.getAttribute("clip-path")||"");
+    /url\(#/.test(admClip) ? ok("경계선 해안선으로 clip") : bad(`clip-path "${admClip}"`);
+    /* 라벨은 숙소가 있는 읍·면만 —— 7곳 */
+    const lbl = await p.$$eval(".maplbl u", e=>e.map(x=>x.textContent));
+    lbl.length===7 && lbl.includes("Gujwa-eup") && lbl.includes("Aewol-eup")
+      ? ok("지역 라벨 7개 (영문)") : bad(`라벨 ${lbl.length}개 [${lbl}]`);
+    /* 라벨이 핀을 가리면 안 된다 —— 핀이 위층 */
+    const zOk = await p.evaluate(()=>{
+      const l=getComputedStyle(document.querySelector(".maplbl")).pointerEvents;
+      return l==="none";
+    });
+    zOk ? ok("라벨이 핀 클릭을 막지 않음") : bad("라벨이 포인터를 먹음");
+    /* 지도를 연 채로 언어를 바꾼다 —— 캡션·핀 이름·옆 목록이 같이 따라와야 한다.
+       예전엔 지도가 열린 상태에서는 다시 그리지 않아 옛 언어로 남아 있었다. */
+    await p.click('.lang button[data-lang="zh"]');
+    await p.waitForTimeout(250);
+    const capZh  = await p.textContent("#mapCap");
+    const sideZh = await p.textContent("#side");
+    /間/.test(capZh) ? ok(`지도 연 채 언어 전환 (${capZh.trim()})`) : bad(`지도 캡션 "${capZh}"`);
+    /西部|南部|東部/.test(sideZh) ? ok("지도 옆 목록 지역명 西部 / 南部 / 東部") : bad("옆 목록이 영문 그대로");
+    await p.click('.lang button[data-lang="en"]');
+    await p.waitForTimeout(250);
+    const sideEn = await p.textContent("#side");
+    /West|South|East/.test(sideEn) ? ok("영문 복귀") : bad("영문 복귀 실패");
     await p.click('.mpin[data-pin="andostay"]');
     await p.waitForTimeout(200);
     const card = await p.$eval("#mapCard", e=>!e.hidden);
