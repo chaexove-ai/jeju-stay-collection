@@ -108,6 +108,29 @@ console.log("\n[목록 페이지]");
   zhCards===15 ? ok("전환 후에도 15장") : bad(`전환 후 ${zhCards}장`);
   await p.click('.lang button[data-lang="en"]');
 
+  /* 지도 */
+  {
+    const mini = await p.$$eval(".mmap", e=>e.length);
+    mini===1 ? ok("작은 지도 있음") : bad(`작은 지도 ${mini}개`);
+    const tiles = await p.$$eval(".mmap-tiles img", e=>e.length);
+    tiles>=4 ? ok(`작은 지도 타일 ${tiles}장`) : bad(`타일 ${tiles}장`);
+    const dots = await p.$$eval(".mmap-dots i", e=>e.length);
+    dots===15 ? ok("작은 지도 점 15개") : bad(`점 ${dots}개`);
+    const lib0 = await p.$$eval('script[src*="leaflet"]', e=>e.length);
+    lib0===0 ? ok("첫 화면에서 Leaflet 미로드") : bad("Leaflet 이 처음부터 실려 있음");
+    await p.click("#mmap");
+    await p.waitForTimeout(300);
+    const hid = await p.$eval("#grid", e=>e.hidden);
+    const shown = await p.$eval("#mapwrap", e=>!e.hidden);
+    hid && shown ? ok("지도 전환 동작") : bad("지도 전환 실패");
+    const back = await p.$eval("#backList", e=>!e.hidden);
+    back ? ok("목록 복귀 버튼 노출") : bad("복귀 버튼 없음");
+    await p.click("#backList");
+    await p.waitForTimeout(150);
+    const back2 = await p.$eval("#grid", e=>!e.hidden);
+    back2 ? ok("목록 복귀 동작") : bad("목록 복귀 실패");
+  }
+
   const ow = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   ow<=0 ? ok("가로 스크롤 없음") : bad(`가로 넘침 ${ow}px`);
   errs.length===0 ? ok("JS 에러 0") : bad("JS 에러: "+errs.join(" | "));

@@ -159,6 +159,42 @@ document.addEventListener("click",e=>{
   if(d) track("stay_detail",{stay:d.dataset.detail, language:lang});
 });`;
 
+
+/* ---------- 미니 지도 ----------
+   컬렉션 헤더에 늘 떠 있는 작은 지도. 라이브러리 없이 타일 이미지 여덟 장으로
+   그린다. 타일과 점을 모두 백분율로 놓아서, 자바스크립트 없이도 폭에 맞게
+   늘어나고 첫 화면에 바로 보인다. Leaflet 은 전체 지도를 열 때 비로소 온다. */
+const MZ = 10, TSZ = 256, WORLD = TSZ * Math.pow(2, MZ);
+const BND = { n:33.585, s:33.195, w:126.145, e:126.985 };   /* 제주 본섬 */
+function merc(lat, lng){
+  const x = (lng + 180) / 360 * WORLD;
+  const s = Math.sin(lat * Math.PI / 180);
+  return [x, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WORLD];
+}
+function miniMap(list, R, t){
+  const geo = list.filter(g => g.geo);
+  if(!geo.length) return "";
+  const [x0, y0] = merc(BND.n, BND.w), [x1, y1] = merc(BND.s, BND.e);
+  const w = x1 - x0, h = y1 - y0;
+  let tiles = "";
+  for(let tx = Math.floor(x0/TSZ); tx <= Math.floor(x1/TSZ); tx++)
+    for(let ty = Math.floor(y0/TSZ); ty <= Math.floor(y1/TSZ); ty++)
+      tiles += `<img src="https://a.basemaps.cartocdn.com/light_nolabels/${MZ}/${tx}/${ty}.png"
+        alt="" loading="lazy" decoding="async" style="left:${((tx*TSZ-x0)/w*100).toFixed(3)}%;top:${((ty*TSZ-y0)/h*100).toFixed(3)}%;width:${(TSZ/w*100).toFixed(3)}%;height:${(TSZ/h*100).toFixed(3)}%">`;
+  const dots = geo.map(g => {
+    const [a, b] = merc(g.geo.lat, g.geo.lng);
+    return `<i style="left:${((a-x0)/w*100).toFixed(2)}%;top:${((b-y0)/h*100).toFixed(2)}%"></i>`;
+  }).join("");
+  return `<button type="button" class="mmap" id="mmap" aria-label="${R.esc(t.mapOpenBig)}">
+    <span class="mmap-canvas"><span class="mmap-tiles">${tiles}</span><span class="mmap-dots" id="mmapDots">${dots}</span></span>
+    <span class="mmap-foot">
+      <span class="lbl" id="mmapLbl" style="white-space:nowrap">${R.esc(t.mapMini(geo.length))}</span>
+      <span class="mmap-go">${R.esc(t.mapOpenBig)}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+    </span>
+  </button>`;
+}
+
 /* ---------- 목록 페이지 ---------- */
 function pageIndex({list, site, hero, css, renderSrc, R}){
   const t=T.en;
@@ -206,11 +242,23 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
         <h2 data-t="secTitle"></h2>
       </div>
       <p class="coll-note" data-t="secNote"></p>
+      ${miniMap(list, R, t)}
     </div>
     <div class="filters" id="filters">${R.filtersHTML(list,"en",filt)}</div>
-    <div class="count-row"><div class="n" id="countTxt">${t.count(list.length,list.length)}</div></div>
+    <div class="count-row">
+      <div class="n" id="countTxt">${t.count(list.length,list.length)}</div>
+      <div class="views"><button type="button" id="backList" hidden>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span data-t="backList"></span>
+      </button></div>
+    </div>
     <div class="rule" style="background:var(--hairline-2); margin-bottom:40px"></div>
     <div class="grid" id="grid">${R.gridHTML(list,"en",filt)}</div>
+    <div class="mapwrap" id="mapwrap" hidden>
+      <div class="mapbox"><div id="map"></div>
+        <div class="map-cap"><i></i><span id="mapCap"></span></div></div>
+      <div class="side" id="side"></div>
+    </div>
   </div>
 </main>
 ${darkFoot}`;
@@ -219,13 +267,15 @@ ${darkFoot}`;
 const DATA=${JSON.stringify(list)};
 const SITE_TXT=${serialize(siteTxt)};
 const HERO=${hero?JSON.stringify({id:hero.id}):"null"};
-let filt={region:"all",guests:"all",tag:"all"};`)}
+let filt={region:"all",guests:"all",tag:"all"};
+let view="list";`)}
 function paint(){
   applyText();
   document.getElementById("filters").innerHTML=R.filtersHTML(DATA,lang,filt);
   document.getElementById("grid").innerHTML=R.gridHTML(DATA,lang,filt);
   const shown=DATA.filter(g=>R.matches(g,filt));
   document.getElementById("countTxt").innerHTML=T[lang].count(shown.length,DATA.length);
+  if(typeof paintMini==="function"){ paintMini(); if(view==="map" && window.L) paintMap(); }
   const cap=document.getElementById("heroCap");
   if(cap&&HERO){
     const h=DATA.find(g=>g.id===HERO.id);
@@ -246,7 +296,165 @@ document.getElementById("grid").addEventListener("click",e=>{
   if(open) track("rooms_open",{stay:b.dataset.toggle, language:lang});
 });
 document.getElementById("heroCta").addEventListener("click",()=>track("hero_cta",{language:lang}));
-paint();`;
+
+/* ══════════════════════════════════════════════════════════
+   지도
+   작은 지도는 이미 그려져 있다(서버에서 타일과 점을 심어 보냄).
+   여기서는 필터가 바뀔 때 점만 다시 찍고, 눌렀을 때 Leaflet 을
+   내려받아 전체 지도를 연다. 브라우저가 한가해질 때 미리 받아두므로
+   실제로 누르는 순간에는 캐시에서 바로 나온다.
+   ══════════════════════════════════════════════════════════ */
+var LEAF_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+var LEAF_JS  = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
+var MZ = 10, TSZ = 256, WORLD = TSZ * Math.pow(2, MZ);
+var BND = { n:33.585, s:33.195, w:126.145, e:126.985 };
+function merc(lat, lng){
+  var x = (lng + 180) / 360 * WORLD;
+  var s = Math.sin(lat * Math.PI / 180);
+  return [x, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WORLD];
+}
+var GEO = DATA.filter(function(g){ return g.geo; });
+function mapped(){ return GEO.filter(function(g){ return R.matches(g, filt); }); }
+
+function paintMini(){
+  var box = document.getElementById("mmapDots");
+  if(!box) return;
+  var p0 = merc(BND.n, BND.w), p1 = merc(BND.s, BND.e);
+  var w = p1[0] - p0[0], h = p1[1] - p0[1];
+  box.innerHTML = mapped().map(function(g){
+    var p = merc(g.geo.lat, g.geo.lng);
+    return '<i style="left:' + ((p[0]-p0[0])/w*100).toFixed(2) + '%;top:' + ((p[1]-p0[1])/h*100).toFixed(2) + '%"></i>';
+  }).join("");
+  var lbl = document.getElementById("mmapLbl");
+  if(lbl) lbl.textContent = T[lang].mapMini(mapped().length);
+}
+
+var leafletP = null;
+function loadLeaflet(){
+  if(leafletP) return leafletP;
+  leafletP = new Promise(function(res, rej){
+    var css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = LEAF_CSS; document.head.appendChild(css);
+    var js = document.createElement("script");
+    js.src = LEAF_JS; js.onload = res; js.onerror = rej; document.head.appendChild(js);
+  });
+  return leafletP;
+}
+function warmLeaflet(){
+  [LEAF_CSS, LEAF_JS].forEach(function(href){
+    var l = document.createElement("link");
+    l.rel = "prefetch"; l.href = href; l.as = href.slice(-3) === "css" ? "style" : "script";
+    document.head.appendChild(l);
+  });
+}
+if(GEO.length){
+  if(window.requestIdleCallback) requestIdleCallback(warmLeaflet, {timeout:6000});
+  else setTimeout(warmLeaflet, 3000);
+}
+
+var map = null, layer = null, pins = {};
+function ratingTxt(g){
+  return R.hasRating(g) ? g.rating.toFixed(2) + " (" + g.reviews + ")" : T[lang].newListing;
+}
+/* 여행자가 실제로 쓰는 구분 —— 서쪽 / 남쪽 해안 / 동쪽.
+   경도만 보면 한경면(서쪽이지만 위도가 낮다)이 남부로 잘못 빠지므로
+   남부는 「위도가 낮고 동시에 서쪽 끝이 아닌 곳」으로 좁힌다. */
+function areaOf(g){
+  var la = g.geo.lat, ln = g.geo.lng;
+  if(la < 33.32 && ln > 126.35) return "S";
+  return ln < 126.55 ? "W" : "E";
+}
+
+function paintMap(){
+  if(!window.L) return;
+  var t = T[lang];
+  if(!map){
+    map = L.map("map", { zoomControl:true, scrollWheelZoom:false });
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+      { subdomains:"abcd", maxZoom:18, attribution:"&copy; OpenStreetMap &copy; CARTO" }).addTo(map);
+  }
+  if(layer) layer.remove();
+  pins = {};
+  var list = mapped();
+  var marks = list.map(function(g){
+    var n = R.name(g, lang);
+    var m = L.marker([g.geo.lat, g.geo.lng], {
+      title: n, riseOnHover: true,
+      icon: L.divIcon({ className:"", iconSize:[0,0],
+        html:'<div class="pin"><div class="dot"></div><div class="name">' + R.esc(n) + '</div></div>' })
+    });
+    var pop = L.popup({ closeButton:true, offset:[0,-10], maxWidth:264 }).setContent(
+      '<div class="pop-img"><img src="' + R.esc(g.photo) + '" alt="' + R.esc(n) + '"></div>' +
+      '<div class="pop-b"><span class="lbl">' + R.esc(R.region(g, lang)) + " · " + R.esc(ratingTxt(g)) + '</span>' +
+      '<h4>' + R.esc(n) + '</h4>' +
+      '<div class="meta">' + R.esc(R.availLine(g, t)) + '</div>' +
+      '<a class="btn" href="' + R.stayUrl(g) + '" data-detail="' + R.esc(g.id) + '">' + R.esc(t.detail) + '</a></div>');
+    pop._stayId = g.id;
+    m.bindPopup(pop);
+    m.on("add", function(){ var el = m.getElement(); if(el) pins[g.id] = el.querySelector(".pin"); });
+    return m;
+  });
+  layer = L.layerGroup(marks).addTo(map);
+  document.getElementById("mapCap").textContent = t.mapOn(list.length);
+  if(list.length) map.fitBounds(L.latLngBounds(list.map(function(g){ return [g.geo.lat, g.geo.lng]; })),
+                                { padding:[64,64], maxZoom:12 });
+  paintSide(list);
+  setTimeout(function(){ map.invalidateSize(); }, 0);
+}
+function paintSide(list){
+  var t = T[lang], names = { W:t.areaW, S:t.areaS, E:t.areaE };
+  var html = ["W","S","E"].map(function(a){
+    var v = list.filter(function(g){ return areaOf(g) === a; });
+    if(!v.length) return "";
+    return '<div class="grp"><span class="lbl">' + R.esc(names[a]) + "<em>" + v.length + "</em></span></div>" +
+      v.map(function(g){
+        return '<button type="button" class="item" data-go="' + R.esc(g.id) + '">' +
+          '<span class="nm">' + R.esc(R.name(g, lang)) + '</span>' +
+          '<span class="rt">' + R.esc(ratingTxt(g)) + "</span></button>";
+      }).join("");
+  }).filter(Boolean).join('<div class="rule"></div>');
+  document.getElementById("side").innerHTML = html;
+}
+function highlight(id){
+  Object.keys(pins).forEach(function(k){ if(pins[k]) pins[k].classList.toggle("on", k === id); });
+}
+function showMap(on){
+  view = on ? "map" : "list";
+  document.getElementById("grid").hidden = on;
+  document.getElementById("mapwrap").hidden = !on;
+  document.getElementById("backList").hidden = !on;
+  var mm = document.getElementById("mmap");
+  if(mm) mm.hidden = on;
+}
+var mmapBtn = document.getElementById("mmap");
+if(mmapBtn) mmapBtn.addEventListener("click", function(){
+  showMap(true);
+  track("map_open", { language: lang });
+  loadLeaflet().then(paintMap).catch(function(){ showMap(false); });
+});
+var backBtn = document.getElementById("backList");
+if(backBtn) backBtn.addEventListener("click", function(){ showMap(false); });
+
+var sideEl = document.getElementById("side");
+if(sideEl){
+  sideEl.addEventListener("mouseover", function(e){
+    var b = e.target.closest("[data-go]"); if(b) highlight(b.dataset.go);
+  });
+  sideEl.addEventListener("mouseout", function(e){
+    if(e.target.closest("[data-go]")) highlight(null);
+  });
+  sideEl.addEventListener("click", function(e){
+    var b = e.target.closest("[data-go]"); if(!b || !map) return;
+    var g = GEO.filter(function(x){ return x.id === b.dataset.go; })[0]; if(!g) return;
+    map.flyTo([g.geo.lat, g.geo.lng], 13, { duration:.6 });
+    var m = layer.getLayers().filter(function(l){ return l.getPopup()._stayId === g.id; })[0];
+    if(m) setTimeout(function(){ m.openPopup(); }, 620);
+  });
+}
+
+/* 최초 렌더 —— 지도 상태가 다 준비된 뒤에 한 번 */
+paint();
+`;
 
   return shell({
     title:"Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island",
