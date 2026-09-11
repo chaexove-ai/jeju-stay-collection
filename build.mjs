@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import { parseCSV, buildStays, pickHero } from "./src/data.mjs";
 import { T, TAGS, BADGES, MIN_REVIEWS } from "./src/i18n.mjs";
+import { JEJU } from "./src/jeju.mjs";
 
 const HERE  = path.dirname(fileURLToPath(import.meta.url));
 const SRC   = path.join(HERE, "src");
@@ -160,33 +161,27 @@ document.addEventListener("click",e=>{
 });`;
 
 
-/* ---------- 미니 지도 ----------
-   컬렉션 헤더에 늘 떠 있는 작은 지도. 라이브러리 없이 타일 이미지 여덟 장으로
-   그린다. 타일과 점을 모두 백분율로 놓아서, 자바스크립트 없이도 폭에 맞게
-   늘어나고 첫 화면에 바로 보인다. Leaflet 은 전체 지도를 열 때 비로소 온다. */
-const MZ = 10, TSZ = 256, WORLD = TSZ * Math.pow(2, MZ);
-const BND = { n:33.585, s:33.195, w:126.145, e:126.985 };   /* 제주 본섬 */
-function merc(lat, lng){
-  const x = (lng + 180) / 360 * WORLD;
-  const s = Math.sin(lat * Math.PI / 180);
-  return [x, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WORLD];
+/* ---------- 지도 ----------
+   제주 해안선을 코드에 담아 직접 그린다. 타일 서버를 쓰지 않으므로
+   외부 서비스의 요금제 변경에 사이트가 흔들리지 않고, 지명 없는
+   섬 윤곽이라는 의도에도 정확히 맞는다. */
+const my = lat => { const s = Math.sin(lat * Math.PI / 180);
+                    return 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI); };
+function project(lat, lng){
+  return [ (((lng + 180) / 360 - JEJU.x0) / (JEJU.x1 - JEJU.x0)) * 100,
+           ((my(lat) - JEJU.y0) / (JEJU.y1 - JEJU.y0)) * 100 ];   /* 백분율 */
 }
+const ISLE = `<svg class="sea" viewBox="0 0 ${JEJU.w} ${JEJU.h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="isle" d="${JEJU.d}"/></svg>`;
+
 function miniMap(list, R, t){
   const geo = list.filter(g => g.geo);
   if(!geo.length) return "";
-  const [x0, y0] = merc(BND.n, BND.w), [x1, y1] = merc(BND.s, BND.e);
-  const w = x1 - x0, h = y1 - y0;
-  let tiles = "";
-  for(let tx = Math.floor(x0/TSZ); tx <= Math.floor(x1/TSZ); tx++)
-    for(let ty = Math.floor(y0/TSZ); ty <= Math.floor(y1/TSZ); ty++)
-      tiles += `<img src="https://a.basemaps.cartocdn.com/light_nolabels/${MZ}/${tx}/${ty}.png"
-        alt="" loading="lazy" decoding="async" style="left:${((tx*TSZ-x0)/w*100).toFixed(3)}%;top:${((ty*TSZ-y0)/h*100).toFixed(3)}%;width:${(TSZ/w*100).toFixed(3)}%;height:${(TSZ/h*100).toFixed(3)}%">`;
   const dots = geo.map(g => {
-    const [a, b] = merc(g.geo.lat, g.geo.lng);
-    return `<i style="left:${((a-x0)/w*100).toFixed(2)}%;top:${((b-y0)/h*100).toFixed(2)}%"></i>`;
+    const [x, y] = project(g.geo.lat, g.geo.lng);
+    return `<i style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"></i>`;
   }).join("");
   return `<button type="button" class="mmap" id="mmap" aria-label="${R.esc(t.mapOpenBig)}">
-    <span class="mmap-canvas"><span class="mmap-tiles">${tiles}</span><span class="mmap-dots" id="mmapDots">${dots}</span></span>
+    <span class="mmap-canvas">${ISLE}<span class="mmap-dots" id="mmapDots">${dots}</span></span>
     <span class="mmap-foot">
       <span class="lbl" id="mmapLbl" style="white-space:nowrap">${R.esc(t.mapMini(geo.length))}</span>
       <span class="mmap-go">${R.esc(t.mapOpenBig)}
@@ -255,8 +250,14 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
     <div class="rule" style="background:var(--hairline-2); margin-bottom:40px"></div>
     <div class="grid" id="grid">${R.gridHTML(list,"en",filt)}</div>
     <div class="mapwrap" id="mapwrap" hidden>
-      <div class="mapbox"><div id="map"></div>
-        <div class="map-cap"><i></i><span id="mapCap"></span></div></div>
+      <div class="mapbox">
+        <div class="mapstage" id="mapStage">
+          ${ISLE}
+          <div class="mappins" id="mapPins"></div>
+          <div class="mapcard" id="mapCard" hidden></div>
+        </div>
+        <div class="map-cap"><i></i><span id="mapCap"></span></div>
+      </div>
       <div class="side" id="side"></div>
     </div>
   </div>
@@ -268,7 +269,13 @@ const DATA=${JSON.stringify(list)};
 const SITE_TXT=${serialize(siteTxt)};
 const HERO=${hero?JSON.stringify({id:hero.id}):"null"};
 let filt={region:"all",guests:"all",tag:"all"};
-let view="list";`)}
+let view="list";
+const JE=${JSON.stringify({x0:JEJU.x0,x1:JEJU.x1,y0:JEJU.y0,y1:JEJU.y1})};
+function PROJ(lat,lng){
+  const s=Math.sin(lat*Math.PI/180);
+  const my=0.5-Math.log((1+s)/(1-s))/(4*Math.PI);
+  return [((lng+180)/360-JE.x0)/(JE.x1-JE.x0)*100, (my-JE.y0)/(JE.y1-JE.y0)*100];
+}`)}
 function paint(){
   applyText();
   document.getElementById("filters").innerHTML=R.filtersHTML(DATA,lang,filt);
@@ -298,112 +305,78 @@ document.getElementById("grid").addEventListener("click",e=>{
 document.getElementById("heroCta").addEventListener("click",()=>track("hero_cta",{language:lang}));
 
 /* ══════════════════════════════════════════════════════════
-   지도
-   작은 지도는 이미 그려져 있다(서버에서 타일과 점을 심어 보냄).
-   여기서는 필터가 바뀔 때 점만 다시 찍고, 눌렀을 때 Leaflet 을
-   내려받아 전체 지도를 연다. 브라우저가 한가해질 때 미리 받아두므로
-   실제로 누르는 순간에는 캐시에서 바로 나온다.
+   지도 —— 섬은 SVG 로 이미 그려져 있다. 여기서는 점을 얹고,
+   필터에 맞춰 다시 찍고, 점을 누르면 카드를 띄운다.
+   라이브러리도 타일 요청도 없다.
    ══════════════════════════════════════════════════════════ */
-var LEAF_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-var LEAF_JS  = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
-var MZ = 10, TSZ = 256, WORLD = TSZ * Math.pow(2, MZ);
-var BND = { n:33.585, s:33.195, w:126.145, e:126.985 };
-function merc(lat, lng){
-  var x = (lng + 180) / 360 * WORLD;
-  var s = Math.sin(lat * Math.PI / 180);
-  return [x, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WORLD];
-}
 var GEO = DATA.filter(function(g){ return g.geo; });
 function mapped(){ return GEO.filter(function(g){ return R.matches(g, filt); }); }
+function ratingTxt(g){
+  return R.hasRating(g) ? g.rating.toFixed(2) + " (" + g.reviews + ")" : T[lang].newListing;
+}
+function areaOf(g){
+  var la = g.geo.lat, ln = g.geo.lng;
+  if(la < 33.32 && ln > 126.35) return "S";     /* 남쪽 해안 */
+  return ln < 126.55 ? "W" : "E";
+}
 
 function paintMini(){
   var box = document.getElementById("mmapDots");
   if(!box) return;
-  var p0 = merc(BND.n, BND.w), p1 = merc(BND.s, BND.e);
-  var w = p1[0] - p0[0], h = p1[1] - p0[1];
   box.innerHTML = mapped().map(function(g){
-    var p = merc(g.geo.lat, g.geo.lng);
-    return '<i style="left:' + ((p[0]-p0[0])/w*100).toFixed(2) + '%;top:' + ((p[1]-p0[1])/h*100).toFixed(2) + '%"></i>';
+    var p = PROJ(g.geo.lat, g.geo.lng);
+    return '<i style="left:' + p[0].toFixed(2) + '%;top:' + p[1].toFixed(2) + '%"></i>';
   }).join("");
   var lbl = document.getElementById("mmapLbl");
   if(lbl) lbl.textContent = T[lang].mapMini(mapped().length);
 }
 
-var leafletP = null;
-function loadLeaflet(){
-  if(leafletP) return leafletP;
-  leafletP = new Promise(function(res, rej){
-    var css = document.createElement("link");
-    css.rel = "stylesheet"; css.href = LEAF_CSS; document.head.appendChild(css);
-    var js = document.createElement("script");
-    js.src = LEAF_JS; js.onload = res; js.onerror = rej; document.head.appendChild(js);
-  });
-  return leafletP;
-}
-function warmLeaflet(){
-  [LEAF_CSS, LEAF_JS].forEach(function(href){
-    var l = document.createElement("link");
-    l.rel = "prefetch"; l.href = href; l.as = href.slice(-3) === "css" ? "style" : "script";
-    document.head.appendChild(l);
-  });
-}
-if(GEO.length){
-  if(window.requestIdleCallback) requestIdleCallback(warmLeaflet, {timeout:6000});
-  else setTimeout(warmLeaflet, 3000);
-}
-
-var map = null, layer = null, pins = {};
-function ratingTxt(g){
-  return R.hasRating(g) ? g.rating.toFixed(2) + " (" + g.reviews + ")" : T[lang].newListing;
-}
-/* 여행자가 실제로 쓰는 구분 —— 서쪽 / 남쪽 해안 / 동쪽.
-   경도만 보면 한경면(서쪽이지만 위도가 낮다)이 남부로 잘못 빠지므로
-   남부는 「위도가 낮고 동시에 서쪽 끝이 아닌 곳」으로 좁힌다. */
-function areaOf(g){
-  var la = g.geo.lat, ln = g.geo.lng;
-  if(la < 33.32 && ln > 126.35) return "S";
-  return ln < 126.55 ? "W" : "E";
-}
-
-function paintMap(){
-  if(!window.L) return;
-  var t = T[lang];
-  if(!map){
-    map = L.map("map", { zoomControl:true, scrollWheelZoom:false });
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
-      { subdomains:"abcd", maxZoom:18, attribution:"&copy; OpenStreetMap &copy; CARTO" }).addTo(map);
+/* 250m 거리의 두 숙소는 섬 전체를 담은 지도에서 한 점으로 겹친다.
+   겹친 핀은 누를 수가 없으므로, 서로 밀어내 최소 간격을 확보한다.
+   밀어내는 거리는 섬 폭의 2% 미만 —— 「어느 쪽 마을인가」라는
+   이 지도의 목적에는 영향이 없고, 대신 두 곳이라는 사실이 보인다. */
+var SEP = 0.019;              /* 지도 폭 기준 최소 간격 */
+var ASPECT = 554 / 1000;      /* 세로 %를 가로 %와 같은 척도로 맞추는 비 */
+function spread(pts){
+  for(var pass = 0; pass < 24; pass++){
+    var moved = false;
+    for(var i = 0; i < pts.length; i++)
+      for(var j = i + 1; j < pts.length; j++){
+        var dx = (pts[j].x - pts[i].x) / 100;
+        var dy = (pts[j].y - pts[i].y) / 100 * ASPECT;
+        var d = Math.sqrt(dx*dx + dy*dy);
+        if(d >= SEP) continue;
+        if(d < 1e-6){ dx = 1e-4; dy = 0; d = 1e-4; }
+        var push = (SEP - d) / 2 / d;
+        pts[i].x -= dx * push * 100;       pts[j].x += dx * push * 100;
+        pts[i].y -= dy * push * 100/ASPECT; pts[j].y += dy * push * 100/ASPECT;
+        moved = true;
+      }
+    if(!moved) break;
   }
-  if(layer) layer.remove();
-  pins = {};
-  var list = mapped();
-  var marks = list.map(function(g){
-    var n = R.name(g, lang);
-    var m = L.marker([g.geo.lat, g.geo.lng], {
-      title: n, riseOnHover: true,
-      icon: L.divIcon({ className:"", iconSize:[0,0],
-        html:'<div class="pin"><div class="dot"></div><div class="name">' + R.esc(n) + '</div></div>' })
-    });
-    var pop = L.popup({ closeButton:true, offset:[0,-10], maxWidth:264 }).setContent(
-      '<div class="pop-img"><img src="' + R.esc(g.photo) + '" alt="' + R.esc(n) + '"></div>' +
-      '<div class="pop-b"><span class="lbl">' + R.esc(R.region(g, lang)) + " · " + R.esc(ratingTxt(g)) + '</span>' +
-      '<h4>' + R.esc(n) + '</h4>' +
-      '<div class="meta">' + R.esc(R.availLine(g, t)) + '</div>' +
-      '<a class="btn" href="' + R.stayUrl(g) + '" data-detail="' + R.esc(g.id) + '">' + R.esc(t.detail) + '</a></div>');
-    pop._stayId = g.id;
-    m.bindPopup(pop);
-    m.on("add", function(){ var el = m.getElement(); if(el) pins[g.id] = el.querySelector(".pin"); });
-    return m;
-  });
-  layer = L.layerGroup(marks).addTo(map);
-  document.getElementById("mapCap").textContent = t.mapOn(list.length);
-  if(list.length) map.fitBounds(L.latLngBounds(list.map(function(g){ return [g.geo.lat, g.geo.lng]; })),
-                                { padding:[64,64], maxZoom:12 });
-  paintSide(list);
-  setTimeout(function(){ map.invalidateSize(); }, 0);
+  return pts;
 }
+function paintMap(){
+  var t = T[lang], list = mapped();
+  var pts = spread(list.map(function(g){
+    var p = PROJ(g.geo.lat, g.geo.lng);
+    return { g: g, x: p[0], y: p[1] };
+  }));
+  document.getElementById("mapPins").innerHTML = pts.map(function(q){
+    return '<button type="button" class="mpin' + (q.x > 58 ? " left" : "") + '" data-pin="' + R.esc(q.g.id) + '"' +
+      ' style="left:' + q.x.toFixed(2) + '%;top:' + q.y.toFixed(2) + '%">' +
+      '<i></i><span>' + R.esc(R.name(q.g, lang)) + "</span></button>";
+  }).join("");
+  PINPOS = {}; pts.forEach(function(q){ PINPOS[q.g.id] = q; });
+  document.getElementById("mapCap").textContent = t.mapOn(list.length);
+  closeCard();
+  paintSide(list);
+}
+var PINPOS = {};
+
 function paintSide(list){
   var t = T[lang], names = { W:t.areaW, S:t.areaS, E:t.areaE };
-  var html = ["W","S","E"].map(function(a){
+  document.getElementById("side").innerHTML = ["W","S","E"].map(function(a){
     var v = list.filter(function(g){ return areaOf(g) === a; });
     if(!v.length) return "";
     return '<div class="grp"><span class="lbl">' + R.esc(names[a]) + "<em>" + v.length + "</em></span></div>" +
@@ -413,11 +386,44 @@ function paintSide(list){
           '<span class="rt">' + R.esc(ratingTxt(g)) + "</span></button>";
       }).join("");
   }).filter(Boolean).join('<div class="rule"></div>');
-  document.getElementById("side").innerHTML = html;
 }
+
 function highlight(id){
-  Object.keys(pins).forEach(function(k){ if(pins[k]) pins[k].classList.toggle("on", k === id); });
+  document.querySelectorAll(".mpin").forEach(function(el){
+    el.classList.toggle("on", el.dataset.pin === id);
+  });
+  document.querySelectorAll(".item").forEach(function(el){
+    el.classList.toggle("on", el.dataset.go === id);
+  });
 }
+function closeCard(){
+  var c = document.getElementById("mapCard");
+  if(c){ c.hidden = true; c.innerHTML = ""; }
+}
+function openCard(id){
+  var g = GEO.filter(function(x){ return x.id === id; })[0];
+  if(!g) return;
+  var t = T[lang], c = document.getElementById("mapCard"), stage = document.getElementById("mapStage");
+  var q = PINPOS[id] || { x: PROJ(g.geo.lat, g.geo.lng)[0], y: PROJ(g.geo.lat, g.geo.lng)[1] };
+  var p = [q.x, q.y], n = R.name(g, lang);
+  c.innerHTML = '<button type="button" class="x" data-close="1" aria-label="close">&times;</button>' +
+    (g.photo ? '<div class="pop-img"><img src="' + R.esc(g.photo) + '" alt="' + R.esc(n) + '"></div>' : "") +
+    '<div class="pop-b"><span class="lbl">' + R.esc(R.region(g, lang)) + " · " + R.esc(ratingTxt(g)) + "</span>" +
+    "<h4>" + R.esc(n) + "</h4>" +
+    '<div class="meta">' + R.esc(R.availLine(g, t)) + "</div>" +
+    '<a class="btn" href="' + R.stayUrl(g) + '" data-detail="' + R.esc(g.id) + '">' + R.esc(t.detail) + "</a></div>";
+  c.hidden = false;
+  /* 카드가 지도 밖으로 나가지 않게 붙이는 쪽을 고른다 */
+  var W = stage.clientWidth, H = stage.clientHeight, cw = c.offsetWidth, ch = c.offsetHeight;
+  var x = p[0] / 100 * W, y = p[1] / 100 * H;
+  var left = x + 20; if(left + cw > W - 8) left = x - cw - 20;
+  if(left < 8) left = 8;
+  var top = y - ch / 2; if(top < 8) top = 8;
+  if(top + ch > H - 8) top = Math.max(8, H - 8 - ch);
+  c.style.left = left + "px"; c.style.top = top + "px";
+  highlight(id);
+}
+
 function showMap(on){
   view = on ? "map" : "list";
   document.getElementById("grid").hidden = on;
@@ -425,16 +431,31 @@ function showMap(on){
   document.getElementById("backList").hidden = !on;
   var mm = document.getElementById("mmap");
   if(mm) mm.hidden = on;
+  if(on) paintMap(); else closeCard();
 }
 var mmapBtn = document.getElementById("mmap");
 if(mmapBtn) mmapBtn.addEventListener("click", function(){
   showMap(true);
   track("map_open", { language: lang });
-  loadLeaflet().then(paintMap).catch(function(){ showMap(false); });
 });
 var backBtn = document.getElementById("backList");
 if(backBtn) backBtn.addEventListener("click", function(){ showMap(false); });
 
+var stageEl = document.getElementById("mapStage");
+if(stageEl){
+  stageEl.addEventListener("click", function(e){
+    if(e.target.closest("[data-close]")) return closeCard();
+    var b = e.target.closest("[data-pin]");
+    if(b) openCard(b.dataset.pin);
+    else if(!e.target.closest(".mapcard")) closeCard();
+  });
+  stageEl.addEventListener("mouseover", function(e){
+    var b = e.target.closest("[data-pin]"); if(b) highlight(b.dataset.pin);
+  });
+  stageEl.addEventListener("mouseout", function(e){
+    if(e.target.closest("[data-pin]")) highlight(null);
+  });
+}
 var sideEl = document.getElementById("side");
 if(sideEl){
   sideEl.addEventListener("mouseover", function(e){
@@ -444,11 +465,7 @@ if(sideEl){
     if(e.target.closest("[data-go]")) highlight(null);
   });
   sideEl.addEventListener("click", function(e){
-    var b = e.target.closest("[data-go]"); if(!b || !map) return;
-    var g = GEO.filter(function(x){ return x.id === b.dataset.go; })[0]; if(!g) return;
-    map.flyTo([g.geo.lat, g.geo.lng], 13, { duration:.6 });
-    var m = layer.getLayers().filter(function(l){ return l.getPopup()._stayId === g.id; })[0];
-    if(m) setTimeout(function(){ m.openPopup(); }, 620);
+    var b = e.target.closest("[data-go]"); if(b) openCard(b.dataset.go);
   });
 }
 
