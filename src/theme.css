@@ -188,7 +188,8 @@ h1 em{font-style:italic}
 .foot .meta a:hover{border-bottom-color:var(--linen)}
 .foot .brand-txt b{color:var(--limestone)}
 .foot .brand-txt span{color:var(--linen)}
-.credit{margin-top:34px; font-size:11px; line-height:1.7; color:#6F6A62}
+/* 어두운 바닥 위의 작은 글씨 —— #6F6A62 는 3.3:1 이라 읽으려면 눈을 좁혀야 했다 */
+.credit{margin-top:34px; font-size:11px; line-height:1.7; color:var(--ash)}
 
 /* 맨 위로 —— 화면 오른쪽 아래에 떠 있는 동그라미.
    히어로를 지난 뒤에만 나타나므로 첫 화면은 가리지 않는다. */
@@ -295,6 +296,11 @@ h1 em{font-style:italic}
 .pop-img{aspect-ratio:16/10; background:var(--placeholder); overflow:hidden}
 .pop-img img{width:100%; height:100%; object-fit:cover}
 .pop-b{padding:14px 16px 16px}
+/* 상세 머리의 평점 줄 —— 인라인 style 로 색을 박아두면 화면 크기별
+   규칙이 못 이긴다. 전에 두 번 그랬다. 클래스로 둔다. */
+.s-meta .sep{color:var(--ash)}
+.s-meta .avail{display:inline; padding:0; font-family:var(--serif); font-style:italic;
+               font-size:16px; color:var(--clay)}
 .pop-meta{display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-bottom:6px}
 .pop-b .lbl{margin:0}
 .pop-b h4{margin:0 0 6px; font-family:var(--serif); font-weight:var(--display-w); font-size:21px; line-height:1.18}
@@ -306,9 +312,11 @@ h1 em{font-style:italic}
 /* 방위는 이 목록의 유일한 구분선이다 —— 회색 라벨로는 항목들 사이에 묻힌다 */
 .grp .lbl{display:flex; align-items:center; justify-content:space-between;
           color:var(--pine); font-weight:600; font-size:11.5px}
-.grp .lbl em{font-style:normal; color:var(--linen); font-weight:400}
+/* 지역별 개수 —— 정보인데 1.76:1 이라 거의 안 보였다 */
+.grp .lbl em{font-style:normal; color:var(--clay); font-weight:400}
+/* 한 줄이 38px 이었다 —— 손가락 기준(44px)에 못 미친다 */
 .item{display:flex; align-items:baseline; gap:10px; width:100%; text-align:left;
-      padding:9px 18px; border-left:2px solid transparent; transition:.14s}
+      padding:12px 18px; border-left:2px solid transparent; transition:.14s}
 .item:hover, .item.on{background:var(--limestone); border-left-color:var(--pine)}
 .item .nm{font-size:14px; line-height:1.35}
 /* 지도 옆 목록의 평점 —— 숫자만 떠 있으면 무슨 숫자인지 모른다.
@@ -485,7 +493,8 @@ h1 em{font-style:italic}
   /* 세 줄이 전부 같은 모양이라 뭐가 탭이고 뭐가 필터인지 구분이 안 됐다.
      탭은 상자를 버리고 밑줄로 —— 칩과 아예 다른 물건으로 보이게 한다. */
   .vtabs{border:0; border-bottom:1px solid var(--hairline-2); gap:26px; margin-bottom:16px}
-  .vtabs button{flex:none; height:44px; padding:0 2px; color:var(--clay);
+  /* 글자 폭 그대로 두면 탭이 37px 밖에 안 된다 —— 손가락 자리를 준다 */
+  .vtabs button{flex:none; height:44px; padding:0 18px; color:var(--clay);
                 border-bottom:2px solid transparent; letter-spacing:.16em}
   .vtabs button + button{border-left:0}
   .vtabs button[aria-pressed="true"]{background:none; color:var(--basalt); border-bottom-color:var(--pine)}
@@ -607,3 +616,10 @@ h1 em{font-style:italic}
   .card:hover, .mini:hover, .btn:hover svg{transform:none}
   *{transition-duration:.01ms !important}
 }
+
+/* ── 없는 주소 ──────────────────────────────────────────── */
+.nf{padding:110px 0 140px; max-width:760px}
+.nf .eyebrow .lbl:first-child{color:var(--linen)}
+.nf h1{margin-bottom:20px}
+.nf .lede{margin-bottom:36px}
+@media (max-width:760px){ .nf{padding:64px 0 88px} }

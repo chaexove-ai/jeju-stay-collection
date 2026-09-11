@@ -66,7 +66,7 @@ const META = {
 };
 
 /* ---------- 페이지 껍데기 ---------- */
-function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, css, body, script, lang="en"}){
+function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, noindex, css, body, script, lang="en"}){
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -74,12 +74,15 @@ function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, css, body
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
 <meta name="description" content="${desc}">
-<link rel="canonical" href="${canonical}">${alts?`
+${noindex?`<meta name="robots" content="noindex">
+`:""}<link rel="canonical" href="${canonical}">${alts?`
 <link rel="alternate" hreflang="en" href="${alts.en}">
 <link rel="alternate" hreflang="zh-Hant" href="${alts.zh}">
 <link rel="alternate" hreflang="x-default" href="${alts.en}">`:""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jeju Stay Collection">
+<meta property="og:locale" content="${lang.startsWith("zh")?"zh_TW":"en_US"}">
+<meta property="og:locale:alternate" content="${lang.startsWith("zh")?"en_US":"zh_TW"}">
 <meta property="og:title" content="${ogTitle||title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:url" content="${canonical}">${ogImage?`
@@ -400,9 +403,6 @@ document.getElementById("heroCta").addEventListener("click",()=>track("hero_cta"
    ══════════════════════════════════════════════════════════ */
 var GEO = DATA.filter(function(g){ return g.geo; });
 function mapped(){ return GEO.filter(function(g){ return R.matches(g, filt); }); }
-function ratingTxt(g){
-  return R.hasRating(g) ? g.rating.toFixed(2) + " (" + g.reviews + ")" : T[lang].newListing;
-}
 /* 지도 옆 목록·핀 카드의 평점 —— 카드와 같은 별, 같은 감귤색.
    숫자만 두면 무슨 숫자인지 모르고, 후기가 없는 곳은 회색으로 흘러 사라진다. */
 var STAR_S = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true">'
@@ -771,6 +771,28 @@ paint();`;
     `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n</head>`);
 }
 
+/* ---------- 없는 주소 ----------
+   주소를 잘못 눌렀거나, 시트에서 내린 숙소의 링크가 어딘가에 남아 있을 때
+   호스팅 기본 화면이 뜨면 그 사람은 그대로 나간다. 컬렉션으로 돌려보낸다. */
+function page404({css}){
+  const body = `${masthead("en", "/", "/zh")}
+<main class="wrap nf">
+  <div class="eyebrow"><span class="lbl">404</span></div>
+  <h1>This page has moved on.</h1>
+  <p class="lede">The stay you were looking for may have left the collection,
+     or the address was mistyped. The fifteen houses are all one click away.</p>
+  <div class="s-act"><a class="btn btn-auto" href="/">The Collection</a></div>
+</main>
+${darkFoot}`;
+  return shell({
+    title:"Not found — Jeju Stay Collection",
+    desc:"That page is not here. The collection of handpicked stays on Jeju Island is one click away.",
+    canonical:SITE+"/", noindex:true, ogImage:SITE+"/og.png", ogTitle:"Jeju Stay Collection",
+    css, body:fillText(body, "en", null),
+    script:`document.querySelectorAll(".lang a").forEach(function(b){b.addEventListener("click",function(){});});`
+  });
+}
+
 /* ---------- 실행 ---------- */
 async function main(){
   /* 지도 비율은 해안선 데이터에서 나온다 —— 좌표를 다시 뽑으면
@@ -821,6 +843,7 @@ async function main(){
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`+
     urls.map(u=>`  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")+
     `\n</urlset>\n`, "utf8");
+  await writeFile(path.join(DIST,"404.html"), page404({css}), "utf8");
   await writeFile(path.join(DIST,"robots.txt"),
     `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`, "utf8");
 

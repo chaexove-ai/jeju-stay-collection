@@ -281,8 +281,8 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
           <h1>${esc(n)}</h1>
           <div class="s-meta">
             ${ratingHTML(g,lang,t)}
-            <span style="color:var(--hairline-2)">·</span>
-            <span style="font-family:var(--serif); font-style:italic; font-size:16px; color:var(--clay)">${esc(availLine(g,t))}</span>
+            <span class="sep">·</span>
+            <span class="avail">${esc(availLine(g,t))}</span>
           </div>
           ${p?`<p class="s-intro">${esc(p)}</p>`:""}
           ${bp.incl?`<div class="incl" data-txt="${esc(bp.incl)}" style="margin:0 0 24px">${esc(bp.incl)}</div>`:""}
