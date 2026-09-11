@@ -5,7 +5,14 @@
    서버 렌더링을 위해 new Function 으로도 불러온다.
    따라서 여기서 DOM 을 건드리면 안 된다 —— 문자열만 만든다.
    ============================================================ */
-function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
+function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
+
+  /* 언어마다 주소가 다르다 —— 영문은 /, 繁體는 /zh/.
+     같은 렌더러를 접두사만 바꿔 두 번 돌린다. 화면 안의 모든 내부 링크가
+     자기 언어 안에 머물러야, 중국어로 보던 사람이 링크 한 번에 영어로
+     떨어지지 않는다. */
+  PREFIX = PREFIX || "";
+  const HOME = PREFIX || "/";
 
   const esc = s => String(s??"").replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
   const fmt = s => esc(s).replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/\r?\n/g,"<br>");
@@ -21,7 +28,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
   const name   = (g,lang)=> (lang==="zh"?g.nameZh:g.nameEn) || g.nameEn || g.nameKo || g.id;
   const region = (g,lang)=> (lang==="zh"?g.regionZh:g.regionEn) || g.regionEn || "";
   const intro  = (g,lang)=> (lang==="zh"?g.introZh:g.introEn) || g.introEn || "";
-  const stayUrl= g => "/stay/" + encodeURIComponent(g.id);
+  const stayUrl= g => PREFIX + "/stay/" + encodeURIComponent(g.id);
 
   /* 같은 사진을 작은 크기로 —— 사진은 Cloudinary 에 w_1200 으로 올라가 있다.
      지도 핀 미리보기에 1200px 짜리를 그대로 쓰면 한 장에 수백 KB 다.
@@ -225,7 +232,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
 
     return `
       <div class="wrap">
-        <nav class="crumb"><a href="/">${BACK} ${esc(t.back)}</a></nav>
+        <nav class="crumb"><a href="${HOME}">${BACK} ${esc(t.back)}</a></nav>
       </div>
 
       <header class="s-hero wrap">
@@ -275,7 +282,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
           <h2>${esc(t.alsoTitle)}</h2>
           <p class="sub">${esc(t.alsoNote)}</p>
           <div class="also">${others.map((o,i)=>miniHTML(o,i,lang)).join("")}</div>
-          <div style="margin-top:34px"><a class="btn btn-o btn-auto" href="/">${esc(t.seeAll)} ${ARROW}</a></div>
+          <div style="margin-top:34px"><a class="btn btn-o btn-auto" href="${HOME}">${esc(t.seeAll)} ${ARROW}</a></div>
         </div>
       </section>`:""}
     `;

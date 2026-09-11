@@ -276,12 +276,33 @@ console.log("\n[목록 페이지]");
   after>0 && after<15 ? ok(`인원 필터 동작 (15 → ${after})`) : bad(`필터 결과 ${after}`);
   await p.click('.chip[data-f="guests"][data-v="all"]');
 
-  await p.click('.lang button[data-lang="zh"]');
-  await p.waitForTimeout(120);
+  /* 繁體中文은 이제 브라우저 안에서 갈아끼우는 게 아니라 주소가 다르다.
+     링크가 실제로 /zh/ 로 가는지, 그 페이지가 자바스크립트가 돌기 전에
+     이미 중국어인지(= 검색엔진이 읽을 수 있는지)까지 본다. */
+  {
+    const href = await p.getAttribute('.lang a[data-lang="zh"]', "href");
+    href==="/zh" ? ok("언어 전환이 링크 (/zh)") : bad(`언어 링크 ${href}`);
+    const raw = await (await p.request.get(BASE+"/zh")).text();
+    const head = raw.slice(0, raw.indexOf("<body"));
+    /<html lang="zh-Hant"/.test(raw)
+      && /hreflang="zh-Hant"/.test(head) && /hreflang="x-default"/.test(head)
+      && /canonical" href="[^"]*\/zh"/.test(head)
+      ? ok("/zh 에 zh-Hant · hreflang · canonical")
+      : bad("繁體 페이지 head 가 모자람");
+    /* 본문이 서버에서 이미 한자여야 한다 —— 예전에는 브라우저가 채웠다 */
+    /住宿選輯/.test(raw) && /涯月邑/.test(raw)
+      ? ok("繁體 본문이 서버 HTML 에 이미 들어 있음") : bad("繁體 본문이 비어서 나감");
+    /* 화면 안의 링크가 자기 언어 안에 머무는지 */
+    const stray = (raw.match(/href="\/stay\//g)||[]).length;
+    stray===0 ? ok("繁體 페이지 안의 링크가 모두 /zh/ 안") : bad(`영문 링크 ${stray}개 샘`);
+  }
+
+  await p.goto(BASE+"/zh", {waitUntil:"domcontentloaded"});
+  await p.waitForTimeout(200);
   const zh = await p.textContent(".coll-head h2");
-  /住宿/.test(zh) ? ok(`언어 전환 (${zh})`) : bad(`언어 전환 실패: ${zh}`);
+  /住宿/.test(zh) ? ok(`繁體 페이지 (${zh})`) : bad(`繁體 페이지 실패: ${zh}`);
   const zhCards = await p.$$eval(".card", e=>e.length);
-  zhCards===15 ? ok("전환 후에도 15장") : bad(`전환 후 ${zhCards}장`);
+  zhCards===15 ? ok("繁體에서도 15장") : bad(`繁體 ${zhCards}장`);
   const zhHero = await p.$$eval(".hero-img .hc", e=>e.map(x=>x.textContent.trim()));
   zhHero.some(t=>/[一-鿿]/.test(t))
     ? ok(`히어로 이름 繁體中文 (${zhHero[0]})`) : bad(`히어로 이름 [${zhHero}]`);
@@ -291,11 +312,21 @@ console.log("\n[목록 페이지]");
   zhNamed.length>0 && zhNamed.every(c=>/[一-鿿]/.test(c.t)) && zhNamed.some(c=>c.v==="Aewol"&&c.t==="涯月邑")
     ? ok(`지역 칩 繁體中文 (${zhNamed.slice(0,3).map(c=>c.t).join(" · ")})`)
     : bad(`지역 칩 [${zhNamed.map(c=>c.v+"→"+c.t).join(", ")}]`);
-  /* 지도 라벨도 같이 한자로 바뀌어야 한다 —— 사전(T)에 없는 문구라 따로 걸린다 */
   const zhLbl = await p.$$eval(".maplbl u", e=>e.map(x=>x.textContent));
   zhLbl.includes("舊左邑") && zhLbl.includes("涯月邑")
-    ? ok("지도 라벨 繁體中文 전환") : bad(`라벨 [${zhLbl}]`);
-  await p.click('.lang button[data-lang="en"]');
+    ? ok("지도 라벨 繁體中文") : bad(`라벨 [${zhLbl}]`);
+  /* 지도를 繁體 페이지에서 열었을 때 캡션과 옆 목록도 한자여야 한다 */
+  await p.click("#mmap");
+  await p.waitForTimeout(300);
+  const capZh  = await p.textContent("#mapCap");
+  const sideZh = await p.textContent("#side");
+  /間/.test(capZh) ? ok(`繁體 지도 캡션 (${capZh.trim()})`) : bad(`지도 캡션 "${capZh}"`);
+  /西部|南部|東部/.test(sideZh) ? ok("지도 옆 목록 西部 / 南部 / 東部") : bad("옆 목록이 영문 그대로");
+  /* 繁體 페이지의 영문 링크로 돌아오기 */
+  const backEn = await p.getAttribute('.lang a[data-lang="en"]', "href");
+  backEn==="/" ? ok("繁體 → 영문 링크 (/)") : bad(`영문 링크 ${backEn}`);
+  await p.goto(BASE+"/", {waitUntil:"domcontentloaded"});
+  await p.waitForTimeout(200);
 
   /* 지도 */
   {
@@ -349,18 +380,8 @@ console.log("\n[목록 페이지]");
     /* 아래쪽 핀은 말풍선이 위로 열려야 지도 밖으로 안 잘린다 */
     const flip = await p.$$eval(".mpin.hi", e=>e.length);
     flip>0 ? ok(`아래쪽 핀 ${flip}개는 말풍선이 위로`) : bad("위로 여는 핀이 없음");
-    /* 지도를 연 채로 언어를 바꾼다 —— 캡션·핀 이름·옆 목록이 같이 따라와야 한다.
-       예전엔 지도가 열린 상태에서는 다시 그리지 않아 옛 언어로 남아 있었다. */
-    await p.click('.lang button[data-lang="zh"]');
-    await p.waitForTimeout(250);
-    const capZh  = await p.textContent("#mapCap");
-    const sideZh = await p.textContent("#side");
-    /間/.test(capZh) ? ok(`지도 연 채 언어 전환 (${capZh.trim()})`) : bad(`지도 캡션 "${capZh}"`);
-    /西部|南部|東部/.test(sideZh) ? ok("지도 옆 목록 지역명 西部 / 南部 / 東部") : bad("옆 목록이 영문 그대로");
-    await p.click('.lang button[data-lang="en"]');
-    await p.waitForTimeout(250);
     const sideEn = await p.textContent("#side");
-    /West|South|East/.test(sideEn) ? ok("영문 복귀") : bad("영문 복귀 실패");
+    /West|South|East/.test(sideEn) ? ok("지도 옆 목록 영문") : bad("옆 목록 영문 아님");
     await p.click('.mpin[data-pin="andostay"]');
     await p.waitForTimeout(200);
     const card = await p.$eval("#mapCard", e=>!e.hidden);
@@ -549,10 +570,16 @@ console.log(`\n[상세 페이지 ${IDS.length}개]`);
   errs.length===0 ? ok("JS 에러 0") : bad("JS 에러: "+errs.slice(0,3).join(" | "));
   await p.goto(`${BASE}/stay/${IDS[0]}`, {waitUntil:"networkidle"});
   await p.screenshot({path:"v-stay.png", fullPage:false});
-  await p.click('.lang button[data-lang="zh"]');
+  /* 상세 페이지도 언어마다 주소가 따로 있다 */
+  const stayZhHref = await p.getAttribute('.lang a[data-lang="zh"]', "href");
+  stayZhHref===`/zh/stay/${IDS[0]}` ? ok(`상세 繁體 링크 (${stayZhHref})`) : bad(`상세 繁體 링크 ${stayZhHref}`);
+  await p.goto(`${BASE}/zh/stay/${IDS[0]}`, {waitUntil:"domcontentloaded"});
   await p.waitForTimeout(150);
   const zh = await p.textContent(".band h2");
-  /設施|訂房|位置|其他/.test(zh) ? ok(`상세 언어 전환 (${zh})`) : bad(`상세 언어 전환 실패: ${zh}`);
+  /設施|訂房|位置|其他/.test(zh) ? ok(`상세 繁體 페이지 (${zh})`) : bad(`상세 繁體 실패: ${zh}`);
+  const stayRaw = await (await p.request.get(`${BASE}/zh/stay/${IDS[0]}`)).text();
+  /<html lang="zh-Hant"/.test(stayRaw) && /hreflang="zh-Hant"/.test(stayRaw)
+    ? ok("상세 繁體 head (zh-Hant · hreflang)") : bad("상세 繁體 head 모자람");
   await ctx.close();
 }
 

@@ -56,8 +56,17 @@ async function loadTable(){
   return parseCSV(await res.text());
 }
 
+/* 페이지 제목과 설명 —— 언어마다 따로. 브랜드 이름은 두 언어에서 같다.
+   화면 위의 워드마크가 로마자이므로 제목만 한자로 바꾸면 다른 사이트로 읽힌다. */
+const META = {
+  en:{ title:"Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island",
+       desc:"A curated collection of private pool villas, ocean-view retreats and quiet stone houses across Jeju Island — each one visited and looked after by a local team." },
+  zh:{ title:"Jeju Stay Collection — 濟州島精選泳池別墅與住宿",
+       desc:"精選濟州島的私人泳池別墅、海景住宿與石屋民宿。每一間都由住在島上的團隊親自走訪、長期照顧。" }
+};
+
 /* ---------- 페이지 껍데기 ---------- */
-function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, css, body, script, lang="en"}){
+function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, css, body, script, lang="en"}){
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -65,7 +74,10 @@ function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, css, body, scri
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
 <meta name="description" content="${desc}">
-<link rel="canonical" href="${canonical}">
+<link rel="canonical" href="${canonical}">${alts?`
+<link rel="alternate" hreflang="en" href="${alts.en}">
+<link rel="alternate" hreflang="zh-Hant" href="${alts.zh}">
+<link rel="alternate" hreflang="x-default" href="${alts.en}">`:""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jeju Stay Collection">
 <meta property="og:title" content="${ogTitle||title}">
@@ -105,12 +117,15 @@ const MARK = `<svg width="40" height="28" viewBox="0 0 40 28" fill="none" stroke
 </svg>`;
 const MARK_LIGHT = MARK.replace('stroke="#191817"','stroke="#F4F1EA"').replace('width="40" height="28"','width="44" height="31"');
 
-const masthead = `<div class="bar">
+/* 언어 전환은 버튼이 아니라 링크다 —— 언어마다 주소가 따로 있기 때문.
+   같은 화면을 브라우저 안에서 갈아끼우면 그 화면에는 주소가 없어서,
+   광고 랜딩으로 지정할 수도, 공유할 수도, 검색엔진이 읽을 수도 없다. */
+const masthead = (lang, hrefEn, hrefZh) => `<div class="bar">
   <div class="wrap bar-in">
-    <a class="brand" href="/">${MARK}<div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div></a>
+    <a class="brand" href="${lang==="zh"?"/zh":"/"}">${MARK}<div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div></a>
     <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="en" aria-pressed="true">English</button>
-      <button type="button" data-lang="zh" aria-pressed="false">繁體中文</button>
+      <a href="${hrefEn}" hreflang="en" data-lang="en" aria-current="${lang==="en"}">English</a>
+      <a href="${hrefZh}" hreflang="zh-Hant" data-lang="zh" aria-current="${lang==="zh"}">繁體中文</a>
     </div>
   </div>
 </div>`;
@@ -136,19 +151,20 @@ const darkFoot = `<div class="dark">
 </div>`;
 
 /* ---------- 공통 클라이언트 머리말 ---------- */
-const preamble = (renderSrc, extra) => `
+const preamble = (renderSrc, extra, lang="en", prefix="") => `
 ${renderSrc}
 const T=${serialize(T)};
 const TAGS=${serialize(TAGS)};
 const BADGES=${serialize(BADGES)};
 const MIN_REVIEWS=${MIN_REVIEWS};
 ${extra}
-const R=makeRender(T,TAGS,BADGES,MIN_REVIEWS);
-let lang="en";
-try{const s=localStorage.getItem("mm_lang"); if(s&&T[s]) lang=s;}catch(e){}
+const R=makeRender(T,TAGS,BADGES,MIN_REVIEWS,${JSON.stringify(prefix)});
+/* 언어는 주소가 정한다 —— 예전에는 localStorage 에 담아두고 어느 주소에서든
+   되살렸는데, 그러면 /(영문) 을 열어도 중국어가 나와 <html lang> · canonical ·
+   광고 랜딩이 전부 어긋난다. 이제 이 페이지의 언어는 빌드 시점에 박힌다. */
+const lang=${JSON.stringify(lang)};
 function track(n,p){try{if(typeof gtag==="function")gtag("event",n,p);}catch(e){}}
 function applyText(){
-  document.documentElement.lang = lang==="zh" ? "zh-Hant" : "en";
   const t=T[lang];
   document.querySelectorAll("[data-t]").forEach(el=>{
     const v=(typeof SITE_TXT!=="undefined" && SITE_TXT[el.dataset.t] && SITE_TXT[el.dataset.t][lang]) || t[el.dataset.t];
@@ -158,13 +174,9 @@ function applyText(){
   document.querySelectorAll("[data-en]").forEach(el=>{
     el.textContent = (lang==="zh" && el.dataset.zh) ? el.dataset.zh : el.dataset.en;
   });
-  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
 }
-document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{
-  lang=b.dataset.lang;
-  try{localStorage.setItem("mm_lang",lang);}catch(e){}
-  track("language_switch",{language:lang});
-  paint();
+document.querySelectorAll(".lang a").forEach(b=>b.addEventListener("click",()=>{
+  track("language_switch",{language:b.dataset.lang});
 }));
 document.addEventListener("click",e=>{
   const a=e.target.closest("a[data-prop]");
@@ -198,8 +210,8 @@ const ISLE_BIG = `<svg class="sea" viewBox="0 0 ${JEJU.w} ${JEJU.h}" preserveAsp
 
 /* 라벨은 숙소가 있는 읍·면만. 지역 이름을 13개 다 띄우면
    사이트가 쓰는 West / South / East 세 구분과 층이 겹친다. */
-const MAPLBL = `<div class="maplbl" aria-hidden="true">${
-  JEJU.labels.map(l => `<u class="a-${l.a}" style="left:${l.x}%;top:${l.y}%" data-en="${l.en}" data-zh="${l.zh}">${l.en}</u>`).join("")
+const MAPLBL = lang => `<div class="maplbl" aria-hidden="true">${
+  JEJU.labels.map(l => `<u class="a-${l.a}" style="left:${l.x}%;top:${l.y}%" data-en="${l.en}" data-zh="${l.zh}">${lang==="zh"?l.zh:l.en}</u>`).join("")
 }</div>`;
 
 function miniMap(list, R, t){
@@ -220,8 +232,26 @@ function miniMap(list, R, t){
 }
 
 /* ---------- 목록 페이지 ---------- */
-function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
-  const t=T.en;
+/* data-t / data-en 자리를 빌드 시점에 채운다.
+   예전에는 브라우저가 켜진 뒤에야 글자가 들어갔다 —— 사람 눈에는 같아 보이지만
+   검색엔진에는 빈 껍데기가 먼저 가고, 자바스크립트가 막히면 영영 빈칸이다.
+   繁體 페이지를 따로 내보내는 이상 본문이 서버에서 이미 그 언어여야 한다.
+   비어 있는 요소만 채우므로, 이미 값이 든 자리는 건드리지 않는다. */
+function fillText(html, lang, siteTxt){
+  const t = T[lang];
+  return html
+    .replace(/(<([a-z0-9]+)\b[^>]*\sdata-t="([A-Za-z0-9_]+)"[^>]*>)(<\/\2>)/g,
+      (m, open, tag, key, close) => {
+        const v = (siteTxt && siteTxt[key] && siteTxt[key][lang]) || t[key];
+        return typeof v === "string" ? open + v + close : m;
+      })
+    .replace(/(<([a-z0-9]+)\b[^>]*\sdata-en="([^"]*)"[^>]*\sdata-zh="([^"]*)"[^>]*>)(<\/\2>)/g,
+      (m, open, tag, en, zh, close) => open + (lang === "zh" && zh ? zh : en) + close);
+}
+
+function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
+  const t=T[lang];
+  const zh = lang==="zh";
   const siteTxt={};
   if(site._hero){
     if(site._hero.h1?.en||site._hero.h1?.zh)     siteTxt.h1  ={en:R.fmt(site._hero.h1.en),  zh:R.fmt(site._hero.h1.zh||site._hero.h1.en)};
@@ -231,7 +261,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
   const avg=R.avgRating(list);
   const villages=new Set(list.map(g=>g.region).filter(Boolean)).size;
 
-  const body = `${masthead}
+  const body = `${masthead(lang, "/", "/zh")}
 <header class="hero wrap" id="hero">
   <div class="hero-txt">
     <div class="eyebrow"><span class="lbl">01</span><i></i><span class="lbl" data-t="place"></span></div>
@@ -263,7 +293,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
     ${heroes.length?heroes.map((h,i)=>`<div class="hcell">
       <img src="${R.esc(R.photoAt(h.photo, i?600:1200))}" alt="" loading="${i?"lazy":"eager"}"
            style="object-position:${R.esc(R.FOCUS[h.focus]||"center")}">
-      <span class="hc" data-hid="${R.esc(h.id)}">${R.esc(R.name(h,"en"))}${i?"":" · "+R.esc(R.shortRegion(R.region(h,"en")))}</span>
+      <span class="hc" data-hid="${R.esc(h.id)}">${R.esc(R.name(h,lang))}${i?"":" · "+R.esc(R.shortRegion(R.region(h,lang)))}</span>
     </div>`).join(""):""}
   </div>
 </header>
@@ -285,7 +315,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
       <button type="button" data-view="list" aria-pressed="true"><span data-t="tabList"></span></button>
       <button type="button" data-view="map" aria-pressed="false"><span data-t="tabMap"></span></button>
     </div>
-    <div class="filters" id="filters">${R.filtersHTML(list,"en",filt)}</div>
+    <div class="filters" id="filters">${R.filtersHTML(list,lang,filt)}</div>
     <div class="count-row">
       <div class="n" id="countTxt">${t.count(list.length,list.length)}</div>
       <div class="views"><button type="button" id="backList" hidden>
@@ -294,12 +324,12 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
       </button></div>
     </div>
     <div class="rule" style="background:var(--hairline-2); margin-bottom:40px"></div>
-    <div class="grid" id="grid">${R.gridHTML(list,"en",filt)}</div>
+    <div class="grid" id="grid">${R.gridHTML(list,lang,filt)}</div>
     <div class="mapwrap" id="mapwrap" hidden>
       <div class="mapbox">
         <div class="mapstage" id="mapStage">
           ${ISLE_BIG}
-          ${MAPLBL}
+          ${MAPLBL(lang)}
           <div class="mappins" id="mapPins"></div>
         </div>
         ${/* 상세 카드는 지도 칸(mapstage) 밖, 지도 상자 안에 둔다.
@@ -331,7 +361,7 @@ function PROJ(lat,lng){
   const s=Math.sin(lat*Math.PI/180);
   const my=0.5-Math.log((1+s)/(1-s))/(4*Math.PI);
   return [((lng+180)/360-JE.x0)/(JE.x1-JE.x0)*100, (my-JE.y0)/(JE.y1-JE.y0)*100];
-}`)}
+}`, lang, zh?"/zh":"")}
 function paint(){
   applyText();
   document.getElementById("filters").innerHTML=R.filtersHTML(DATA,lang,filt);
@@ -606,10 +636,41 @@ if(sideEl){
 paint();
 `;
 
-  return shell({
-    title:"Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island",
-    desc:"A curated collection of private pool villas, ocean-view retreats and quiet stone houses across Jeju Island — each one visited and looked after by a local team.",
-    canonical:SITE+"/",
+  /* 검색엔진용 목록 —— 이 페이지가 「숙소 열다섯 곳의 목록」이라는 것을
+     사람 눈이 아니라 기계에 알려 준다. 화면 순서를 그대로 따르므로
+     맨 아래로 고정한 곳은 여기서도 맨 뒤다. 평점은 넣지 않는다 ——
+     상세 페이지에서 표본 기준을 넘긴 곳만 쓰기로 한 규칙을 목록이
+     우회해 버리면 안 되기 때문. */
+  const ld = {
+    "@context":"https://schema.org", "@type":"CollectionPage",
+    name:"Jeju Stay Collection",
+    url:SITE+"/",
+    mainEntity:{
+      "@type":"ItemList",
+      numberOfItems:list.length,
+      itemListOrder:"https://schema.org/ItemListOrderAscending",
+      itemListElement:list.map((g,i)=>({
+        "@type":"ListItem", position:i+1,
+        item:{
+          "@type":"LodgingBusiness",
+          name:R.name(g,"en"),
+          url:`${SITE}/stay/${g.id}`,
+          ...(g.photo?{image:g.photo}:{}),
+          address:{"@type":"PostalAddress",
+                   addressRegion:R.region(g,"en"), addressCountry:"KR"},
+          ...(g.geo?{geo:{"@type":"GeoCoordinates",
+                          latitude:g.geo.lat, longitude:g.geo.lng}}:{})
+        }
+      }))
+    }
+  };
+
+  const html = shell({
+    title:META[lang].title,
+    desc:META[lang].desc,
+    lang:zh?"zh-Hant":"en",
+    canonical:SITE+(zh?"/zh":"/"),
+    alts:{en:SITE+"/", zh:SITE+"/zh"},
     /* 공유 카드 —— 카톡·아이메시지가 집어가는 그림은 한 장짜리 정지
        이미지라, 숙소 사진 한 장을 쓰면 그 주의 히어로 숙소만 공짜 노출을
        가져간다. 컬렉션 전체를 가리키는 그림을 따로 둔다. ogcard.mjs 로 만든다. */
@@ -618,23 +679,27 @@ paint();
     /* 공유 카드의 제목은 따로 —— 검색용 <title> 을 그대로 쓰면
        카톡에서 「… Handpicked Vil…」 로 잘린다. */
     ogTitle:"Jeju Stay Collection",
-    css, body, script
+    css, body:fillText(body, lang, siteTxt), script
   });
+  return html.replace("</head>",
+    `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n</head>`);
 }
 
 /* ---------- 상세 페이지 ---------- */
-function pageStay({g, others, css, renderSrc, R}){
-  const t=T.en;
-  const n=R.name(g,"en"), region=R.region(g,"en");
-  const desc=(R.intro(g,"en") || `${n} — a handpicked stay in ${region}, Jeju Island.`).slice(0,300);
+function pageStay({g, others, css, renderSrc, R, lang="en"}){
+  const t=T[lang];
+  const zh=lang==="zh";
+  const n=R.name(g,lang), region=R.region(g,lang);
+  const desc=(R.intro(g,lang) || (zh ? `${n} —— 濟州島 ${region} 的精選住宿。`
+                                     : `${n} — a handpicked stay in ${region}, Jeju Island.`)).slice(0,300);
 
-  const body = `${masthead}
-<div id="stayRoot">${R.stayHTML(g,others,"en")}</div>
+  const body = `${masthead(lang, `/stay/${g.id}`, `/zh/stay/${g.id}`)}
+<div id="stayRoot">${R.stayHTML(g,others,lang)}</div>
 ${darkFoot}`;
 
   const script = `${preamble(renderSrc, `
 const STAY=${JSON.stringify(g)};
-const OTHERS=${JSON.stringify(others)};`)}
+const OTHERS=${JSON.stringify(others)};`, lang, zh?"/zh":"")}
 function paint(){
   applyText();
   document.getElementById("stayRoot").innerHTML=R.stayHTML(STAY,OTHERS,lang);
@@ -656,12 +721,14 @@ paint();`;
   const html = shell({
     title:`${n} — Jeju Stay Collection`,
     desc:desc.replace(/"/g,"&quot;"),
-    canonical:`${SITE}/stay/${g.id}`,
+    lang:zh?"zh-Hant":"en",
+    canonical:`${SITE}${zh?"/zh":""}/stay/${g.id}`,
+    alts:{en:`${SITE}/stay/${g.id}`, zh:`${SITE}/zh/stay/${g.id}`},
     /* 상세 페이지는 그 숙소 사진이 맞다 —— 그 숙소를 보라고 보내는 링크이므로.
        사진이 없으면 컬렉션 카드로 떨어진다. */
     ogImage:g.photo||SITE+"/og.png",
     ogTitle:n, ogAlt:`${n}, ${region}`,
-    css, body, script
+    css, body:fillText(body, lang, null), script
   });
   return html.replace("</head>",
     `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n</head>`);
@@ -674,7 +741,9 @@ async function main(){
   const css       = await readFile(path.join(SRC,"theme.css"), "utf8")
                   + `\n:root{--map-ar:${JEJU.w}/${JEJU.h}}\n`;
   const renderSrc = await readFile(path.join(SRC,"render.js"), "utf8");
-  const R         = new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS);
+  /* 같은 렌더러를 언어별 접두사만 바꿔 두 벌 만든다 */
+  const mkR       = pre => new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS,pre);
+  const R         = mkR(""), Rz = mkR("/zh");
 
   const {list, site} = buildStays(await loadTable());
   if(list.length < MIN_STAYS)
@@ -688,20 +757,28 @@ async function main(){
   if(existsSync(PUBLIC)) await cp(PUBLIC, DIST, {recursive:true});
 
   await writeFile(path.join(DIST,"index.html"),
-    pageIndex({list, site, hero, heroes, css, renderSrc, R}), "utf8");
+    pageIndex({list, site, hero, heroes, css, renderSrc, R, lang:"en"}), "utf8");
+  await mkdir(path.join(DIST,"zh"),{recursive:true});
+  await writeFile(path.join(DIST,"zh","index.html"),
+    pageIndex({list, site, hero, heroes, css, renderSrc, R:Rz, lang:"zh"}), "utf8");
 
   for(const g of list){
     /* 「다른 숙소」 —— 같은 지역 먼저, 그다음 정렬 순서. 자기 자신 제외. */
     const rest = list.filter(o=>o.id!==g.id);
     const near = rest.filter(o=>o.region===g.region);
     const others = [...near, ...rest.filter(o=>o.region!==g.region)].slice(0,4);
-    const dir = path.join(DIST,"stay",g.id);
-    await mkdir(dir,{recursive:true});
-    await writeFile(path.join(dir,"index.html"),
-      pageStay({g, others, css, renderSrc, R}), "utf8");
+    for(const [lang, rr, sub] of [["en",R,""],["zh",Rz,"zh"]]){
+      const dir = path.join(DIST, sub, "stay", g.id);
+      await mkdir(dir,{recursive:true});
+      await writeFile(path.join(dir,"index.html"),
+        pageStay({g, others, css, renderSrc, R:rr, lang}), "utf8");
+    }
   }
 
-  const urls = ["/", ...list.map(g=>`/stay/${g.id}`)];
+  /* 사이트맵에는 두 언어를 모두 넣는다 —— 한쪽만 내면 다른 언어는
+     색인이 늦거나 아예 안 잡힌다. 서로를 가리키는 hreflang 은 각 페이지 head 에. */
+  const paths = ["/", ...list.map(g=>`/stay/${g.id}`)];
+  const urls  = [...paths, ...paths.map(u => u==="/" ? "/zh" : "/zh"+u)];
   const today = new Date().toISOString().slice(0,10);
   await writeFile(path.join(DIST,"sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`+
@@ -713,7 +790,7 @@ async function main(){
   console.log(`· 숙소 ${list.length}곳`);
   console.log(`· 히어로 ${hero?hero.id:"(없음)"}`);
   console.log(`· 좌표 있는 숙소 ${list.filter(g=>g.geo).length}곳 / 평점 표시 ${list.filter(g=>R.hasRating(g)).length}곳`);
-  console.log(`· 페이지 ${urls.length}개 → dist/`);
+  console.log(`· 페이지 ${urls.length}개 (영문 ${paths.length} · 繁體 ${paths.length}) → dist/`);
 }
 
 main().catch(e=>{ console.error("\n✗ 빌드 실패:", e.message, "\n"); process.exit(1); });
