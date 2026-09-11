@@ -256,7 +256,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
               ${feats.length?`<div class="feat">${feats.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`
                             :`<p class="prose">${esc(p)}</p>`}
             </div>
-            <div>
+            <div class="book">
               <h2>${esc(multi?t.roomsTitle:t.roomsOne)}</h2>
               <p class="sub">${esc(t.micro)}</p>
               <div class="rlist">${rooms}</div>

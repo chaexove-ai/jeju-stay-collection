@@ -316,9 +316,24 @@ h1 em{font-style:italic}
 .prose p:last-child{margin:0}
 
 .feat{display:flex; flex-wrap:wrap; gap:10px}
+/* 테두리가 --hairline-2 일 때 배경과 1.5:1 이었다 —— 상자가 있는지도 모른다.
+   누를 수 있는 것도 아니지만, 칸으로 보이려면 최소한 보이긴 해야 한다. */
 .feat span{display:inline-flex; align-items:center; height:38px; padding:0 16px;
-  border:1px solid var(--hairline-2); background:var(--paper); font-size:12.5px; color:var(--basalt)}
+  border:1px solid var(--control); background:var(--paper); font-size:12.5px; color:var(--basalt)}
 .band-paper .feat span{background:var(--limestone)}
+
+/* 예약하는 칸 —— 상세 페이지에서 유일하게 어두운 덩어리다.
+   나란히 놓인 두 제목이 같은 바탕 위에 있으면 어디까지가 무엇인지 안 읽힌다.
+   여기가 이 페이지에서 실제로 눌러야 하는 곳이기도 하다. */
+.book{background:var(--pine); color:var(--paper); padding:30px 28px 14px}
+.book h2{color:var(--paper)}
+.book .sub{color:#AFC3BC}
+.book .rlist{border-top-color:rgba(251,249,245,.22)}
+.book .rrow{border-bottom-color:rgba(251,249,245,.14)}
+.book .rrow-n{color:var(--paper)}
+.book .rrow-s{color:#AFC3BC}
+.book .rrow-go{border-color:rgba(251,249,245,.5); color:var(--paper)}
+.book .rrow-go svg{stroke:var(--paper)}
 
 .rlist{border-top:1px solid var(--hairline-2)}
 .rrow{display:flex; align-items:center; justify-content:space-between; gap:20px;
@@ -474,6 +489,9 @@ h1 em{font-style:italic}
   .map-side{gap:14px}
   .map-note{max-width:none}
   .map-side .btn{width:100%; align-self:stretch !important}
+  /* 휴대폰에서는 두 제목이 위아래로 쌓이므로 초록 칸이 화면 끝까지 가야
+     「여기부터 다른 이야기」가 읽힌다 */
+  .book{margin:0 calc(var(--pad) * -1); padding:26px var(--pad) 10px}
   .rrow{flex-direction:column; align-items:stretch; gap:14px}
   .rrow-go{width:100%}
   .also{grid-template-columns:1fr 1fr; gap:16px}
@@ -518,6 +536,8 @@ h1 em{font-style:italic}
   /* 객실 줄 —— 펼쳤을 때 각 줄도 누를 수 있다는 게 보여야 한다 */
   .room{transition:background .14s ease; padding-left:10px; padding-right:10px; margin:0 -10px}
   .room:hover{background:var(--limestone)}
+  .book .rrow-go:hover{background:var(--paper); color:var(--pine); border-color:var(--paper)}
+  .book .rrow-go:hover svg{stroke:var(--pine)}
 
   /* 헤더의 작은 지도 */
   .mmap{transition:border-color .16s ease, box-shadow .16s ease}
