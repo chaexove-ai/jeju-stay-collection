@@ -54,6 +54,25 @@ const IDS = JSON.parse(fs.readFileSync("dist/sitemap.xml","utf8")
   ? JSON.stringify(fs.readFileSync("dist/sitemap.xml","utf8").match(/\/stay\/([^<]+)/g).map(s=>s.replace("/stay/","")))
   : "[]");
 
+
+/* 상단 막대의 좌우 여백 —— 본문과 같은 자리에서 시작하고 끝나야 한다.
+   .wrap 과 .bar-in 이 같은 요소에 붙어 있어서, .bar-in 이 padding 을
+   한 줄로 쓰면 .wrap 이 준 좌우값이 통째로 0 이 된다. 한 번 그랬다. */
+async function checkBar(p, label){
+  const m = await p.evaluate(()=>{
+    const bar=document.querySelector(".bar").getBoundingClientRect();
+    const brand=document.querySelector(".brand").getBoundingClientRect();
+    const lang=document.querySelector(".lang").getBoundingClientRect();
+    const body=document.querySelector(".coll .wrap > .coll-head").getBoundingClientRect();
+    return { left:Math.round(brand.left-bar.left), right:Math.round(bar.right-lang.right),
+             bodyLeft:Math.round(body.left) };
+  });
+  const same = m.left===m.bodyLeft && m.right===m.bodyLeft;
+  same && m.left>0
+    ? ok(`${label} 상단 막대 여백 ${m.left}px (본문과 동일)`)
+    : bad(`${label} 막대 좌 ${m.left} / 우 ${m.right} / 본문 ${m.bodyLeft}`);
+}
+
 /* ── 1. 목록 페이지 ── */
 console.log("\n[목록 페이지]");
 {
@@ -71,6 +90,8 @@ console.log("\n[목록 페이지]");
 
   const links = await p.$$eval(".card h3 a", a=>a.map(x=>x.getAttribute("href")));
   links.every(h=>h.startsWith("/stay/")) ? ok("카드 제목 → /stay/*") : bad("카드 제목 링크 이상");
+
+  await checkBar(p, "데스크톱");
 
   /* 카드 호버 —— 얹으면 눈에 띄게 달라져야 한다. 버튼 배경이 어두워지고
      카드가 떠오르는지, 실제 계산된 값으로 확인한다. */
@@ -248,6 +269,8 @@ console.log("\n[모바일 390px]");
   await p.goto(BASE+"/", {waitUntil:"networkidle"});
   const ow = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   ow<=0 ? ok("가로 스크롤 없음") : bad(`가로 넘침 ${ow}px`);
+
+  await checkBar(p, "모바일");
 
   /* 첫 화면 —— 히어로 사진이 헤더 바로 아래에 있고, 글까지 한 화면에 들어가야 한다 */
   const hero = await p.evaluate(()=>{
