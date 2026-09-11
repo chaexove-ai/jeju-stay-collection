@@ -93,7 +93,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
       <h3><a href="${stayUrl(g)}" data-detail="${esc(g.id)}">${esc(n)}</a></h3>
       ${p?`<p>${esc(p)}</p>`:""}
       ${bp.incl?`<div class="incl" data-txt="${esc(bp.incl)}">${esc(bp.incl)}</div>`:""}
-      ${tags.length?`<div class="tags">${tags.map((x,j)=>`<span>${esc(x)}</span>${j<tags.length-1?"<span>·</span>":""}`).join("")}</div>`:""}
+      ${tags.length?`<div class="tags">${tags.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
       <div class="c-foot">
         <div class="avail">${esc(availLine(g,t))}</div>
         <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"

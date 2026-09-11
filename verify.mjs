@@ -161,6 +161,20 @@ console.log("\n[목록 페이지]");
       ? ok(`아이콘 파일 ${codes.length}개 응답 200`) : bad(`아이콘 응답 ${codes.join(" ")}`);
   }
 
+  /* 공유 카드 —— 카톡·아이메시지가 집어가는 그림.
+     숙소 사진이 아니라 컬렉션 카드여야 하고(그 주의 히어로만 공짜 노출을
+     가져가지 않게), 파일이 실제로 응답해야 하며, 제목이 잘리지 않아야 한다. */
+  {
+    const og = await p.evaluate(()=>{
+      const m = n => (document.querySelector(`meta[property="og:${n}"]`)||{}).content || "";
+      return { img:m("image"), title:m("title"), w:m("image:width"), h:m("image:height") };
+    });
+    const r = await p.request.get(og.img.replace(/^https?:\/\/[^/]+/, BASE));
+    og.img.endsWith("/og.png") && r.status()===200 && og.title.length<=34 && og.w==="1200"
+      ? ok(`공유 카드 ${og.img.split("/").pop()} 200 · 제목 “${og.title}” (${og.title.length}자)`)
+      : bad(`og ${JSON.stringify(og)} / 응답 ${r.status()}`);
+  }
+
   /* 맨 위로 —— 히어로를 지나기 전에는 안 보이고, 지나면 나타나고, 누르면 올라간다 */
   {
     const before = await p.$eval("#toTop", e=>e.hidden);
@@ -185,6 +199,20 @@ console.log("\n[목록 페이지]");
     const star = await p.$eval(".star", e=>getComputedStyle(e).color);
     nl && nl.c===star && +nl.w>=500
       ? ok(`${nl.t} 이 별과 같은 색 (${nl.c})`) : bad(`Newly listed ${JSON.stringify(nl)} / 별 ${star}`);
+  }
+
+  /* 숙소 특징 —— 가운뎃점으로 잇지 않고, 초록 칸으로 끊어 놓는다 */
+  {
+    const t = await p.$eval(".card .tags", e=>{
+      const sp=[...e.querySelectorAll("span")];
+      const s=getComputedStyle(sp[0]);
+      return { n:sp.length, dot:sp.some(x=>x.textContent.trim()==="·"),
+               c:s.color, bg:s.backgroundColor, txt:sp.map(x=>x.textContent.trim()).join(" | ") };
+    }).catch(()=>null);
+    const pine = await p.$eval(".btn", e=>getComputedStyle(e).backgroundColor);
+    t && !t.dot && t.c===pine && t.bg!=="rgba(0, 0, 0, 0)"
+      ? ok(`특징 뱃지 ${t.n}칸, 파인 글씨 (${t.txt})`)
+      : bad(`특징 줄 ${JSON.stringify(t)} / 파인 ${pine}`);
   }
 
   /* 카드 호버 —— 얹으면 눈에 띄게 달라져야 한다. 버튼 배경이 어두워지고
