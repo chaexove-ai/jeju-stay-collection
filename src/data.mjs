@@ -122,7 +122,12 @@ export function buildStays(table){
     g.rooms.forEach(r=>{ r.photo = photoSrc(r.photo) || ""; });
     g.maxSleeps = Math.max(0, ...g.rooms.map(r=>r.sleeps||0));
     g.anyWhole  = g.rooms.some(r=>r.whole);
+    /* 지역 필터의 키는 언제나 영문 약칭이다 —— 언어를 바꿔도 고른 필터가
+       풀리면 안 되기 때문. 화면에 찍을 글자는 따로 들고 간다.
+       繁體는 「濟州 涯月邑」처럼 앞에 시 이름이 붙어 오므로 뒤 토막만 쓴다. */
     g.region    = shortRegion(g.regionEn);
+    g.regionTag = { en: g.region,
+                    zh: (g.regionZh||"").trim().split(/\s+/).pop() || g.region };
     g.bottom    = g.pin!==null && g.pin<0;
     g.geo       = geo(g.lat, g.lng);
     delete g.lat; delete g.lng; delete g.tagsRaw;

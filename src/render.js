@@ -127,6 +127,10 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
   /* ---------- 필터 ---------- */
   function filtersHTML(list,lang,filt){
     const t=T[lang];
+    /* 키는 영문 약칭 하나로 고정하고, 칩에 찍는 글자만 언어를 따라간다 */
+    const label={};
+    list.forEach(g=>{ if(g.region && !label[g.region])
+      label[g.region] = (g.regionTag && g.regionTag[lang]) || g.region; });
     const regions=[...new Set(list.map(g=>g.region).filter(Boolean))];
     const n={}; list.forEach(g=>g.tags.forEach(k=>{ if(TAGS[k]) n[k]=(n[k]||0)+1; }));
     const tags=Object.entries(n).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
@@ -135,7 +139,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
     return `<div class="frow">
         <span class="lbl">${esc(t.fWhere)}</span>
         ${chip(t.fAll,"region","all",filt.region==="all")}
-        ${regions.map(r=>chip(r,"region",r,filt.region===r)).join("")}
+        ${regions.map(r=>chip(label[r]||r,"region",r,filt.region===r)).join("")}
       </div>
       <div class="frow">
         <span class="lbl">${esc(t.fWho)}</span>

@@ -124,6 +124,12 @@ console.log("\n[목록 페이지]");
   /住宿/.test(zh) ? ok(`언어 전환 (${zh})`) : bad(`언어 전환 실패: ${zh}`);
   const zhCards = await p.$$eval(".card", e=>e.length);
   zhCards===15 ? ok("전환 후에도 15장") : bad(`전환 후 ${zhCards}장`);
+  /* 지역 필터 칩도 한자여야 한다 —— 값(키)은 영문 그대로 두고 글자만 바꾼다 */
+  const zhChips = await p.$$eval('.chip[data-f="region"]', e=>e.map(x=>({v:x.dataset.v,t:x.textContent.trim()})));
+  const zhNamed = zhChips.filter(c=>c.v!=="all");
+  zhNamed.length>0 && zhNamed.every(c=>/[一-鿿]/.test(c.t)) && zhNamed.some(c=>c.v==="Aewol"&&c.t==="涯月邑")
+    ? ok(`지역 칩 繁體中文 (${zhNamed.slice(0,3).map(c=>c.t).join(" · ")})`)
+    : bad(`지역 칩 [${zhNamed.map(c=>c.v+"→"+c.t).join(", ")}]`);
   /* 지도 라벨도 같이 한자로 바뀌어야 한다 —— 사전(T)에 없는 문구라 따로 걸린다 */
   const zhLbl = await p.$$eval(".maplbl u", e=>e.map(x=>x.textContent));
   zhLbl.includes("舊左邑") && zhLbl.includes("涯月邑")
@@ -227,6 +233,57 @@ console.log("\n[모바일 390px]");
   await p.goto(BASE+"/", {waitUntil:"networkidle"});
   const ow = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   ow<=0 ? ok("가로 스크롤 없음") : bad(`가로 넘침 ${ow}px`);
+
+  /* 첫 화면 —— 히어로 사진이 헤더 바로 아래에 있고, 글까지 한 화면에 들어가야 한다 */
+  const hero = await p.evaluate(()=>{
+    const y = s => { const e=document.querySelector(s); if(!e) return null;
+      const r=e.getBoundingClientRect(); return Math.round(r.top+window.scrollY); };
+    const b = document.querySelector(".hero-img").getBoundingClientRect();
+    return { img:y(".hero-img"), txt:y(".hero-txt"), end:Math.round(
+      document.querySelector("#hero").getBoundingClientRect().bottom+window.scrollY) , imgH:Math.round(b.height)};
+  });
+  hero.img < hero.txt ? ok("사진이 글보다 위") : bad(`사진 ${hero.img} / 글 ${hero.txt}`);
+  hero.end <= 844 ? ok(`히어로가 첫 화면에 들어감 (${hero.end}px / 844)`)
+                  : bad(`히어로가 ${hero.end}px 까지 —— 첫 화면을 넘김`);
+
+  /* 작은 지도는 내려가고 목록/지도 탭이 그 자리를 대신한다 */
+  const mmHidden = await p.$eval("#mmap", e=>getComputedStyle(e).display==="none");
+  const tabShown = await p.$eval("#vtabs", e=>getComputedStyle(e).display!=="none");
+  mmHidden && tabShown ? ok("작은 지도 내림 · 목록/지도 탭 노출")
+                       : bad(`작은 지도 숨김 ${mmHidden} / 탭 노출 ${tabShown}`);
+
+  /* 예약 버튼까지의 거리 —— 광고 랜딩에서 이게 전부다 */
+  const btnY = await p.evaluate(()=>{
+    const e=document.querySelector(".card .btn");
+    return Math.round(e.getBoundingClientRect().top+window.scrollY);
+  });
+  btnY < 1900 ? ok(`첫 예약 버튼 ${btnY}px (화면 ${(btnY/844).toFixed(1)}개)`)
+              : bad(`첫 예약 버튼이 ${btnY}px —— 너무 멂`);
+
+  /* 카드 사진은 휴대폰에서 3:2 */
+  const ar = await p.$eval(".card .thumb", e=>getComputedStyle(e).aspectRatio);
+  /3\s*\/\s*2/.test(ar) ? ok("카드 사진 3:2") : bad(`사진 비율 ${ar}`);
+
+  /* 탭 전환 —— 지도로 갔다가 목록으로 돌아온다 */
+  await p.click('#vtabs button[data-view="map"]');
+  await p.waitForTimeout(400);
+  const onMap = await p.evaluate(()=>({
+    grid:document.getElementById("grid").hidden,
+    map:!document.getElementById("mapwrap").hidden,
+    pressed:document.querySelector('#vtabs button[data-view="map"]').getAttribute("aria-pressed"),
+    pins:document.querySelectorAll(".mpin").length
+  }));
+  onMap.grid && onMap.map && onMap.pressed==="true" && onMap.pins===15
+    ? ok("지도 탭 → 지도 15핀") : bad(JSON.stringify(onMap));
+  await p.click('#vtabs button[data-view="list"]');
+  await p.waitForTimeout(300);
+  const backOk = await p.evaluate(()=>!document.getElementById("grid").hidden
+    && document.getElementById("mapwrap").hidden);
+  backOk ? ok("목록 탭 복귀") : bad("목록으로 안 돌아옴");
+
+  const ow2 = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+  ow2<=0 ? ok("지도 탭에서도 가로 스크롤 없음") : bad(`지도 탭 가로 넘침 ${ow2}px`);
+
   errs.length===0 ? ok("JS 에러 0") : bad("JS 에러: "+errs.join(" | "));
   await p.screenshot({path:"v-index-m.png"});
   await ctx.close();

@@ -77,6 +77,14 @@ h1 em{font-style:italic}
 .coll-head h2{margin:0; font-family:var(--serif); font-weight:var(--display-w); font-size:36px; letter-spacing:-.01em}
 .coll-note{font-size:13.5px; color:var(--stone); padding-bottom:8px; max-width:46ch}
 
+/* 목록 / 지도 탭 —— 휴대폰 전용. 넓은 화면에서는 헤더의 작은 지도가 같은 일을 한다. */
+.vtabs{display:none; border:1px solid var(--control); margin-bottom:18px}
+.vtabs button{flex:1; height:46px; display:flex; align-items:center; justify-content:center;
+  font-size:12.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--basalt); transition:.15s}
+.vtabs button + button{border-left:1px solid var(--control)}
+.vtabs button[aria-pressed="true"]{background:var(--pine); color:var(--paper)}
+
 .filters{display:flex; flex-direction:column; gap:14px; margin-bottom:22px}
 .frow{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
 .frow > .lbl{width:76px; flex:none}
@@ -319,13 +327,29 @@ h1 em{font-style:italic}
 }
 @media (max-width:760px){
   :root{--pad:20px}
+  /* 첫 화면에 사진과 글이 같이 들어가야 한다 —— 사진을 헤더 바로 아래로
+     올리고, 세로로 먹는 값을 한 줄씩 깎는다. 390px 화면 기준으로
+     막대 + 사진 + 글 전체가 한 화면에 떨어지는 것이 목표. */
   .hero{grid-template-columns:1fr}
-  .hero-txt{padding:32px 0 30px; order:1}
-  .hero-img{order:2; min-height:0; height:260px}
-  .lede{font-size:15.5px}
+  .hero-img{order:1; min-height:0; height:190px}
+  .hero-txt{order:2; padding:20px 0 24px}
+  .eyebrow{margin-bottom:16px}
+  h1{font-size:30px; margin-bottom:16px}
+  .lede{font-size:15.5px; margin-bottom:18px}
+  .hero-act{gap:12px; margin-bottom:20px}
+  .avg{min-height:0; font-size:13px}
   .btn{height:52px}
-  .stats{gap:32px}
-  .stat b{font-size:24px}
+  .stats{gap:28px; padding-top:16px}
+  .stat b{font-size:24px; margin-bottom:4px}
+
+  /* 목록/지도 탭을 켜고, 헤더의 작은 지도와 「목록으로」 버튼은 내린다 ——
+     탭 하나가 둘을 다 대신한다. */
+  .vtabs{display:flex}
+  .mmap{display:none}
+  .count-row .views{display:none}
+  /* 390px 폭에서 섬은 350px 남짓이다. 지역 이름 일곱 개가 그 위에 겹치면
+     읽히는 게 아니라 지저분해진다. 경계선만 남긴다. */
+  .maplbl{display:none}
   .coll{padding:34px 0 40px}
   .coll-head{flex-direction:column; align-items:stretch; gap:16px; margin-bottom:18px}
   .coll-head h2{font-size:30px}
@@ -335,6 +359,9 @@ h1 em{font-style:italic}
   .frow > .lbl{display:none}
   .chip{height:44px; font-size:13px}
   .grid{grid-template-columns:1fr; gap:24px}
+  /* 사진 4:5 는 한 장이 화면 절반을 먹는다. 휴대폰에서는 3:2 로 줄여
+     예약 버튼을 위로 끌어올리고 한 화면에 더 많은 숙소가 걸리게 한다. */
+  .card .thumb{aspect-ratio:3/2}
   .dark{padding:48px 0 36px}
   .wall{margin-bottom:40px; gap:22px}
   .foot{grid-template-columns:1fr; gap:24px}

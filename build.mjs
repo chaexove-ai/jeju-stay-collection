@@ -260,6 +260,13 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
       <p class="coll-note" data-t="secNote"></p>
       ${miniMap(list, R, t)}
     </div>
+    ${/* 휴대폰에서는 작은 지도를 목록 위에 두지 않는다 —— 첫 숙소의 예약
+          버튼이 화면 두 개 반 아래로 밀려난다. 대신 목록/지도 탭을 준다.
+          넓은 화면에서는 이 탭이 숨고 위의 작은 지도가 그 일을 한다. */""}
+    <div class="vtabs" id="vtabs" role="group" aria-label="View">
+      <button type="button" data-view="list" aria-pressed="true"><span data-t="tabList"></span></button>
+      <button type="button" data-view="map" aria-pressed="false"><span data-t="tabMap"></span></button>
+    </div>
     <div class="filters" id="filters">${R.filtersHTML(list,"en",filt)}</div>
     <div class="count-row">
       <div class="n" id="countTxt">${t.count(list.length,list.length)}</div>
@@ -476,8 +483,19 @@ function showMap(on){
   document.getElementById("backList").hidden = !on;
   var mm = document.getElementById("mmap");
   if(mm) mm.hidden = on;
+  document.querySelectorAll("#vtabs button").forEach(function(b){
+    b.setAttribute("aria-pressed", String((b.dataset.view === "map") === on));
+  });
   if(on) paintMap(); else closeCard();
 }
+document.querySelectorAll("#vtabs button").forEach(function(b){
+  b.addEventListener("click", function(){
+    var toMap = b.dataset.view === "map";
+    if(toMap === (view === "map")) return;
+    showMap(toMap);
+    if(toMap) track("map_open", { language: lang, from: "tab" });
+  });
+});
 var mmapBtn = document.getElementById("mmap");
 if(mmapBtn) mmapBtn.addEventListener("click", function(){
   showMap(true);
