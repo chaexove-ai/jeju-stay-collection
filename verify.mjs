@@ -73,6 +73,45 @@ async function checkBar(p, label){
     : bad(`${label} 막대 좌 ${m.left} / 우 ${m.right} / 본문 ${m.bodyLeft}`);
 }
 
+/* ── 화면 크기 전수 ──
+   1440 과 390 만 보던 탓에, 761~1080px 구간(태블릿·휴대폰 가로)에서 지도가
+   216px 밖으로 나가 있는 걸 몇 달 동안 못 봤다. 사파리는 넘치는 페이지를
+   축소해서 맞추고, 가로로 눕혔다 세로로 돌리면 그 축소가 남아 「늘어나」 보인다.
+   그래서 실제 기기 치수를 가로·세로 양쪽으로 전부 훑는다. */
+console.log("\n[화면 크기 전수]");
+{
+  const VP = [
+    [320,568,"SE 세로"],   [568,320,"SE 가로"],
+    [375,667,"8 세로"],    [667,375,"8 가로"],
+    [390,844,"14 세로"],   [844,390,"14 가로"],
+    [430,932,"ProMax 세로"],[932,430,"ProMax 가로"],
+    [768,1024,"iPad 세로"], [1024,768,"iPad 가로"],
+    [1280,800,"노트북"],    [1920,1080,"큰 화면"]
+  ];
+  let bad_ = 0;
+  for(const url of ["/", "/stay/"+IDS[0]]){
+    for(const [w,h,tag] of VP){
+      const {p, ctx} = await newPage(w,h,w<500);
+      await p.goto(BASE+url, {waitUntil:"domcontentloaded"});
+      await p.waitForTimeout(120);
+      const r = await p.evaluate(()=>{
+        const de=document.documentElement;
+        const over=de.scrollWidth-de.clientWidth;
+        const wide=[];
+        if(over>0) document.querySelectorAll("body *").forEach(e=>{
+          const b=e.getBoundingClientRect();
+          if(b.right>de.clientWidth+1.5)
+            wide.push((typeof e.className==="string"&&e.className?"."+e.className.split(" ")[0]:e.tagName));
+        });
+        return {over, wide:[...new Set(wide)].slice(0,4)};
+      });
+      if(r.over>0){ bad_++; bad(`${url} ${w}×${h} ${tag} 가로 ${r.over}px 넘침 [${r.wide}]`); }
+      await ctx.close();
+    }
+  }
+  bad_===0 ? ok(`${VP.length*2}개 화면 크기 전부 가로 넘침 없음`) : null;
+}
+
 /* ── 1. 목록 페이지 ── */
 console.log("\n[목록 페이지]");
 {

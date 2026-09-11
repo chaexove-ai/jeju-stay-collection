@@ -381,6 +381,10 @@ h1 em{font-style:italic}
 
 @media (max-width:1080px){
   :root{--pad:40px}
+  /* .mmap 은 flex:none 인데 여기서 width:100% 가 되면, 줄어들지도 못하면서
+     칸 전체를 요구한다 —— 옆의 제목·설명 폭만큼 통째로 화면 밖으로 나갔다.
+     태블릿과 휴대폰 가로가 전부 여기 걸린다. 줄을 세로로 바꾼다. */
+  .coll-head{flex-direction:column; align-items:stretch; gap:18px}
   .mmap{width:100%}
   .mapwrap{grid-template-columns:1fr; gap:16px}
   .side{height:auto; max-height:300px}
@@ -516,6 +520,16 @@ h1 em{font-style:italic}
   .mini h3{font-size:17px}
 }
 
+
+/* 320px 짜리 화면에서는 24px 여백 사이에 로고와 언어 스위치가 3px 모자란다.
+   둘 다 한 단계 더 줄인다 —— 여백을 깎는 대신. */
+@media (max-width:370px){
+  .bar-in{gap:8px}
+  .brand{gap:8px}
+  .brand svg{width:30px; height:21px}
+  .brand-txt b, .brand-txt span{font-size:11px; letter-spacing:.16em}
+  .lang button{min-width:58px; padding:0 8px; font-size:11.5px; letter-spacing:.02em}
+}
 
 /* ── 호버 ────────────────────────────────────────────────
    손가락에는 호버가 없다. 터치 기기에서 이 규칙들이 걸리면
