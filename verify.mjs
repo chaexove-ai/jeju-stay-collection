@@ -84,6 +84,17 @@ console.log("\n[목록 페이지]");
       return { t:s.transform, sh:s.boxShadow, bd:s.borderColor };
     });
     base!==hov ? ok(`카드 호버 → 버튼 ${base} → ${hov}`) : bad(`버튼 색 그대로 ${base}`);
+    /* 한 줄 강조 —— 같은 글자를 한 겹 더 얹고 왼쪽부터 열어 보인다.
+       겹의 글자 폭이 원본과 어긋나면 호버할 때마다 글자가 흔들린다. */
+    const ink = await p.evaluate(()=>{
+      const el=[...document.querySelectorAll(".incl")].find(e=>e.dataset.txt);
+      if(!el) return {none:true};
+      const a=getComputedStyle(el,"::after");
+      return { txt:el.dataset.txt, matches: a.content.includes(el.dataset.txt),
+               clip:a.clipPath, stroke:a.webkitTextStrokeWidth, color:a.color };
+    });
+    !ink.none && ink.matches && /inset/.test(ink.clip)
+      ? ok(`한 줄 강조 겹 (${ink.txt} · ${ink.stroke})`) : bad(`강조 겹 ${JSON.stringify(ink)}`);
     card.t!=="none" && card.sh!=="none"
       ? ok("카드 호버 → 떠오름 + 그림자") : bad(`transform ${card.t} / shadow ${card.sh}`);
     await p.hover(".coll-head h2");

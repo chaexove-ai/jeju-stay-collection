@@ -90,7 +90,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
       <div class="c-top"><span class="lbl">${esc(r)}</span>${ratingHTML(g,lang,t)}</div>
       <h3><a href="${stayUrl(g)}" data-detail="${esc(g.id)}">${esc(n)}</a></h3>
       ${p?`<p>${esc(p)}</p>`:""}
-      ${bp.incl?`<div class="incl">${esc(bp.incl)}</div>`:""}
+      ${bp.incl?`<div class="incl" data-txt="${esc(bp.incl)}">${esc(bp.incl)}</div>`:""}
       ${tags.length?`<div class="tags">${tags.map((x,j)=>`<span>${esc(x)}</span>${j<tags.length-1?"<span>·</span>":""}`).join("")}</div>`:""}
       <div class="c-foot">
         <div class="avail">${esc(availLine(g,t))}</div>
@@ -230,7 +230,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
             <span style="font-family:var(--serif); font-style:italic; font-size:16px; color:var(--clay)">${esc(availLine(g,t))}</span>
           </div>
           ${p?`<p class="s-intro">${esc(p)}</p>`:""}
-          ${bp.incl?`<div class="incl" style="margin:0 0 24px">${esc(bp.incl)}</div>`:""}
+          ${bp.incl?`<div class="incl" data-txt="${esc(bp.incl)}" style="margin:0 0 24px">${esc(bp.incl)}</div>`:""}
           <div class="s-act">
             <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"
                data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}"
