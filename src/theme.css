@@ -226,13 +226,18 @@ h1 em{font-style:italic}
 .mpin .tip b{display:block; padding:7px 10px 8px; font-weight:500; line-height:1.35;
              white-space:normal; word-break:keep-all}
 .mpin:hover i, .mpin:focus-visible i, .mpin.on i{transform:scale(1.35); background:var(--pine-dark)}
-.mpin:hover .tip, .mpin:focus-visible .tip, .mpin.on .tip{opacity:1; transform:translateX(0)}
 .mpin:focus-visible{outline:none}
 .mpin:hover, .mpin:focus-visible, .mpin.on{z-index:4}
 /* 오른쪽 절반의 점은 말풍선을 왼쪽으로, 아래쪽 점은 위로 편다 —— 지도 밖으로 나가지 않게 */
 .mpin.left .tip{left:auto; right:26px; transform:translateX(4px)}
-.mpin.left:hover .tip, .mpin.left:focus-visible .tip, .mpin.left.on .tip{transform:translateX(0)}
 .mpin.hi .tip{top:auto; bottom:-2px}
+/* 말풍선은 마우스가 있는 기기에서만 연다. 손가락으로 누르면 아래 상세 카드가
+   열리는데, 그 위에 말풍선까지 겹쳐 뜨면 지도를 가린다. */
+.mpin:focus-visible .tip{opacity:1; transform:translateX(0)}
+@media (hover:hover) and (pointer:fine){
+  .mpin:hover .tip, .mpin.on .tip{opacity:1; transform:translateX(0)}
+  .mpin.left:hover .tip, .mpin.left.on .tip{transform:translateX(0)}
+}
 
 .mapcard{position:absolute; z-index:5; width:264px; background:var(--paper); border:1px solid var(--control);
          box-shadow:0 8px 28px rgba(25,24,23,.20)}
@@ -326,13 +331,23 @@ h1 em{font-style:italic}
   .also{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:760px){
-  :root{--pad:20px}
+  /* 20px 은 글이 화면 모서리에 붙어 보인다 */
+  :root{--pad:24px}
   /* 첫 화면에 사진과 글이 같이 들어가야 한다 —— 사진을 헤더 바로 아래로
      올리고, 세로로 먹는 값을 한 줄씩 깎는다. 390px 화면 기준으로
      막대 + 사진 + 글 전체가 한 화면에 떨어지는 것이 목표. */
   .hero{grid-template-columns:1fr}
-  .hero-img{order:1; min-height:0; height:190px}
-  .hero-txt{order:2; padding:20px 0 24px}
+  /* 사진은 화면 끝까지 —— 글과 같은 여백 안에 갇혀 있으면 둘이 한 덩어리로
+     붙어 「글 나열」처럼 보인다. 사진이 끝까지 가야 글 블록이 시작되는 지점이
+     눈에 잡힌다. */
+  .hero-img{order:1; min-height:0; height:210px; margin:0 calc(var(--pad) * -1)}
+  .hero-img::after{content:""; position:absolute; left:0; right:0; bottom:0; height:104px;
+    background:linear-gradient(to top, rgba(25,24,23,.55), rgba(25,24,23,0)); pointer-events:none}
+  /* 사진 설명은 흰 상자가 아니라 사진 위 글씨로 —— 아래 「01 JEJU ISLAND」와
+     똑같이 생긴 회색 줄이 두 번 겹치는 게 나열처럼 보이던 원인이다. */
+  .hero-cap{background:none; color:#fff; padding:0 var(--pad) 15px; z-index:2}
+  .hero-cap i{background:rgba(255,255,255,.65)}
+  .hero-txt{order:2; padding:26px 0 26px}
   .eyebrow{margin-bottom:16px}
   h1{font-size:30px; margin-bottom:16px}
   .lede{font-size:15.5px; margin-bottom:18px}
@@ -350,6 +365,22 @@ h1 em{font-style:italic}
   /* 390px 폭에서 섬은 350px 남짓이다. 지역 이름 일곱 개가 그 위에 겹치면
      읽히는 게 아니라 지저분해진다. 경계선만 남긴다. */
   .maplbl{display:none}
+
+  /* 지도 칸이 190px 밖에 안 된다. 그 안에 260px 짜리 카드를 띄우면
+     사진부터 잘린다. 휴대폰에서는 지도 아래 가로 한 줄로 깐다. */
+  /* static 으로 두면 닫기(×)가 지도 상자 모서리로 날아간다 —— relative 라야
+     카드 자신이 기준 상자가 된다. 대신 JS 가 남긴 left/top 은 꺼 준다. */
+  .mapcard{position:relative; left:auto !important; top:auto !important;
+           width:auto; border-width:1px 0 0; box-shadow:none;
+           display:flex; align-items:stretch}
+  .mapcard .x{width:38px; height:38px}
+  .pop-img{flex:none; width:116px; aspect-ratio:auto; align-self:stretch}
+  .pop-b{flex:1; min-width:0; padding:12px 40px 12px 14px}
+  .pop-b h4{font-size:18px; margin-bottom:4px}
+  .pop-b .meta{margin-bottom:10px}
+  .pop-b .btn{height:44px; width:auto; padding:0 18px; font-size:12px; letter-spacing:.1em}
+  /* 「15 stays shown」은 바로 위 줄에 이미 있다 —— 카드와 겹치기까지 한다 */
+  .map-cap{display:none}
   .coll{padding:34px 0 40px}
   .coll-head{flex-direction:column; align-items:stretch; gap:16px; margin-bottom:18px}
   .coll-head h2{font-size:30px}

@@ -28,8 +28,12 @@ const fails = [];
 const ok = m => console.log("  ✓ " + m);
 const bad = m => { console.log("  ✗ " + m); fails.push(m); };
 
-async function newPage(w=1440,h=1000){
-  const ctx = await browser.newContext({viewport:{width:w,height:h}});
+async function newPage(w=1440,h=1000,touch=false){
+  /* touch:true 는 진짜 손가락 기기를 흉내 낸다 —— 창만 좁힌 데스크톱에서는
+     hover 가 그대로 살아 있어서 「터치에서 호버가 안 걸리는지」를 못 잰다. */
+  const ctx = await browser.newContext(touch
+    ? {viewport:{width:w,height:h}, isMobile:true, hasTouch:true, deviceScaleFactor:2}
+    : {viewport:{width:w,height:h}});
   await ctx.route("**/*", route => {
     const u = route.request().url();
     if(u.startsWith(BASE)) return route.continue();
@@ -229,7 +233,7 @@ console.log("\n[목록 페이지]");
 /* ── 2. 모바일 ── */
 console.log("\n[모바일 390px]");
 {
-  const {p, ctx, errs} = await newPage(390,844);
+  const {p, ctx, errs} = await newPage(390,844,true);
   await p.goto(BASE+"/", {waitUntil:"networkidle"});
   const ow = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   ow<=0 ? ok("가로 스크롤 없음") : bad(`가로 넘침 ${ow}px`);
@@ -280,6 +284,33 @@ console.log("\n[모바일 390px]");
   const backOk = await p.evaluate(()=>!document.getElementById("grid").hidden
     && document.getElementById("mapwrap").hidden);
   backOk ? ok("목록 탭 복귀") : bad("목록으로 안 돌아옴");
+
+  /* 히어로 사진은 화면 끝까지 —— 글 블록과 눈에 띄게 갈려야 한다 */
+  const heroImgW = await p.$eval(".hero-img", e=>Math.round(e.getBoundingClientRect().width));
+  heroImgW===390 ? ok("히어로 사진 화면 끝까지 (390px)") : bad(`사진 폭 ${heroImgW}px`);
+
+  /* 핀을 눌렀을 때 —— 카드가 지도 상자 안에 온전히 들어가야 한다.
+     예전엔 190px 짜리 지도 칸 안에 260px 카드를 띄워 사진부터 잘렸다. */
+  await p.click('#vtabs button[data-view="map"]');
+  await p.waitForTimeout(400);
+  await p.click('.mpin[data-pin="ojori"]');
+  await p.waitForTimeout(400);
+  const card = await p.evaluate(()=>{
+    const c=document.getElementById("mapCard"), box=document.querySelector(".mapbox");
+    const r=c.getBoundingClientRect(), b=box.getBoundingClientRect();
+    const x=c.querySelector(".x").getBoundingClientRect();
+    return { clipped: r.bottom>b.bottom+1 || r.top<b.top-1 || r.right>b.right+1,
+             xInside: x.top>=r.top-1 && x.right<=r.right+1,
+             tip: getComputedStyle(document.querySelector(".mpin.on .tip")).opacity,
+             h: Math.round(r.height) };
+  });
+  !card.clipped ? ok(`핀 카드가 지도 상자 안에 (높이 ${card.h}px)`) : bad("카드가 잘림");
+  card.xInside ? ok("닫기 버튼이 카드 안") : bad("닫기 버튼이 카드 밖으로 날아감");
+  card.tip==="0" ? ok("터치 기기에서 호버 말풍선 안 뜸") : bad(`말풍선 opacity ${card.tip}`);
+  await p.click('#vtabs button[data-view="list"]');
+  await p.waitForTimeout(250);
+  await p.click('#vtabs button[data-view="map"]');
+  await p.waitForTimeout(300);
 
   const ow2 = await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   ow2<=0 ? ok("지도 탭에서도 가로 스크롤 없음") : bad(`지도 탭 가로 넘침 ${ow2}px`);

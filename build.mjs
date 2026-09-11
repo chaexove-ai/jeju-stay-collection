@@ -283,8 +283,13 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
           ${ISLE_BIG}
           ${MAPLBL}
           <div class="mappins" id="mapPins"></div>
-          <div class="mapcard" id="mapCard" hidden></div>
         </div>
+        ${/* 상세 카드는 지도 칸(mapstage) 밖, 지도 상자 안에 둔다.
+              넓은 화면에서는 지도 위에 절대 위치로 떠 있고 —— mapbox 도 기준
+              상자라 좌표 계산은 그대로다 —— 휴대폰에서는 position:static 이 되어
+              지도 아래 한 줄로 깔린다. 지도 칸이 190px 밖에 안 돼서 그 안에
+              띄우면 사진이 잘려나갔다. */""}
+        <div class="mapcard" id="mapCard" hidden></div>
         <div class="map-cap"><i></i><span id="mapCap"></span></div>
       </div>
       <div class="side" id="side"></div>
