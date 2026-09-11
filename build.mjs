@@ -57,7 +57,7 @@ async function loadTable(){
 }
 
 /* ---------- 페이지 껍데기 ---------- */
-function shell({title, desc, canonical, ogImage, css, body, script, lang="en"}){
+function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, css, body, script, lang="en"}){
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -68,10 +68,13 @@ function shell({title, desc, canonical, ogImage, css, body, script, lang="en"}){
 <link rel="canonical" href="${canonical}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jeju Stay Collection">
-<meta property="og:title" content="${title}">
+<meta property="og:title" content="${ogTitle||title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:url" content="${canonical}">${ogImage?`
-<meta property="og:image" content="${ogImage}">`:""}
+<meta property="og:image" content="${ogImage}">
+<meta property="og:image:alt" content="${ogAlt||ogTitle||title}">${ogImage.endsWith("/og.png")?`
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">`:""}`:""}
 <meta name="twitter:card" content="${ogImage?"summary_large_image":"summary"}">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -607,7 +610,14 @@ paint();
     title:"Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island",
     desc:"A curated collection of private pool villas, ocean-view retreats and quiet stone houses across Jeju Island — each one visited and looked after by a local team.",
     canonical:SITE+"/",
-    ogImage:hero?hero.photo:"",
+    /* 공유 카드 —— 카톡·아이메시지가 집어가는 그림은 한 장짜리 정지
+       이미지라, 숙소 사진 한 장을 쓰면 그 주의 히어로 숙소만 공짜 노출을
+       가져간다. 컬렉션 전체를 가리키는 그림을 따로 둔다. ogcard.mjs 로 만든다. */
+    ogImage:SITE+"/og.png",
+    ogAlt:"Jeju Stay Collection",
+    /* 공유 카드의 제목은 따로 —— 검색용 <title> 을 그대로 쓰면
+       카톡에서 「… Handpicked Vil…」 로 잘린다. */
+    ogTitle:"Jeju Stay Collection",
     css, body, script
   });
 }
@@ -647,7 +657,10 @@ paint();`;
     title:`${n} — Jeju Stay Collection`,
     desc:desc.replace(/"/g,"&quot;"),
     canonical:`${SITE}/stay/${g.id}`,
-    ogImage:g.photo||"",
+    /* 상세 페이지는 그 숙소 사진이 맞다 —— 그 숙소를 보라고 보내는 링크이므로.
+       사진이 없으면 컬렉션 카드로 떨어진다. */
+    ogImage:g.photo||SITE+"/og.png",
+    ogTitle:n, ogAlt:`${n}, ${region}`,
     css, body, script
   });
   return html.replace("</head>",
