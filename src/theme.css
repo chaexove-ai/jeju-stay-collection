@@ -112,7 +112,11 @@ h1 em{font-style:italic}
 .stars b{color:var(--basalt); font-weight:500}
 .card h3{margin:0 6px 10px; font-family:var(--serif); font-weight:var(--display-w); font-size:26px; line-height:1.2}
 .card p{margin:0 6px 14px; font-size:14.5px; line-height:1.7; color:var(--stone)}
-.incl{font-family:var(--serif); font-style:italic; font-size:15.5px; color:var(--clay); margin:0 6px 12px}
+/* 한 줄 강조 —— 카드에 마우스를 얹으면 이 줄 뒤로 색이 왼쪽에서 오른쪽으로
+   번진다. 형광펜이 아니라 잉크가 배어드는 정도의 세기. z-index:0 으로
+   자기 층을 만들어야 -1 짜리 뒷배경이 카드 밖으로 빠지지 않는다. */
+.incl{font-family:var(--serif); font-style:italic; font-size:15.5px; color:var(--clay); margin:0 6px 12px;
+      position:relative; z-index:0; width:fit-content}
 .tags{display:flex; flex-wrap:wrap; gap:6px 12px; margin:0 6px; font-size:12px; color:var(--clay)}
 .c-foot{margin-top:auto; padding-top:20px}
 .avail{display:flex; align-items:center; padding:15px 6px 13px;
@@ -389,7 +393,21 @@ h1 em{font-style:italic}
   .frow::-webkit-scrollbar{display:none}
   .frow > .lbl{display:none}
   .chip{height:44px; font-size:13px}
-  .grid{grid-template-columns:1fr; gap:24px}
+  .grid{grid-template-columns:1fr; gap:20px}
+  /* 카드를 한 칸 줄인다 —— 칸 수는 그대로 두고 세로로 먹는 값만 깎는다.
+     사진과 설명문은 건드리지 않는다. 광고로 들어온 사람에게
+     「왜 이 집인가」를 말하는 건 그 두 개뿐이다. */
+  .card{padding:10px 10px 18px}
+  .c-top{padding:13px 4px 4px}
+  .card h3{font-size:23px; margin-bottom:8px}
+  .card p{line-height:1.62; margin-bottom:12px}
+  .incl{font-size:14.5px; margin-bottom:10px}
+  .c-foot{padding-top:12px}
+  /* 「7 rooms to choose from」과 바로 아래 「See the 7 rooms」는 같은 말이다.
+     펼치기 버튼이 있는 카드에서는 윗줄을 뺀다. 객실이 하나뿐인 숙소는
+     저 줄이 유일한 정보라 그대로 둔다. */
+  .c-foot:has(.micro-a) .avail{display:none}
+  .avail{padding:10px 6px 10px}
   /* 사진 4:5 는 한 장이 화면 절반을 먹는다. 휴대폰에서는 3:2 로 줄여
      예약 버튼을 위로 끌어올리고 한 화면에 더 많은 숙소가 걸리게 한다. */
   .card .thumb{aspect-ratio:3/2}
@@ -435,6 +453,12 @@ h1 em{font-style:italic}
   .card:hover .btn{background:var(--pine-dark); box-shadow:0 6px 18px rgba(47,74,67,.28)}
   .card:hover h3 a{text-decoration:underline; text-underline-offset:4px;
                    text-decoration-thickness:1px; text-decoration-color:var(--linen)}
+  .incl::before{content:""; position:absolute; z-index:-1;
+    left:-.26em; right:-.26em; top:.02em; bottom:.06em;
+    background:rgba(47,74,67,.14);
+    transform:scaleX(0); transform-origin:left center;
+    transition:transform .42s cubic-bezier(.22,.61,.36,1)}
+  .card:hover .incl::before{transform:scaleX(1)}
 
   /* 객실 줄 —— 펼쳤을 때 각 줄도 누를 수 있다는 게 보여야 한다 */
   .room{transition:background .14s ease; padding-left:10px; padding-right:10px; margin:0 -10px}
