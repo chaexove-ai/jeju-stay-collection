@@ -166,11 +166,13 @@ const R=makeRender(T,TAGS,BADGES,MIN_REVIEWS,${JSON.stringify(prefix)});
    되살렸는데, 그러면 /(영문) 을 열어도 중국어가 나와 <html lang> · canonical ·
    광고 랜딩이 전부 어긋난다. 이제 이 페이지의 언어는 빌드 시점에 박힌다. */
 const lang=${JSON.stringify(lang)};
+const N=${STAY_COUNT};   /* 숙소 수 —— 문구에 숫자를 박지 않기 위해 */
 function track(n,p){try{if(typeof gtag==="function")gtag("event",n,p);}catch(e){}}
 function applyText(){
   const t=T[lang];
   document.querySelectorAll("[data-t]").forEach(el=>{
-    const v=(typeof SITE_TXT!=="undefined" && SITE_TXT[el.dataset.t] && SITE_TXT[el.dataset.t][lang]) || t[el.dataset.t];
+    let v=(typeof SITE_TXT!=="undefined" && SITE_TXT[el.dataset.t] && SITE_TXT[el.dataset.t][lang]) || t[el.dataset.t];
+    if(typeof v==="function") v=v(N);
     if(typeof v==="string") el.innerHTML=v;
   });
   /* 사전(T)에 없는 고정 문구 —— 지도 라벨처럼 두 언어를 요소가 직접 들고 있는 것 */
@@ -240,12 +242,15 @@ function miniMap(list, R, t){
    검색엔진에는 빈 껍데기가 먼저 가고, 자바스크립트가 막히면 영영 빈칸이다.
    繁體 페이지를 따로 내보내는 이상 본문이 서버에서 이미 그 언어여야 한다.
    비어 있는 요소만 채우므로, 이미 값이 든 자리는 건드리지 않는다. */
+let STAY_COUNT = 0;   /* 숙소 수는 데이터에서 한 번 읽어 여기에만 둔다 */
+
 function fillText(html, lang, siteTxt){
   const t = T[lang];
   return html
     .replace(/(<([a-z0-9]+)\b[^>]*\sdata-t="([A-Za-z0-9_]+)"[^>]*>)(<\/\2>)/g,
       (m, open, tag, key, close) => {
-        const v = (siteTxt && siteTxt[key] && siteTxt[key][lang]) || t[key];
+        let v = (siteTxt && siteTxt[key] && siteTxt[key][lang]) || t[key];
+        if(typeof v === "function") v = v(STAY_COUNT);
         return typeof v === "string" ? open + v + close : m;
       })
     .replace(/(<([a-z0-9]+)\b[^>]*\sdata-en="([^"]*)"[^>]*\sdata-zh="([^"]*)"[^>]*>)(<\/\2>)/g,
@@ -780,7 +785,7 @@ function page404({css}){
   <div class="eyebrow"><span class="lbl">404</span></div>
   <h1>This page has moved on.</h1>
   <p class="lede">The stay you were looking for may have left the collection,
-     or the address was mistyped. The fifteen houses are all one click away.</p>
+     or the address was mistyped. Every house in the collection is one click away.</p>
   <div class="s-act"><a class="btn btn-auto" href="/">The Collection</a></div>
 </main>
 ${darkFoot}`;
@@ -805,6 +810,7 @@ async function main(){
   const R         = mkR(""), Rz = mkR("/zh");
 
   const {list, site} = buildStays(await loadTable());
+  STAY_COUNT = list.length;
   if(list.length < MIN_STAYS)
     throw new Error(`숙소가 ${list.length}개만 파싱됨 (최소 ${MIN_STAYS}). 시트가 비었거나 열 순서가 바뀐 것 —— 배포를 멈춘다.`);
 

@@ -55,8 +55,10 @@ button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
 /* 섹션 머리 —— 얇은 선과 배경색만으로는 구간이 바뀐 게 안 읽혔다.
    번호를 큰 세리프로 키워 「여기서부터 다른 이야기」를 눈에 띄게 한다. */
 .eyebrow{display:flex; align-items:baseline; gap:14px; margin-bottom:26px}
+/* 구간 번호 —— 38px 이라도 --linen 은 1.76:1 이라 큰 글씨 기준(3:1)에 못 미쳤다.
+   한 톱 내려 3.3:1. 여전히 제목보다 뒤에 서지만 이제 보이기는 한다. */
 .eyebrow .lbl:first-child{font-family:var(--serif); font-weight:500; font-size:38px;
-  line-height:1; letter-spacing:0; color:var(--linen)}
+  line-height:1; letter-spacing:0; color:var(--ash)}
 .eyebrow i{display:none}
 h1{margin:0 0 26px; font-family:var(--serif); font-weight:450; font-size:clamp(34px,4vw,56px);
    line-height:1.08; letter-spacing:-.015em; text-wrap:pretty}
@@ -175,7 +177,7 @@ h1 em{font-style:italic}
 .dark{background:var(--basalt); padding:92px 0 64px}
 .wall{max-width:880px; margin:0 auto 76px; display:flex; flex-direction:column; align-items:center; gap:30px; text-align:center}
 .wall .eyebrow .lbl{color:var(--linen)}
-.wall .eyebrow .lbl:first-child{color:#4A463F}
+.wall .eyebrow .lbl:first-child{color:#767065}   /* 어두운 바닥 위 3.6:1 */
 .wall .eyebrow i{background:#4A463F}
 .wall-q{font-family:var(--serif); font-weight:450; font-size:clamp(24px,3vw,34px); line-height:1.42;
   letter-spacing:-.008em; color:var(--limestone); text-wrap:pretty}
@@ -619,7 +621,7 @@ h1 em{font-style:italic}
 
 /* ── 없는 주소 ──────────────────────────────────────────── */
 .nf{padding:110px 0 140px; max-width:760px}
-.nf .eyebrow .lbl:first-child{color:var(--linen)}
+
 .nf h1{margin-bottom:20px}
 .nf .lede{margin-bottom:36px}
 @media (max-width:760px){ .nf{padding:64px 0 88px} }

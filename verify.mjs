@@ -124,6 +124,23 @@ console.log("\n[목록 페이지]");
     ? ok("도틀왓 마지막") : bad(`마지막 카드가 도틀왓이 아님: ${cards[cards.length-1]}`);
   cards.indexOf("dotlwat")===14 ? ok("도틀왓 단 한 번, 맨 끝") : bad("도틀왓 위치 이상");
 
+  /* 숙소 수는 문구에 글자로 박지 않는다 —— 열여섯 번째 집이 들어오는 날
+     사이트가 조용히 거짓말을 하기 때문. 사전과 화면 양쪽으로 확인한다. */
+  {
+    const src = fs.readFileSync("src/i18n.mjs","utf8");
+    const words = src.match(/\b(?:ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b/gi) || [];
+    /* 「每一間」(each one) 은 개수가 아니다 —— 두 자 이상만 센다: 十五間, 二十間 */
+    const han   = src.match(/[一二三四五六七八九十]{2,}\s*間/g) || [];
+    words.length===0 && han.length===0
+      ? ok("문구에 숙소 수가 글자로 박혀 있지 않음")
+      : bad(`숫자가 박힌 문구 [${[...words, ...han].slice(0,4)}]`);
+    const eyebrow = (await p.textContent('[data-t="wallEyebrow"]')).trim();
+    const n = (eyebrow.match(/\d+/) || [])[0];
+    +n === cards.length
+      ? ok(`「${eyebrow}」 가 실제 숙소 수와 일치`)
+      : bad(`문구 "${eyebrow}" / 실제 ${cards.length}곳`);
+  }
+
   /* 히어로는 세 칸 —— 서로 다른 숙소여야 하고, 도틀왓은 절대 올라오면 안 된다.
      그리고 누를 수 없어야 한다: 여기 걸린 세 곳만 지름길을 얻으면 불공평해진다. */
   const hero = await p.$$eval(".hero-img .hcell", els=>els.map(e=>({

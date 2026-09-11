@@ -1,5 +1,9 @@
 /* ============================================================
    문구 · 태그 · 배지 사전
+
+   숙소 수가 들어가는 문구는 글자로 박지 말 것 —— 열여섯 번째 집이
+   들어오는 날 사이트가 조용히 거짓말을 한다. 값이 필요하면 함수로 두면
+   빌드가 실제 숙소 수를 넣어 준다 (wallEyebrow 참고).
    이 파일의 객체는 빌드 시 페이지 안으로 직렬화되어 들어간다.
    함수를 값으로 써도 되지만 클로저를 잡으면 안 된다 —
    serialize()가 Function.toString()으로 옮기기 때문.
@@ -9,7 +13,7 @@ export const T = {
   en:{
     place:"Jeju Island",
     h1:'Not every stay on Jeju.<br>Only the ones we would<br>send <em>a friend</em> to.',
-    lede:"Fifteen independent houses across the island — visited, photographed and looked after by a small team that lives here. Book each one directly on Airbnb; we take no commission.",
+    lede:"Independent houses across the island — visited, photographed and looked after by a small team that lives here. Book each one directly on Airbnb; we take no commission.",
     heroCta:"See the stays",
     avgLabel:"average across the collection",
     s1:"Stays", s2:"Villages", s3:"Visited in person", s3b:"All",
@@ -37,7 +41,7 @@ export const T = {
     tabList:"List", tabMap:"Map",
     mapOn:n=> n===1 ? "1 stay shown" : `${n} stays shown`,
     areaW:"West", areaS:"South", areaE:"East",
-    wallEyebrow:"Why these fifteen",
+    wallEyebrow:n=>`Why these ${n}`,
     wallQ:"Every house here is looked after by the same small team that lives on the island — before your booking, and long after it.",
     wallS:"We take no booking commission. Every stay is booked directly with its host on Airbnb.",
     footer:"A curated collection of independent stays across Jeju Island, put together and looked after by a team that lives here.",
@@ -48,7 +52,6 @@ export const T = {
     /* ── 상세 페이지 ── */
     detail:"View the stay",
     back:"The Collection",
-    backAll:"All fifteen stays",
     aboutTitle:"About the house",
     roomsTitle:"How it is taken",
     roomsOne:"Booking",
@@ -65,7 +68,7 @@ export const T = {
   zh:{
     place:"濟州島",
     h1:'不是濟州所有的住宿。<br>只有我們願意<br><em>推薦給朋友</em>的那幾間。',
-    lede:"島上十五間獨立住宿 —— 每一間都由住在這裡的小團隊親自走訪、拍攝並長期照顧。直接在 Airbnb 訂房，我們不收任何佣金。",
+    lede:"島上的獨立住宿 —— 每一間都由住在這裡的小團隊親自走訪、拍攝並長期照顧。直接在 Airbnb 訂房，我們不收任何佣金。",
     heroCta:"查看住宿",
     avgLabel:"為本系列平均評分",
     s1:"合作住宿", s2:"村落", s3:"親自走訪", s3b:"全部",
@@ -93,7 +96,7 @@ export const T = {
     tabList:"清單", tabMap:"地圖",
     mapOn:n=>`顯示 ${n} 間`,
     areaW:"西部", areaS:"南部", areaE:"東部",
-    wallEyebrow:"為什麼是這十五間",
+    wallEyebrow:n=>`為什麼是這 ${n} 間`,
     wallQ:"這裡的每一棟房子，都由同一組住在島上的人照顧 —— 在您訂房之前，也在很久之後。",
     wallS:"我們不收訂房佣金。每一間都直接在 Airbnb 向房東預訂。",
     footer:"由住在濟州島的團隊親自挑選並長期照顧的獨立住宿選輯。",
@@ -103,7 +106,6 @@ export const T = {
 
     detail:"查看詳情",
     back:"住宿選輯",
-    backAll:"全部十五間",
     aboutTitle:"關於這棟房子",
     roomsTitle:"訂房方式",
     roomsOne:"訂房",
