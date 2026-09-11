@@ -292,7 +292,8 @@ h1 em{font-style:italic}
 .pop-img{aspect-ratio:16/10; background:var(--placeholder); overflow:hidden}
 .pop-img img{width:100%; height:100%; object-fit:cover}
 .pop-b{padding:14px 16px 16px}
-.pop-b .lbl{display:block; margin-bottom:6px}
+.pop-meta{display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-bottom:6px}
+.pop-b .lbl{margin:0}
 .pop-b h4{margin:0 0 6px; font-family:var(--serif); font-weight:var(--display-w); font-size:21px; line-height:1.18}
 .pop-b .meta{font-size:12.5px; color:var(--clay); font-family:var(--serif); font-style:italic; margin-bottom:12px}
 
@@ -307,7 +308,16 @@ h1 em{font-style:italic}
       padding:9px 18px; border-left:2px solid transparent; transition:.14s}
 .item:hover, .item.on{background:var(--limestone); border-left-color:var(--pine)}
 .item .nm{font-size:14px; line-height:1.35}
-.item .rt{margin-left:auto; font-size:11.5px; color:var(--clay); white-space:nowrap; font-variant-numeric:tabular-nums}
+/* 지도 옆 목록의 평점 —— 숫자만 떠 있으면 무슨 숫자인지 모른다.
+   카드와 같은 별, 같은 감귤색. 후기가 아직 없는 곳도 같은 색으로 말한다. */
+.item .rt{display:inline-flex; align-items:center; gap:5px; margin-left:auto;
+  font-size:11.5px; color:var(--clay); white-space:nowrap; font-variant-numeric:tabular-nums}
+.item .rt b{font-weight:500; color:var(--basalt)}
+.rt .star{color:var(--tangerine); flex:none}
+.rt .new{color:var(--tangerine); font-weight:500}
+.pop-b .rt{display:inline-flex; align-items:center; gap:5px; font-size:11.5px;
+  color:var(--clay); font-variant-numeric:tabular-nums}
+.pop-b .rt b{font-weight:500; color:var(--basalt)}
 .side .rule{margin:10px 18px 0}
 
 /* ══════════════════════════════════════════════════════════
@@ -341,12 +351,12 @@ h1 em{font-style:italic}
 .prose p{margin:0 0 16px}
 .prose p:last-child{margin:0}
 
-.feat{display:flex; flex-wrap:wrap; gap:10px}
-/* 테두리가 --hairline-2 일 때 배경과 1.5:1 이었다 —— 상자가 있는지도 모른다.
-   누를 수 있는 것도 아니지만, 칸으로 보이려면 최소한 보이긴 해야 한다. */
-.feat span{display:inline-flex; align-items:center; height:38px; padding:0 16px;
-  border:1px solid var(--control); background:var(--paper); font-size:12.5px; color:var(--basalt)}
-.band-paper .feat span{background:var(--limestone)}
+/* 「여기 뭐가 있나」 —— 테두리 친 칸이었는데, 누를 수 없는 것이 버튼처럼
+   보이는 데다 글자만 있어서 훑어지지 않았다. 선 하나짜리 그림을 붙이고
+   칸을 없앤다. 눈이 그림을 먼저 잡고 글자가 뒤따른다. */
+.feat{display:grid; grid-template-columns:repeat(auto-fill,minmax(178px,1fr)); gap:15px 24px}
+.feat span{display:flex; align-items:center; gap:11px; font-size:14px; color:var(--basalt)}
+.feat svg{color:var(--pine); flex:none}
 
 /* 예약하는 칸 —— 상세 페이지에서 유일하게 어두운 덩어리다.
    나란히 놓인 두 제목이 같은 바탕 위에 있으면 어디까지가 무엇인지 안 읽힌다.

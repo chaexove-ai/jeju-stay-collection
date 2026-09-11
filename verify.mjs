@@ -382,6 +382,17 @@ console.log("\n[목록 페이지]");
     flip>0 ? ok(`아래쪽 핀 ${flip}개는 말풍선이 위로`) : bad("위로 여는 핀이 없음");
     const sideEn = await p.textContent("#side");
     /West|South|East/.test(sideEn) ? ok("지도 옆 목록 영문") : bad("옆 목록 영문 아님");
+    /* 옆 목록의 평점 —— 별이 붙고, 후기 없는 곳은 카드와 같은 감귤색 */
+    const rt = await p.evaluate(()=>{
+      const stars = document.querySelectorAll("#side .rt .star").length;
+      const nw = document.querySelector("#side .rt .new");
+      const ref = getComputedStyle(document.querySelector(".card .star")).color;
+      return { stars, newCol: nw ? getComputedStyle(nw).color : null, ref,
+               starCol: getComputedStyle(document.querySelector("#side .rt .star")).color };
+    });
+    rt.stars>0 && rt.starCol===rt.ref && rt.newCol===rt.ref
+      ? ok(`옆 목록 별 ${rt.stars}개 · Newly listed 도 같은 감귤색`)
+      : bad(`별 ${rt.stars} / 별색 ${rt.starCol} / new ${rt.newCol} / 기준 ${rt.ref}`);
     await p.click('.mpin[data-pin="andostay"]');
     await p.waitForTimeout(200);
     const card = await p.$eval("#mapCard", e=>!e.hidden);
@@ -564,6 +575,13 @@ console.log(`\n[상세 페이지 ${IDS.length}개]`);
     if(ow>0) problems.push("가로 넘침 "+ow);
     const ld = await p.$$eval('script[type="application/ld+json"]', s=>s.length);
     if(ld!==1) problems.push("구조화 데이터 "+ld);
+    /* 「여기 뭐가 있나」 —— 항목마다 선 그림이 하나씩 붙어 있어야 한다 */
+    const feat = await p.$$eval(".feat span", e=>({
+      n:e.length, svg:e.filter(x=>x.querySelector("svg")).length,
+      empty:e.filter(x=>!x.textContent.trim()).length
+    })).catch(()=>({n:0,svg:0,empty:0}));
+    if(feat.n && (feat.svg!==feat.n || feat.empty))
+      problems.push(`설비 ${feat.n}개 중 아이콘 ${feat.svg}개`);
     problems.length ? bad(`${id}: ${problems.join(", ")}`) : ok(id);
   }
   console.log(`  · 지도 있는 페이지 ${maps}/${IDS.length} (좌표 없는 숙소는 지도 섹션 자체가 없음)`);

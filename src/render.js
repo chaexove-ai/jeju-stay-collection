@@ -25,6 +25,46 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
   const BACK ='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
   const STAR ='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>';
 
+
+  /* 설비 아이콘 —— 「여기 뭐가 있나」를 글자만으로 읽게 하면 목록을 훑지 않는다.
+     선 하나짜리 그림이면 눈이 먼저 잡고 글자가 뒤따른다.
+     굵기·둥근 끝은 브랜드 마크와 같은 값이라 한 손에서 나온 것처럼 보인다.
+     사전(TAGS)의 키와 1:1 이고, 없는 키는 그냥 글자만 나간다. */
+  const IC = {
+    POOL:    'M7 13.5V7a2.5 2.5 0 0 1 5 0v6.5M7 9h5M7 11.5h5M3 17c2-1.8 4-1.8 6 0s4 1.8 6 0 4-1.8 6 0M3 21c2-1.8 4-1.8 6 0s4 1.8 6 0 4-1.8 6 0',
+    HEATED:  'M3 18c2-1.8 4-1.8 6 0s4 1.8 6 0 4-1.8 6 0M8 12c0-2 2-2 2-4s-2-2-2-4M16 12c0-2-2-2-2-4s2-2 2-4',
+    INDOOR:  'M4 10.5 12 4l8 6.5V20H4zM7 16c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0',
+    OCEAN:   'M3 8c2-1.7 4-1.7 6 0s4 1.7 6 0 4-1.7 6 0M3 13c2-1.7 4-1.7 6 0s4 1.7 6 0 4-1.7 6 0M3 18c2-1.7 4-1.7 6 0s4 1.7 6 0 4-1.7 6 0',
+    BEACH:   'M12 12v8M4 12a8 8 0 0 1 16 0zM3 21c1.5-1.3 3-1.3 4.5 0M16.5 21c1.5-1.3 3-1.3 4.5 0',
+    MOUNTAIN:'M2 19l6.5-9 3.5 4.6L15.5 10 22 19zM8.5 10l1.7 2.3',
+    SUNRISE: 'M3 20h18M7.5 16a4.5 4.5 0 0 1 9 0M12 3v5M12 3L9.5 5.5M12 3l2.5 2.5M4 12.5l1.8 1.8M20 12.5l-1.8 1.8',
+    SUNSET:  'M3 20h18M7.5 16a4.5 4.5 0 0 1 9 0M12 8V3M12 8L9.5 5.5M12 8l2.5-2.5M4 12.5l1.8 1.8M20 12.5l-1.8 1.8',
+    JACUZZI: 'M3 12h18v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5zM7 12V6a2 2 0 0 1 4 0M10 4.5h2M15 9V7.5M18 9.5V8',
+    SPA:     'M12 21c0-4.5 2.8-7.5 7.5-7.5C19.5 18 16.7 21 12 21zM12 21c0-4.5-2.8-7.5-7.5-7.5C4.5 18 7.3 21 12 21zM12 21v-6.5c0-3 1.2-5.5 3-7',
+    SAUNA:   'M4 20h16M6 20v-3a6 6 0 0 1 12 0v3M9 9c0-1.6 1.5-1.8 1.5-3.2S9 3.6 9 2M15 9c0-1.6-1.5-1.8-1.5-3.2S15 3.6 15 2',
+    CINEMA:  'M3 5h18v12H3zM9 21h6M12 17v4M10.5 8.5l4 2.5-4 2.5z',
+    KARAOKE: 'M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM6.5 11a5.5 5.5 0 0 0 11 0M12 16.5V21M9 21h6',
+    BBQ:     'M4 11h16v1.5a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM8.5 18.5 6.5 21.5M15.5 18.5l2 3M9 7.5c0-1.6 1.5-1.6 1.5-3.2M14 7.5c0-1.6-1.5-1.6-1.5-3.2',
+    KITCHEN: 'M3.5 11.5h12V15a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4zM15.5 13.5h5M8 8c0-1.4 1.3-1.4 1.3-2.8M12 8c0-1.4 1.3-1.4 1.3-2.8',
+    PARKING: 'M4 4h16v16H4zM10 16.5V8h3.2a2.6 2.6 0 0 1 0 5.2H10',
+    GARDEN:  'M12 21v-5.5M12 15.5a5.2 5.2 0 1 0 0-10.4 5.2 5.2 0 0 0 0 10.4zM8 21h8',
+    ORCHARD: 'M12 21a6 6 0 0 0 0-12 6 6 0 0 0 0 12zM12 9c0-2.5 2-4.5 4.5-4.5C16.5 7 14.5 9 12 9z',
+    FOREST:  'M8 16L4 16l4-7 4 7H10M8 16v5M17 18h-3.5l3.5-6 3.5 6H17M17 18v3',
+    CAMPING: 'M12 4 3.5 20h17zM12 4v16M8.5 20l3.5-6.5 3.5 6.5',
+    STONE:   'M3 5h18v14H3zM3 9.5h18M3 14.5h18M9 5v4.5M15 5v4.5M6 9.5v5M12 9.5v5M18 9.5v5M9 14.5V19M15 14.5V19',
+    DESIGN:  'M9.5 4a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zM11 11h9v9h-9z',
+    PHOTO:   'M3 7.5h4l1.5-3h7L17 7.5h4V20H3zM12 10.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z',
+    PRIVATE: 'M4 20V10l8-6 8 6v10zM10 20v-6h4v6',
+    GROUP:   'M9 4.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16.5 7a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM17 14.5c2.3.3 4 2.2 4 4.5',
+    FAMILY:  'M8 4.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3.5 20c0-2.8 2-4.8 4.5-4.8s4.5 2 4.5 4.8M16.5 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13.5 20c0-1.9 1.3-3.3 3-3.3s3 1.4 3 3.3',
+    COUPLE:  'M12 20.5S4.5 15.6 4.5 10.4A3.9 3.9 0 0 1 12 8.6a3.9 3.9 0 0 1 7.5 1.8c0 5.2-7.5 10.1-7.5 10.1z',
+    PET:     'M6.5 9.5a1.8 2.3 0 1 1 0 4.6 1.8 2.3 0 0 1 0-4.6zM17.5 9.5a1.8 2.3 0 1 1 0 4.6 1.8 2.3 0 0 1 0-4.6zM9.8 4.5a1.7 2.2 0 1 1 0 4.4 1.7 2.2 0 0 1 0-4.4zM14.2 4.5a1.7 2.2 0 1 1 0 4.4 1.7 2.2 0 0 1 0-4.4zM12 12.5c3 0 4.8 2 4.8 4 0 1.8-1.5 3-3.4 3h-2.8c-1.9 0-3.4-1.2-3.4-3 0-2 1.8-4 4.8-4z'
+  };
+  const icon = k => IC[k]
+    ? `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${IC[k]}"/></svg>`
+    : "";
+
   const name   = (g,lang)=> (lang==="zh"?g.nameZh:g.nameEn) || g.nameEn || g.nameKo || g.id;
   const region = (g,lang)=> (lang==="zh"?g.regionZh:g.regionEn) || g.regionEn || "";
   const intro  = (g,lang)=> (lang==="zh"?g.introZh:g.introEn) || g.introEn || "";
@@ -197,7 +237,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
   function stayHTML(g, others, lang){
     const t=T[lang];
     const n=name(g,lang), r=region(g,lang), p=intro(g,lang);
-    const feats=g.tags.map(k=>TAGS[k]&&TAGS[k][lang]).filter(Boolean);
+    const feats=g.tags.filter(k=>TAGS[k]).map(k=>({k, label:TAGS[k][lang]})).filter(x=>x.label);
     const bp=badgeParts(g,lang);
     const primary=g.rooms[0];
     const multi=g.rooms.length>1;
@@ -262,7 +302,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
             <div>
               <h2>${esc(t.featTitle)}</h2>
               ${hasRating(g)?`<p class="sub">${esc(t.ratingNote)}</p>`:`<p class="sub">&nbsp;</p>`}
-              ${feats.length?`<div class="feat">${feats.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`
+              ${feats.length?`<div class="feat">${feats.map(x=>`<span>${icon(x.k)}${esc(x.label)}</span>`).join("")}</div>`
                             :`<p class="prose">${esc(p)}</p>`}
             </div>
             <div class="book">
