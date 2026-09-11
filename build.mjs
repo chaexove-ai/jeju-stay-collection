@@ -16,7 +16,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseCSV, buildStays, pickHero } from "./src/data.mjs";
+import { parseCSV, buildStays, pickHero, pickHeroes } from "./src/data.mjs";
 import { T, TAGS, BADGES, MIN_REVIEWS } from "./src/i18n.mjs";
 import { JEJU } from "./src/jeju.mjs";
 
@@ -212,7 +212,7 @@ function miniMap(list, R, t){
 }
 
 /* ---------- 목록 페이지 ---------- */
-function pageIndex({list, site, hero, css, renderSrc, R}){
+function pageIndex({list, site, hero, heroes, css, renderSrc, R}){
   const t=T.en;
   const siteTxt={};
   if(site._hero){
@@ -244,9 +244,16 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
       <div class="stat"><b data-t="s3b"></b><span class="lbl" data-t="s3"></span></div>
     </div>
   </div>
+  ${/* 사진 한 장에 이름 하나면 「그 집 사이트」로 읽힌다. 세 곳을 한 번에
+        보여주면 여러 곳을 모아둔 자리라는 게 움직임 없이 전달된다.
+        세 곳은 히어로 순환과 같은 규칙으로 매주 같이 바뀌고,
+        맨 아래로 고정된 숙소는 여기 올라오지 않는다. */""}
   <div class="hero-img">
-    ${hero?`<img src="${R.esc(hero.photo)}" alt="" style="object-position:${R.esc(R.FOCUS[hero.focus]||"center")}">
-    <div class="hero-cap"><i></i><span id="heroCap">${R.esc(R.name(hero,"en"))} · ${R.esc(R.shortRegion(R.region(hero,"en")))}</span></div>`:""}
+    ${heroes.length?heroes.map((h,i)=>`<a class="hcell" href="/stay/${encodeURIComponent(h.id)}" data-detail="${R.esc(h.id)}">
+      <img src="${R.esc(R.photoAt(h.photo, i?600:1200))}" alt="" loading="${i?"lazy":"eager"}"
+           style="object-position:${R.esc(R.FOCUS[h.focus]||"center")}">
+      <span class="hc" data-hid="${R.esc(h.id)}">${R.esc(R.name(h,"en"))}${i?"":" · "+R.esc(R.shortRegion(R.region(h,"en")))}</span>
+    </a>`).join(""):""}
   </div>
 </header>
 
@@ -320,11 +327,11 @@ function paint(){
      예전엔 여기 window.L(Leaflet) 조건이 붙어 있었는데, Leaflet 을 걷어낸 뒤로
      그 값이 영영 undefined 라 지도가 열린 채 언어를 바꾸면 지도만 옛 언어로 남았다. */
   if(typeof paintMini==="function"){ paintMini(); if(view==="map") paintMap(); }
-  const cap=document.getElementById("heroCap");
-  if(cap&&HERO){
-    const h=DATA.find(g=>g.id===HERO.id);
-    if(h) cap.textContent=R.name(h,lang)+" · "+R.shortRegion(R.region(h,lang));
-  }
+  /* 히어로 세 칸의 이름 —— 큰 칸만 지역까지 붙인다 */
+  document.querySelectorAll(".hcell .hc").forEach((el,i)=>{
+    const h=DATA.find(g=>g.id===el.dataset.hid);
+    if(h) el.textContent = R.name(h,lang) + (i?"":" · "+R.shortRegion(R.region(h,lang)));
+  });
 }
 document.getElementById("filters").addEventListener("click",e=>{
   const b=e.target.closest("button[data-f]"); if(!b) return;
@@ -628,14 +635,15 @@ async function main(){
   if(list.length < MIN_STAYS)
     throw new Error(`숙소가 ${list.length}개만 파싱됨 (최소 ${MIN_STAYS}). 시트가 비었거나 열 순서가 바뀐 것 —— 배포를 멈춘다.`);
 
-  const hero = pickHero(list);
+  const heroes = pickHeroes(list, 3);
+  const hero = heroes[0] || null;
 
   await rm(DIST,{recursive:true,force:true});
   await mkdir(DIST,{recursive:true});
   if(existsSync(PUBLIC)) await cp(PUBLIC, DIST, {recursive:true});
 
   await writeFile(path.join(DIST,"index.html"),
-    pageIndex({list, site, hero, css, renderSrc, R}), "utf8");
+    pageIndex({list, site, hero, heroes, css, renderSrc, R}), "utf8");
 
   for(const g of list){
     /* 「다른 숙소」 —— 같은 지역 먼저, 그다음 정렬 순서. 자기 자신 제외. */

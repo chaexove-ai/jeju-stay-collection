@@ -67,12 +67,20 @@ h1 em{font-style:italic}
 .avg b{color:var(--basalt); font-weight:500}
 .stats{display:flex; flex-wrap:wrap; gap:52px; padding-top:22px}
 .stat b{display:block; font-family:var(--serif); font-weight:var(--display-w); font-size:30px; line-height:1; margin-bottom:7px}
-.hero-img{position:relative; min-height:600px; overflow:hidden; background:var(--placeholder)}
-.hero-img img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
-.hero-cap{position:absolute; left:0; bottom:0; background:var(--paper); padding:13px 22px;
-  display:flex; align-items:center; gap:12px; font-size:11px; font-weight:500;
-  letter-spacing:.2em; text-transform:uppercase; color:var(--stone)}
-.hero-cap i{width:20px; height:1px; background:var(--hairline-2); display:block}
+/* 히어로 —— 세 곳을 한 화면에. 큰 칸 하나 + 작은 칸 둘.
+   사진 한 장에 이름 하나면 그 집 사이트로 읽히지만, 서로 다른 집 셋이
+   같이 보이면 「모아둔 곳」이라는 게 움직임 없이 바로 전달된다. */
+.hero-img{position:relative; min-height:600px; background:var(--placeholder);
+  display:grid; gap:4px; grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr}
+.hcell{position:relative; overflow:hidden; background:var(--placeholder); display:block}
+.hcell:first-child{grid-row:1 / span 2}
+.hcell img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .6s ease}
+.hcell::after{content:""; position:absolute; left:0; right:0; bottom:0; height:58%;
+  background:linear-gradient(to top, rgba(25,24,23,.62), rgba(25,24,23,0)); pointer-events:none}
+.hc{position:absolute; left:14px; bottom:11px; z-index:2; color:#fff; font-size:10px;
+  font-weight:500; letter-spacing:.16em; line-height:1.35; text-transform:uppercase;
+  text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.hcell:first-child .hc{left:22px; bottom:17px; font-size:11.5px; letter-spacing:.2em}
 
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; height:50px; padding:0 30px;
   background:var(--pine); color:var(--paper); font-size:13px; font-weight:500;
@@ -386,13 +394,9 @@ h1 em{font-style:italic}
   /* 사진은 화면 끝까지 —— 글과 같은 여백 안에 갇혀 있으면 둘이 한 덩어리로
      붙어 「글 나열」처럼 보인다. 사진이 끝까지 가야 글 블록이 시작되는 지점이
      눈에 잡힌다. */
-  .hero-img{order:1; min-height:0; height:210px; margin:0 calc(var(--pad) * -1)}
-  .hero-img::after{content:""; position:absolute; left:0; right:0; bottom:0; height:104px;
-    background:linear-gradient(to top, rgba(25,24,23,.55), rgba(25,24,23,0)); pointer-events:none}
-  /* 사진 설명은 흰 상자가 아니라 사진 위 글씨로 —— 아래 「01 JEJU ISLAND」와
-     똑같이 생긴 회색 줄이 두 번 겹치는 게 나열처럼 보이던 원인이다. */
-  .hero-cap{background:none; color:#fff; padding:0 var(--pad) 15px; z-index:2}
-  .hero-cap i{background:rgba(255,255,255,.65)}
+  .hero-img{order:1; min-height:0; height:232px; margin:0 calc(var(--pad) * -1)}
+  .hcell:first-child .hc{left:var(--pad); bottom:13px; font-size:10.5px}
+  .hcell .hc{font-size:9px; left:10px; bottom:8px; letter-spacing:.12em}
   .hero-txt{order:2; padding:26px 0 26px}
   .eyebrow{margin-bottom:16px}
   h1{font-size:30px; margin-bottom:16px}
@@ -538,6 +542,8 @@ h1 em{font-style:italic}
   .room:hover{background:var(--limestone)}
   .book .rrow-go:hover{background:var(--paper); color:var(--pine); border-color:var(--paper)}
   .book .rrow-go:hover svg{stroke:var(--pine)}
+
+  .hcell:hover img{transform:scale(1.045)}
 
   /* 헤더의 작은 지도 */
   .mmap{transition:border-color .16s ease, box-shadow .16s ease}

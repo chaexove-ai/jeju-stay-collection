@@ -155,8 +155,24 @@ export function buildStays(table){
    빌드 시점에 결정되므로, 재배포가 없으면 사진도 바뀌지 않는다.
    시트 수정마다 재배포가 걸려 있으니 실질적으로는 주 단위로 돈다. */
 export function pickHero(list, now = Date.now()){
+  return pickHeroes(list, 1, now)[0] || null;
+}
+
+/* 히어로에 세울 숙소 —— 사진이 있고 맨 아래 고정이 아닌 곳만.
+   주 단위로 돌고, 한 화면에 여러 장을 쓰므로 서로 겹치지 않게 고른다.
+   풀 길이와 서로소인 간격으로 건너뛰어야 매주 조합이 달라진다. */
+export function pickHeroes(list, n = 3, now = Date.now()){
   const pool = list.filter(g=>g.photo && !g.bottom);
-  if(!pool.length) return null;
+  if(!pool.length) return [];
   const week = Math.floor(now/6048e5);
-  return pool[week % pool.length];
+  const step = pool.length % 3 === 0 ? 4 : 3;
+  const out = [];
+  for(let i=0; i<Math.min(n, pool.length); i++)
+    out.push(pool[(week + i*step) % pool.length]);
+  /* 같은 곳이 두 번 걸리면(풀이 짧을 때) 뒤에서 채운다 */
+  for(let i=0; i<out.length; i++)
+    for(let j=0; j<i; j++)
+      if(out[j] === out[i])
+        out[i] = pool.find(g=>!out.includes(g)) || out[i];
+  return out;
 }

@@ -85,8 +85,16 @@ console.log("\n[목록 페이지]");
     ? ok("도틀왓 마지막") : bad(`마지막 카드가 도틀왓이 아님: ${cards[cards.length-1]}`);
   cards.indexOf("dotlwat")===14 ? ok("도틀왓 단 한 번, 맨 끝") : bad("도틀왓 위치 이상");
 
-  const heroCap = await p.textContent("#heroCap").catch(()=>null);
-  heroCap && !/dotlwat|도틀왓/i.test(heroCap) ? ok(`히어로: ${heroCap}`) : bad(`히어로 이상: ${heroCap}`);
+  /* 히어로는 세 칸 —— 서로 다른 숙소여야 하고, 도틀왓은 절대 올라오면 안 된다 */
+  const hero = await p.$$eval(".hero-img .hcell", els=>els.map(e=>({
+    id:e.dataset.detail, href:e.getAttribute("href"), cap:e.querySelector(".hc").textContent.trim()
+  })));
+  const ids = hero.map(h=>h.id);
+  hero.length===3 && new Set(ids).size===3
+    ? ok(`히어로 3곳 (${hero.map(h=>h.cap).join(" / ")})`) : bad(`히어로 ${hero.length}칸 [${ids}]`);
+  !ids.includes("dotlwat") ? ok("히어로에 도틀왓 없음") : bad("도틀왓이 히어로에 올라옴");
+  hero.every(h=>h.href && h.href.startsWith("/stay/"))
+    ? ok("히어로 각 칸 → 상세 페이지") : bad("히어로 링크 이상");
 
   const links = await p.$$eval(".card h3 a", a=>a.map(x=>x.getAttribute("href")));
   links.every(h=>h.startsWith("/stay/")) ? ok("카드 제목 → /stay/*") : bad("카드 제목 링크 이상");
@@ -160,6 +168,9 @@ console.log("\n[목록 페이지]");
   /住宿/.test(zh) ? ok(`언어 전환 (${zh})`) : bad(`언어 전환 실패: ${zh}`);
   const zhCards = await p.$$eval(".card", e=>e.length);
   zhCards===15 ? ok("전환 후에도 15장") : bad(`전환 후 ${zhCards}장`);
+  const zhHero = await p.$$eval(".hero-img .hc", e=>e.map(x=>x.textContent.trim()));
+  zhHero.some(t=>/[一-鿿]/.test(t))
+    ? ok(`히어로 이름 繁體中文 (${zhHero[0]})`) : bad(`히어로 이름 [${zhHero}]`);
   /* 지역 필터 칩도 한자여야 한다 —— 값(키)은 영문 그대로 두고 글자만 바꾼다 */
   const zhChips = await p.$$eval('.chip[data-f="region"]', e=>e.map(x=>({v:x.dataset.v,t:x.textContent.trim()})));
   const zhNamed = zhChips.filter(c=>c.v!=="all");
