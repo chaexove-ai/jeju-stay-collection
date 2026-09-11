@@ -23,6 +23,16 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
   const intro  = (g,lang)=> (lang==="zh"?g.introZh:g.introEn) || g.introEn || "";
   const stayUrl= g => "/stay/" + encodeURIComponent(g.id);
 
+  /* 같은 사진을 작은 크기로 —— 사진은 Cloudinary 에 w_1200 으로 올라가 있다.
+     지도 핀 미리보기에 1200px 짜리를 그대로 쓰면 한 장에 수백 KB 다.
+     변환 구간의 w_ 만 바꿔치기하고, 형식이 다르면 원본을 그대로 돌려준다. */
+  function photoAt(url, w){
+    const s = String(url||"");
+    return /\/image\/upload\/[^/]*\bw_\d+/.test(s)
+      ? s.replace(/(\/image\/upload\/[^/]*\b)w_\d+/, "$1w_" + w)
+      : s;
+  }
+
   /* 표본이 작은 평점은 숫자로 내보내지 않는다.
      후기 2~3건의 5.00 / 4.67 은 정보가 아니라 잡음이다.
      시트에는 실제 값을 넣어두고, 기준을 넘기면 자동으로 숫자가 나온다. */
@@ -261,5 +271,5 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
 
   return {esc, fmt, name, region, intro, stayUrl, hasRating, ratingHTML,
           availLine, cardHTML, miniHTML, filtersHTML, matches, gridHTML,
-          avgRating, stayHTML, shortRegion, FOCUS};
+          avgRating, stayHTML, shortRegion, photoAt, FOCUS};
 }

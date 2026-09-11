@@ -388,9 +388,19 @@ function paintMap(){
     return { g: g, x: p[0], y: p[1] };
   }));
   document.getElementById("mapPins").innerHTML = pts.map(function(q){
-    return '<button type="button" class="mpin' + (q.x > 58 ? " left" : "") + '" data-pin="' + R.esc(q.g.id) + '"' +
+    /* 말풍선은 핀 오른쪽·아래로 자라는 게 기본이다.
+       핀이 섬 오른쪽에 있으면 왼쪽으로(left), 아래쪽에 있으면 위로(hi) 뒤집어
+       말풍선이 지도 밖으로 잘려나가지 않게 한다. */
+    var cls = "mpin" + (q.x > 58 ? " left" : "") + (q.y > 52 ? " hi" : "");
+    /* 사진은 처음 호버할 때 넣는다 —— 지도를 열자마자 15장을 받아오면
+       지도 자체가 느려진다. 여기서는 주소만 들려 보낸다. */
+    var img = q.g.photo
+      ? '<img alt="" decoding="async" data-src="' + R.esc(R.photoAt(q.g.photo, 320)) + '">'
+      : "";
+    return '<button type="button" class="' + cls + '" data-pin="' + R.esc(q.g.id) + '"' +
       ' style="left:' + q.x.toFixed(2) + '%;top:' + q.y.toFixed(2) + '%">' +
-      '<i></i><span>' + R.esc(R.name(q.g, lang)) + "</span></button>";
+      '<i></i><span class="tip">' + img +
+      '<b>' + R.esc(R.name(q.g, lang)) + "</b></span></button>";
   }).join("");
   PINPOS = {}; pts.forEach(function(q){ PINPOS[q.g.id] = q; });
   document.getElementById("mapCap").textContent = t.mapOn(list.length);
@@ -449,6 +459,16 @@ function openCard(id){
   highlight(id);
 }
 
+/* 말풍선 사진을 처음 볼 때 한 번만 받아온다. 두 번째부터는 data-src 가
+   지워져 있어 아무 일도 하지 않는다. 사진이 아직 안 왔으면 이름만 뜬다. */
+function wakeTip(btn){
+  var img = btn.querySelector(".tip img[data-src]");
+  if(!img) return;
+  img.src = img.dataset.src;
+  delete img.dataset.src;
+  img.onerror = function(){ img.remove(); };
+}
+
 function showMap(on){
   view = on ? "map" : "list";
   document.getElementById("grid").hidden = on;
@@ -475,7 +495,11 @@ if(stageEl){
     else if(!e.target.closest(".mapcard")) closeCard();
   });
   stageEl.addEventListener("mouseover", function(e){
-    var b = e.target.closest("[data-pin]"); if(b) highlight(b.dataset.pin);
+    var b = e.target.closest("[data-pin]"); if(b){ highlight(b.dataset.pin); wakeTip(b); }
+  });
+  /* 키보드로 핀을 훑을 때도 사진이 나와야 한다 —— focus 는 버블링하지 않으므로 캡처로 받는다 */
+  stageEl.addEventListener("focusin", function(e){
+    var b = e.target.closest("[data-pin]"); if(b) wakeTip(b);
   });
   stageEl.addEventListener("mouseout", function(e){
     if(e.target.closest("[data-pin]")) highlight(null);

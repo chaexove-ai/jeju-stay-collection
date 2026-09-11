@@ -68,6 +68,24 @@ console.log("\n[목록 페이지]");
   const links = await p.$$eval(".card h3 a", a=>a.map(x=>x.getAttribute("href")));
   links.every(h=>h.startsWith("/stay/")) ? ok("카드 제목 → /stay/*") : bad("카드 제목 링크 이상");
 
+  /* 카드 호버 —— 얹으면 눈에 띄게 달라져야 한다. 버튼 배경이 어두워지고
+     카드가 떠오르는지, 실제 계산된 값으로 확인한다. */
+  {
+    const base = await p.$eval(".card:nth-child(3) .btn", e=>getComputedStyle(e).backgroundColor);
+    await p.hover(".card:nth-child(3) .thumb");
+    await p.waitForTimeout(320);
+    const hov  = await p.$eval(".card:nth-child(3) .btn", e=>getComputedStyle(e).backgroundColor);
+    const card = await p.$eval(".card:nth-child(3)", e=>{
+      const s=getComputedStyle(e);
+      return { t:s.transform, sh:s.boxShadow, bd:s.borderColor };
+    });
+    base!==hov ? ok(`카드 호버 → 버튼 ${base} → ${hov}`) : bad(`버튼 색 그대로 ${base}`);
+    card.t!=="none" && card.sh!=="none"
+      ? ok("카드 호버 → 떠오름 + 그림자") : bad(`transform ${card.t} / shadow ${card.sh}`);
+    await p.hover(".coll-head h2");
+    await p.waitForTimeout(200);
+  }
+
   const tog = await p.$$eval("button[data-toggle]", b=>b.length);
   tog>0 ? ok(`인라인 객실 펼치기 ${tog}곳`) : bad("인라인 객실 펼치기 없음");
   {
@@ -147,6 +165,23 @@ console.log("\n[목록 페이지]");
       return l==="none";
     });
     zOk ? ok("라벨이 핀 클릭을 막지 않음") : bad("라벨이 포인터를 먹음");
+    /* 말풍선 사진 —— 처음엔 주소만 들고 있다가 호버할 때 받아온다.
+       지도를 열자마자 15장이 날아가면 안 된다. */
+    const lazy = await p.$$eval(".mpin .tip img[data-src]", e=>e.length);
+    const eager = await p.$$eval(".mpin .tip img[src]", e=>e.length);
+    lazy===15 && eager===0
+      ? ok("핀 사진 15장 지연 로딩 (초기 요청 0)") : bad(`대기 ${lazy} / 이미 로드 ${eager}`);
+    /* 작은 크기로 바꿔 부르는지 —— 원본 w_1200 을 그대로 쓰면 한 장에 수백 KB */
+    const small = await p.$eval(".mpin .tip img[data-src]", e=>e.dataset.src);
+    /w_320/.test(small) ? ok("핀 사진 w_320 축소본") : bad(`사진 주소 ${small}`);
+    await p.hover('.mpin[data-pin="casadia"]');
+    await p.waitForTimeout(200);
+    const woke = await p.$eval('.mpin[data-pin="casadia"] .tip img', e=>!!e.getAttribute("src"));
+    const tipVis = await p.$eval('.mpin[data-pin="casadia"] .tip', e=>getComputedStyle(e).opacity);
+    woke && tipVis==="1" ? ok("핀 호버 → 사진 + 이름") : bad(`호버 후 src ${woke} / opacity ${tipVis}`);
+    /* 아래쪽 핀은 말풍선이 위로 열려야 지도 밖으로 안 잘린다 */
+    const flip = await p.$$eval(".mpin.hi", e=>e.length);
+    flip>0 ? ok(`아래쪽 핀 ${flip}개는 말풍선이 위로`) : bad("위로 여는 핀이 없음");
     /* 지도를 연 채로 언어를 바꾼다 —— 캡션·핀 이름·옆 목록이 같이 따라와야 한다.
        예전엔 지도가 열린 상태에서는 다시 그리지 않아 옛 언어로 남아 있었다. */
     await p.click('.lang button[data-lang="zh"]');

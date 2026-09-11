@@ -1,7 +1,9 @@
 :root{
   --paper:#FBF9F5; --limestone:#F4F1EA; --hairline:#E0DBD1; --hairline-2:#CDC6B9;
   --linen:#C4BEB2; --ash:#8B857A; --clay:#6E6558; --stone:#57534B; --basalt:#191817;
-  --pine:#2F4A43; --pine-dark:#243934; --placeholder:#E6E1D7;
+  --pine:#2F4A43; --pine-dark:#1B2E28; --placeholder:#E6E1D7;
+  /* 호버 그림자 —— 색이 아니라 깊이로 「눌린다」를 알린다 */
+  --lift:0 10px 30px rgba(25,24,23,.11);
   /* 누를 수 있는 것의 테두리 —— 배경 대비 3:1 이상이어야 버튼처럼 보인다 */
   --control:#8B857A;
   --serif:"Source Serif 4","Noto Serif TC",Georgia,serif;
@@ -205,16 +207,24 @@ h1 em{font-style:italic}
 .mpin i{position:absolute; left:3px; top:3px; width:16px; height:16px; border-radius:50%;
         background:var(--pine); box-shadow:0 0 0 3px var(--paper), 0 1px 4px rgba(25,24,23,.25);
         transition:transform .16s ease, background .16s ease}
-.mpin span{position:absolute; left:26px; top:-2px; white-space:nowrap; background:var(--paper);
-           border:1px solid var(--control); padding:4px 11px; font-size:12px; font-weight:500;
-           color:var(--basalt); opacity:0; transform:translateX(-4px); transition:.16s ease; pointer-events:none}
+/* 호버 말풍선 —— 이름만으로는 어떤 집인지 모른다. 사진이 붙어야
+   점 하나가 「가 볼 만한 곳」으로 읽힌다. 사진은 첫 호버에 받아온다. */
+.mpin .tip{position:absolute; left:26px; top:-2px; width:168px; background:var(--paper);
+           border:1px solid var(--control); box-shadow:0 8px 24px rgba(25,24,23,.16);
+           padding:0; font-size:12.5px; font-weight:500; color:var(--basalt);
+           opacity:0; transform:translateX(-4px); transition:.16s ease; pointer-events:none;
+           display:flex; flex-direction:column; overflow:hidden}
+.mpin .tip img{width:100%; aspect-ratio:16/10; object-fit:cover; background:var(--placeholder)}
+.mpin .tip b{display:block; padding:7px 10px 8px; font-weight:500; line-height:1.35;
+             white-space:normal; word-break:keep-all}
 .mpin:hover i, .mpin:focus-visible i, .mpin.on i{transform:scale(1.35); background:var(--pine-dark)}
-.mpin:hover span, .mpin:focus-visible span, .mpin.on span{opacity:1; transform:translateX(0)}
+.mpin:hover .tip, .mpin:focus-visible .tip, .mpin.on .tip{opacity:1; transform:translateX(0)}
 .mpin:focus-visible{outline:none}
 .mpin:hover, .mpin:focus-visible, .mpin.on{z-index:4}
-/* 오른쪽 절반의 점은 이름표를 왼쪽으로 편다 —— 지도 밖으로 나가지 않게 */
-.mpin.left span{left:auto; right:26px; transform:translateX(4px)}
-.mpin.left:hover span, .mpin.left:focus-visible span, .mpin.left.on span{transform:translateX(0)}
+/* 오른쪽 절반의 점은 말풍선을 왼쪽으로, 아래쪽 점은 위로 편다 —— 지도 밖으로 나가지 않게 */
+.mpin.left .tip{left:auto; right:26px; transform:translateX(4px)}
+.mpin.left:hover .tip, .mpin.left:focus-visible .tip, .mpin.left.on .tip{transform:translateX(0)}
+.mpin.hi .tip{top:auto; bottom:-2px}
 
 .mapcard{position:absolute; z-index:5; width:264px; background:var(--paper); border:1px solid var(--control);
          box-shadow:0 8px 28px rgba(25,24,23,.20)}
@@ -340,4 +350,45 @@ h1 em{font-style:italic}
   .rrow-go{width:100%}
   .also{grid-template-columns:1fr 1fr; gap:16px}
   .mini h3{font-size:17px}
+}
+
+
+/* ── 호버 ────────────────────────────────────────────────
+   손가락에는 호버가 없다. 터치 기기에서 이 규칙들이 걸리면
+   한 번 누른 카드에 효과가 「붙어버리므로」 통째로 가둔다.
+   광고 유입의 상당수가 휴대폰이라는 점은 따로 기억할 것 ——
+   여기서 올리는 건 데스크톱 클릭률이다. */
+@media (hover:hover) and (pointer:fine){
+
+  /* 버튼 —— 색만 살짝 바꾸면 바뀐 줄 모른다. 확실히 어두워지고,
+     화살표가 갈 방향으로 한 칸 움직인다. */
+  .btn{transition:background .16s ease, box-shadow .16s ease}
+  .btn svg{transition:transform .16s ease}
+  .btn:hover{background:var(--pine-dark); box-shadow:0 6px 18px rgba(47,74,67,.28)}
+  .btn:hover svg{transform:translate(2px,-2px)}
+  .btn-o:hover{background:var(--pine); color:var(--paper); box-shadow:none}
+
+  /* 카드 —— 테두리 한 칸으로는 「누를 수 있다」가 안 읽힌다.
+     떠오르고, 테두리가 진해지고, 사진이 조금 밀려 들어오고,
+     카드 어디에 얹어도 아래 버튼이 미리 어두워진다. */
+  .card, .mini{transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease}
+  .card:hover, .mini:hover{border-color:var(--control); box-shadow:var(--lift); transform:translateY(-3px)}
+  .card:hover .thumb img, .mini:hover .thumb img{transform:scale(1.05)}
+  .card:hover .btn{background:var(--pine-dark); box-shadow:0 6px 18px rgba(47,74,67,.28)}
+  .card:hover h3 a{text-decoration:underline; text-underline-offset:4px;
+                   text-decoration-thickness:1px; text-decoration-color:var(--linen)}
+
+  /* 객실 줄 —— 펼쳤을 때 각 줄도 누를 수 있다는 게 보여야 한다 */
+  .room{transition:background .14s ease; padding-left:10px; padding-right:10px; margin:0 -10px}
+  .room:hover{background:var(--limestone)}
+
+  /* 헤더의 작은 지도 */
+  .mmap{transition:border-color .16s ease, box-shadow .16s ease}
+  .mmap:hover{border-color:var(--stone); box-shadow:var(--lift)}
+}
+
+/* 움직임을 줄여달라고 설정한 사람에게는 떠오르지 않는다 */
+@media (prefers-reduced-motion:reduce){
+  .card:hover, .mini:hover, .btn:hover svg{transform:none}
+  *{transition-duration:.01ms !important}
 }
