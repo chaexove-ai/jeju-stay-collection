@@ -2,6 +2,9 @@
   --paper:#FBF9F5; --limestone:#F4F1EA; --hairline:#E0DBD1; --hairline-2:#CDC6B9;
   --linen:#C4BEB2; --ash:#8B857A; --clay:#6E6558; --stone:#57534B; --basalt:#191817;
   --pine:#2F4A43; --pine-dark:#1B2E28; --placeholder:#E6E1D7;
+  /* 평점 별 —— 이 팔레트에서 유일하게 채도가 있는 색이다. 밝은 주황은
+     이 종이색 위에서 싸구려로 보이니, 제주 감귤 쪽으로 한 단계 눌러 쓴다. */
+  --tangerine:#C0761F;
   /* 호버 그림자 —— 색이 아니라 깊이로 「눌린다」를 알린다 */
   --lift:0 10px 30px rgba(25,24,23,.11);
   /* 누를 수 있는 것의 테두리 —— 배경 대비 3:1 이상이어야 버튼처럼 보인다 */
@@ -49,8 +52,12 @@ button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
 /* ── hero ───────────────────────────────────────────────── */
 .hero{display:grid; grid-template-columns:1fr 1fr; background:var(--paper)}
 .hero-txt{padding:76px 60px 76px 0; display:flex; flex-direction:column}
-.eyebrow{display:flex; align-items:center; gap:14px; margin-bottom:30px}
-.eyebrow i{width:26px; height:1px; background:var(--hairline-2); display:block}
+/* 섹션 머리 —— 얇은 선과 배경색만으로는 구간이 바뀐 게 안 읽혔다.
+   번호를 큰 세리프로 키워 「여기서부터 다른 이야기」를 눈에 띄게 한다. */
+.eyebrow{display:flex; align-items:baseline; gap:14px; margin-bottom:26px}
+.eyebrow .lbl:first-child{font-family:var(--serif); font-weight:500; font-size:38px;
+  line-height:1; letter-spacing:0; color:var(--linen)}
+.eyebrow i{display:none}
 h1{margin:0 0 26px; font-family:var(--serif); font-weight:450; font-size:clamp(34px,4vw,56px);
    line-height:1.08; letter-spacing:-.015em; text-wrap:pretty}
 h1 em{font-style:italic}
@@ -76,7 +83,7 @@ h1 em{font-style:italic}
 .btn-auto{width:auto}
 
 /* ── collection ─────────────────────────────────────────── */
-.coll{background:var(--limestone); border-top:1px solid var(--hairline-2); padding:76px 0 88px}
+.coll{background:var(--limestone); border-top:2px solid var(--basalt); padding:76px 0 88px}
 .coll-head{display:flex; align-items:flex-end; justify-content:space-between; gap:32px; margin-bottom:26px}
 .coll-head h2{margin:0; font-family:var(--serif); font-weight:var(--display-w); font-size:36px; letter-spacing:-.01em}
 .coll-note{font-size:13.5px; color:var(--stone); padding-bottom:8px; max-width:46ch}
@@ -114,6 +121,7 @@ h1 em{font-style:italic}
   font-size:10.5px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; padding:8px 14px}
 .c-top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 6px 8px}
 .stars{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--stone); white-space:nowrap}
+.star{color:var(--tangerine); flex:none}
 .stars b{color:var(--basalt); font-weight:500}
 .card h3{margin:0 6px 10px; font-family:var(--serif); font-weight:var(--display-w); font-size:26px; line-height:1.2}
 .card p{margin:0 6px 14px; font-size:14.5px; line-height:1.7; color:var(--stone)}
@@ -152,6 +160,7 @@ h1 em{font-style:italic}
 .dark{background:var(--basalt); padding:92px 0 64px}
 .wall{max-width:880px; margin:0 auto 76px; display:flex; flex-direction:column; align-items:center; gap:30px; text-align:center}
 .wall .eyebrow .lbl{color:var(--linen)}
+.wall .eyebrow .lbl:first-child{color:#4A463F}
 .wall .eyebrow i{background:#4A463F}
 .wall-q{font-family:var(--serif); font-weight:450; font-size:clamp(24px,3vw,34px); line-height:1.42;
   letter-spacing:-.008em; color:var(--limestone); text-wrap:pretty}
@@ -264,8 +273,10 @@ h1 em{font-style:italic}
 .side{background:var(--paper); border:1px solid var(--hairline); padding:4px 0;
       overflow-y:auto; max-height:620px}
 .grp{padding:16px 18px 4px}
-.grp .lbl{display:flex; align-items:center; justify-content:space-between}
-.grp .lbl em{font-style:normal; color:var(--linen)}
+/* 방위는 이 목록의 유일한 구분선이다 —— 회색 라벨로는 항목들 사이에 묻힌다 */
+.grp .lbl{display:flex; align-items:center; justify-content:space-between;
+          color:var(--pine); font-weight:600; font-size:11.5px}
+.grp .lbl em{font-style:normal; color:var(--linen); font-weight:400}
 .item{display:flex; align-items:baseline; gap:10px; width:100%; text-align:left;
       padding:9px 18px; border-left:2px solid transparent; transition:.14s}
 .item:hover, .item.on{background:var(--limestone); border-left-color:var(--pine)}
@@ -290,7 +301,7 @@ h1 em{font-style:italic}
 .s-img img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
 .s-img .ph{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--serif); font-size:96px; color:rgba(255,255,255,.9)}
 
-.band{border-top:1px solid var(--hairline-2); padding:66px 0 72px}
+.band{border-top:2px solid var(--basalt); padding:66px 0 72px}
 .band-lime{background:var(--limestone)}
 .band-paper{background:var(--paper)}
 .band h2{margin:0 0 8px; font-family:var(--serif); font-weight:var(--display-w); font-size:30px; letter-spacing:-.01em}

@@ -75,7 +75,7 @@ function shell({title, desc, canonical, ogImage, css, body, script, lang="en"}){
 <meta name="twitter:card" content="${ogImage?"summary_large_image":"summary"}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=Jost:wght@400;500&family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=Jost:wght@400;500;600&family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500&display=swap">
 <style>${css}</style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
 <script>
@@ -234,7 +234,7 @@ function pageIndex({list, site, hero, css, renderSrc, R}){
         <span data-t="heroCta"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBF9F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       </a>
-      ${avg?`<div class="avg"><svg width="15" height="15" viewBox="0 0 24 24" fill="#57534B" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>
+      ${avg?`<div class="avg"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>
         <span><b>${avg}</b> <span data-t="avgLabel"></span></span></div>`:""}
     </div>
     <div class="rule" style="max-width:520px"></div>
