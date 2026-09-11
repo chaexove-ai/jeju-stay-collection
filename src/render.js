@@ -136,18 +136,24 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
     const tags=Object.entries(n).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
     const chip=(label,key,val,on)=>
       `<button type="button" class="chip" data-f="${key}" data-v="${esc(val)}" aria-pressed="${on}">${esc(label)}</button>`;
-    return `<div class="frow">
+    /* 라벨을 칩 줄 안이 아니라 밖에 둔다 —— 휴대폰에서는 칩 줄이 옆으로
+       스크롤되기 때문에, 안에 있으면 라벨이 같이 밀려 사라진다. */
+    return `<div class="fgrp">
         <span class="lbl">${esc(t.fWhere)}</span>
-        ${chip(t.fAll,"region","all",filt.region==="all")}
-        ${regions.map(r=>chip(label[r]||r,"region",r,filt.region===r)).join("")}
+        <div class="frow">
+          ${chip(t.fAll,"region","all",filt.region==="all")}
+          ${regions.map(r=>chip(label[r]||r,"region",r,filt.region===r)).join("")}
+        </div>
       </div>
-      <div class="frow">
+      <div class="fgrp">
         <span class="lbl">${esc(t.fWho)}</span>
-        ${chip(t.fAny,"guests","all",filt.guests==="all")}
-        ${chip(t.g1,"guests","g1",filt.guests==="g1")}
-        ${chip(t.g2,"guests","g2",filt.guests==="g2")}
-        ${chip(t.g3,"guests","g3",filt.guests==="g3")}
-        ${tags.map(k=>chip(TAGS[k][lang],"tag",k,filt.tag===k)).join("")}
+        <div class="frow">
+          ${chip(t.fAny,"guests","all",filt.guests==="all")}
+          ${chip(t.g1,"guests","g1",filt.guests==="g1")}
+          ${chip(t.g2,"guests","g2",filt.guests==="g2")}
+          ${chip(t.g3,"guests","g3",filt.guests==="g3")}
+          ${tags.map(k=>chip(TAGS[k][lang],"tag",k,filt.tag===k)).join("")}
+        </div>
       </div>`;
   }
 
@@ -201,7 +207,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS){
         <div class="wrap">
           <h2>${esc(t.mapTitle)}</h2>
           <p class="sub">${esc(r)}</p>
-          <div class="two" style="grid-template-columns:7fr 5fr">
+          <div class="two two-map">
             <div class="mapbox">
               <iframe title="${esc(n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
                 src="https://www.google.com/maps?q=${g.geo.lat},${g.geo.lng}&z=13&hl=${lang==="zh"?"zh-TW":"en"}&output=embed"></iframe>

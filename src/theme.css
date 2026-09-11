@@ -90,8 +90,9 @@ h1 em{font-style:italic}
 .vtabs button[aria-pressed="true"]{background:var(--pine); color:var(--paper)}
 
 .filters{display:flex; flex-direction:column; gap:14px; margin-bottom:22px}
-.frow{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
-.frow > .lbl{width:76px; flex:none}
+.fgrp{display:flex; align-items:center; gap:10px}
+.fgrp > .lbl{width:76px; flex:none}
+.frow{display:flex; flex-wrap:wrap; align-items:center; gap:10px; min-width:0}
 .chip{display:inline-flex; align-items:center; height:40px; padding:0 18px; border:1px solid var(--control);
   font-size:12.5px; color:var(--basalt); white-space:nowrap; transition:.15s}
 .chip:hover{border-color:var(--stone)}
@@ -295,6 +296,9 @@ h1 em{font-style:italic}
 .band h2{margin:0 0 8px; font-family:var(--serif); font-weight:var(--display-w); font-size:30px; letter-spacing:-.01em}
 .band .sub{margin:0 0 32px; font-size:13.5px; color:var(--stone)}
 .two{display:grid; grid-template-columns:5fr 7fr; gap:56px; align-items:start}
+/* 지도 칸만 비율이 반대다. 예전엔 이걸 인라인 style 로 줬는데,
+   인라인은 미디어 쿼리보다 세서 휴대폰에서도 두 칸으로 남아 있었다. */
+.two-map{grid-template-columns:7fr 5fr}
 
 .prose{font-size:16px; line-height:1.85; color:var(--stone); max-width:62ch}
 .prose p{margin:0 0 16px}
@@ -382,6 +386,13 @@ h1 em{font-style:italic}
      읽히는 게 아니라 지저분해진다. 경계선만 남긴다. */
   .maplbl{display:none}
 
+  /* 점이 몰려 손가락으로 못 고른다. 점을 작게 하고 서로 더 밀어내되
+     (JS 쪽 SEP), 누르는 상자는 벌어진 간격만큼만 키운다 —— 상자가 간격보다
+     크면 위에 얹힌 점이 옆 점의 터치를 가로챈다. 빗나간 터치는 JS 가
+     가장 가까운 점으로 보낸다. */
+  .mpin{width:18px; height:18px; margin:-9px 0 0 -9px}
+  .mpin i{left:3px; top:3px; width:12px; height:12px; box-shadow:0 0 0 2.5px var(--paper), 0 1px 3px rgba(25,24,23,.28)}
+
   /* 지도 칸이 190px 밖에 안 된다. 그 안에 260px 짜리 카드를 띄우면
      사진부터 잘린다. 휴대폰에서는 지도 아래 가로 한 줄로 깐다. */
   /* static 으로 두면 닫기(×)가 지도 상자 모서리로 날아간다 —— relative 라야
@@ -401,9 +412,21 @@ h1 em{font-style:italic}
   .coll-head{flex-direction:column; align-items:stretch; gap:16px; margin-bottom:18px}
   .coll-head h2{font-size:30px}
   .views button{padding:0 15px}
+  /* 세 줄이 전부 같은 모양이라 뭐가 탭이고 뭐가 필터인지 구분이 안 됐다.
+     탭은 상자를 버리고 밑줄로 —— 칩과 아예 다른 물건으로 보이게 한다. */
+  .vtabs{border:0; border-bottom:1px solid var(--hairline-2); gap:26px; margin-bottom:16px}
+  .vtabs button{flex:none; height:44px; padding:0 2px; color:var(--clay);
+                border-bottom:2px solid transparent; letter-spacing:.16em}
+  .vtabs button + button{border-left:0}
+  .vtabs button[aria-pressed="true"]{background:none; color:var(--basalt); border-bottom-color:var(--pine)}
+
+  /* 「Where」「Who for」 라벨이 숨어 있어서 칩 두 줄이 무슨 기준인지 알 수 없었다.
+     칩 줄은 옆으로 스크롤되므로 라벨은 줄 위에 따로 세운다. */
+  .filters{gap:16px}
+  .fgrp{flex-direction:column; align-items:stretch; gap:7px}
+  .fgrp > .lbl{width:auto; font-size:10.5px}
   .frow{flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{display:none}
-  .frow > .lbl{display:none}
   .chip{height:44px; font-size:13px}
   .grid{grid-template-columns:1fr; gap:20px}
   /* 카드를 한 칸 줄인다 —— 칸 수는 그대로 두고 세로로 먹는 값만 깎는다.
@@ -433,7 +456,13 @@ h1 em{font-style:italic}
   .s-act{max-width:none}
   .band{padding:38px 0 42px}
   .band h2{font-size:26px}
-  .mapbox iframe{height:300px}
+  /* 상세 페이지 지도 —— 좁은 칸에 지도와 버튼을 나란히 두니 버튼 글자가
+     세 줄로 접혔다. 지도는 가로로 넓고 낮게, 설명과 버튼은 그 아래로. */
+  .two-map{grid-template-columns:1fr; gap:18px}
+  .mapbox iframe{height:210px}
+  .map-side{gap:14px}
+  .map-note{max-width:none}
+  .map-side .btn{width:100%; align-self:stretch !important}
   .rrow{flex-direction:column; align-items:stretch; gap:14px}
   .rrow-go{width:100%}
   .also{grid-template-columns:1fr 1fr; gap:16px}

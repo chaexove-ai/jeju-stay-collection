@@ -272,6 +272,44 @@ console.log("\n[모바일 390px]");
 
   await checkBar(p, "모바일");
 
+  /* 탭과 칩이 같은 모양이면 세 줄이 전부 같은 물건으로 보인다 */
+  const shapes = await p.evaluate(()=>{
+    const t=getComputedStyle(document.querySelector("#vtabs button"));
+    const c=getComputedStyle(document.querySelector(".chip"));
+    const lbl=[...document.querySelectorAll(".fgrp > .lbl")]
+      .filter(e=>getComputedStyle(e).display!=="none").map(e=>e.textContent.trim());
+    return { tabBorder:t.borderTopWidth+"/"+t.borderBottomWidth, chipBorder:c.borderTopWidth, labels:lbl };
+  });
+  shapes.tabBorder==="0px/2px" && shapes.chipBorder!=="0px"
+    ? ok("탭은 밑줄 · 칩은 상자로 구분") : bad(`탭 ${shapes.tabBorder} / 칩 ${shapes.chipBorder}`);
+  shapes.labels.length===2
+    ? ok(`필터 라벨 노출 (${shapes.labels.join(" · ")})`) : bad(`라벨 ${shapes.labels.length}개`);
+
+  /* 핀 사이가 손가락으로 고를 만큼은 벌어져야 한다 */
+  await p.click('#vtabs button[data-view="map"]');
+  await p.waitForTimeout(400);
+  const gap = await p.evaluate(()=>{
+    const ps=[...document.querySelectorAll(".mpin")].map(e=>{const r=e.getBoundingClientRect();
+      return [r.left+r.width/2, r.top+r.height/2];});
+    let m=Infinity;
+    for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)
+      m=Math.min(m, Math.hypot(ps[j][0]-ps[i][0], ps[j][1]-ps[i][1]));
+    return +m.toFixed(1);
+  });
+  gap>=15 ? ok(`핀 최소 간격 ${gap}px`) : bad(`핀이 ${gap}px 밖에 안 떨어짐 —— 손가락으로 못 고른다`);
+  /* 빗나간 터치도 가장 가까운 점을 연다 */
+  await p.evaluate(()=>{
+    const st=document.getElementById("mapStage").getBoundingClientRect();
+    const q=document.querySelector('.mpin[data-pin="hadoondam"]').getBoundingClientRect();
+    document.getElementById("mapStage").dispatchEvent(new MouseEvent("click",
+      {bubbles:true, clientX:q.left+q.width/2+13, clientY:q.top+q.height/2+11}));
+  });
+  await p.waitForTimeout(300);
+  const nearOpened = await p.$eval("#mapCard", e=>!e.hidden);
+  nearOpened ? ok("빗나간 터치 → 가장 가까운 숙소") : bad("빗나간 터치가 그냥 닫힘");
+  await p.click('#vtabs button[data-view="list"]');
+  await p.waitForTimeout(250);
+
   /* 첫 화면 —— 히어로 사진이 헤더 바로 아래에 있고, 글까지 한 화면에 들어가야 한다 */
   const hero = await p.evaluate(()=>{
     const y = s => { const e=document.querySelector(s); if(!e) return null;

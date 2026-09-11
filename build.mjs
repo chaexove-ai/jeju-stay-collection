@@ -372,9 +372,13 @@ function paintMini(){
    겹친 핀은 누를 수가 없으므로, 서로 밀어내 최소 간격을 확보한다.
    밀어내는 거리는 섬 폭의 2% 미만 —— 「어느 쪽 마을인가」라는
    이 지도의 목적에는 영향이 없고, 대신 두 곳이라는 사실이 보인다. */
-var SEP = 0.019;              /* 지도 폭 기준 최소 간격 */
+/* 최소 간격은 지도가 실제로 몇 px 로 그려졌는지에 달렸다. 넓은 화면에서는
+   0.019(≈1.9%)면 점끼리 안 겹치지만, 340px 짜리 휴대폰 지도에서는 그게
+   6.5px 라 손가락으로 고를 수가 없다. 좁으면 0.05 로 벌린다 —— 점이 제자리에서
+   최대 2km 쯤 밀려나는데, 이 지도는 원래 「어느 쪽 마을인가」만 말한다. */
+function sepFor(w){ return w < 520 ? 0.05 : 0.019; }
 var ASPECT = ${JEJU.h} / ${JEJU.w};      /* 세로 %를 가로 %와 같은 척도로 맞추는 비 */
-function spread(pts){
+function spread(pts, SEP){
   for(var pass = 0; pass < 24; pass++){
     var moved = false;
     for(var i = 0; i < pts.length; i++)
@@ -395,10 +399,11 @@ function spread(pts){
 }
 function paintMap(){
   var t = T[lang], list = mapped();
+  var stageW = (document.getElementById("mapStage") || {}).clientWidth || 900;
   var pts = spread(list.map(function(g){
     var p = PROJ(g.geo.lat, g.geo.lng);
     return { g: g, x: p[0], y: p[1] };
-  }));
+  }), sepFor(stageW));
   document.getElementById("mapPins").innerHTML = pts.map(function(q){
     /* 말풍선은 핀 오른쪽·아래로 자라는 게 기본이다.
        핀이 섬 오른쪽에 있으면 왼쪽으로(left), 아래쪽에 있으면 위로(hi) 뒤집어
@@ -514,8 +519,22 @@ if(stageEl){
   stageEl.addEventListener("click", function(e){
     if(e.target.closest("[data-close]")) return closeCard();
     var b = e.target.closest("[data-pin]");
-    if(b) openCard(b.dataset.pin);
-    else if(!e.target.closest(".mapcard")) closeCard();
+    if(b) return openCard(b.dataset.pin);
+    if(e.target.closest(".mapcard")) return;
+    /* 빗나간 터치는 버리지 말고 가장 가까운 점으로 보낸다 —— 점 사이가
+       17px 인 휴대폰 지도에서 손가락으로 정확히 맞히기는 어렵다. */
+    var st = e.currentTarget.getBoundingClientRect();
+    var px = (e.clientX - st.left) / st.width * 100;
+    var py = (e.clientY - st.top) / st.height * 100;
+    var near = null, best = Infinity;
+    for(var id in PINPOS){
+      var q = PINPOS[id];
+      var dx = (q.x - px) / 100 * st.width;
+      var dy = (q.y - py) / 100 * st.height;
+      var d = Math.sqrt(dx*dx + dy*dy);
+      if(d < best){ best = d; near = id; }
+    }
+    if(near && best <= 34) openCard(near); else closeCard();
   });
   stageEl.addEventListener("mouseover", function(e){
     var b = e.target.closest("[data-pin]"); if(b){ highlight(b.dataset.pin); wakeTip(b); }
