@@ -134,6 +134,12 @@ console.log("\n[목록 페이지]");
     words.length===0 && han.length===0
       ? ok("문구에 숙소 수가 글자로 박혀 있지 않음")
       : bad(`숫자가 박힌 문구 [${[...words, ...han].slice(0,4)}]`);
+    /* 시트에서 온 문구의 {n} 이 숫자로 바뀌어 나갔는지 —— 그대로 새어 나가면
+       화면에 「{n} independent stays」가 찍힌다 */
+    /* 눈에 보이는 글자만 본다 —— 페이지 안에 박힌 스크립트에는 사전의
+       템플릿 문자열(${n})이 그대로 들어 있어서 textContent 로는 못 가린다. */
+    const seen = await p.evaluate(()=>document.body.innerText);
+    !seen.includes("{n}") ? ok("시트 문구의 {n} 이 숫자로 치환됨") : bad("{n} 이 화면에 그대로 남음");
     const eyebrow = (await p.textContent('[data-t="wallEyebrow"]')).trim();
     const n = (eyebrow.match(/\d+/) || [])[0];
     +n === cards.length

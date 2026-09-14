@@ -260,10 +260,14 @@ function fillText(html, lang, siteTxt){
 function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
   const t=T[lang];
   const zh = lang==="zh";
+  /* 시트에서 온 문구에도 숙소 수를 글자로 적지 않게 한다 ——
+     {n} 이라고 써 두면 빌드가 실제 숫자를 넣는다. 시트에 「Nine」이라고
+     적혀 있던 적이 있고, 그 사이 숙소는 열다섯 곳이 되어 있었다. */
+  const withN = t => String(t||"").replace(/\{n\}/g, STAY_COUNT);
   const siteTxt={};
   if(site._hero){
-    if(site._hero.h1?.en||site._hero.h1?.zh)     siteTxt.h1  ={en:R.fmt(site._hero.h1.en),  zh:R.fmt(site._hero.h1.zh||site._hero.h1.en)};
-    if(site._hero.lede?.en||site._hero.lede?.zh) siteTxt.lede={en:R.fmt(site._hero.lede.en),zh:R.fmt(site._hero.lede.zh||site._hero.lede.en)};
+    if(site._hero.h1?.en||site._hero.h1?.zh)     siteTxt.h1  ={en:R.fmt(withN(site._hero.h1.en)),  zh:R.fmt(withN(site._hero.h1.zh||site._hero.h1.en))};
+    if(site._hero.lede?.en||site._hero.lede?.zh) siteTxt.lede={en:R.fmt(withN(site._hero.lede.en)),zh:R.fmt(withN(site._hero.lede.zh||site._hero.lede.en))};
   }
   const filt={region:"all",guests:"all",tag:"all"};
   const avg=R.avgRating(list);
@@ -826,6 +830,17 @@ async function main(){
     const norm = s => String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
     const odd = list.filter(g => g.nameEn && !norm(g.nameEn).includes(norm(g.id)));
     if(odd.length) console.log(`· ⚠ 아이디와 이름이 어긋남: ${odd.map(g=>`${g.id} ↔ "${g.nameEn}"`).join(", ")}`);
+
+    /* 시트의 히어로 문구에 숙소 수가 글자로 적혀 있으면 말해 준다 ——
+       숙소가 늘어도 그 글자는 따라오지 않는다. {n} 으로 바꾸면 된다. */
+    const heroTxt = [site._hero?.h1?.en, site._hero?.h1?.zh,
+                     site._hero?.lede?.en, site._hero?.lede?.zh].filter(Boolean).join(" ");
+    /* one·two 는 「one group at a time」처럼 개수가 아닌 뜻으로도 쓰인다.
+       「每一間」도 마찬가지라 한자는 두 자 이상만 센다. */
+    const spelled = (heroTxt.match(/\b(?:three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b/gi) || [])
+      .concat(heroTxt.match(/[一二三四五六七八九十]{2,3}\s*間/g) || []);
+    if(spelled.length)
+      console.log(`· ⚠ 시트 _hero 문구에 숫자가 박혀 있음 [${[...new Set(spelled)].join(", ")}] —— 숙소는 지금 ${list.length}곳. {n} 으로 바꾸면 자동으로 맞는다`);
   }
 
   const heroes = pickHeroes(list, 3);
