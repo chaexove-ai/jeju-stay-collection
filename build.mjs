@@ -508,7 +508,12 @@ function paintSide(list){
 
 function highlight(id){
   document.querySelectorAll(".mpin").forEach(function(el){
-    el.classList.toggle("on", el.dataset.pin === id);
+    var on = el.dataset.pin === id;
+    el.classList.toggle("on", on);
+    /* 켜진 핀은 말풍선이 열린다. 사진은 처음 볼 때 받아오므로 여기서 같이
+       깨우지 않으면 빈 회색 칸만 뜬다 —— 옆 목록에 손을 얹거나 카드를 여는
+       길로 들어오면 핀 위에 마우스가 없어서 그 일이 일어나지 않았다. */
+    if(on) wakeTip(el);
   });
   document.querySelectorAll(".item").forEach(function(el){
     el.classList.toggle("on", el.dataset.go === id);
@@ -813,6 +818,15 @@ async function main(){
   STAY_COUNT = list.length;
   if(list.length < MIN_STAYS)
     throw new Error(`숙소가 ${list.length}개만 파싱됨 (최소 ${MIN_STAYS}). 시트가 비었거나 열 순서가 바뀐 것 —— 배포를 멈춘다.`);
+
+  /* 아이디와 영문 이름이 어긋나면 둘 중 하나가 오타다 —— 아이디는 주소·사진
+     파일명·에어비앤비 링크에 같이 쓰이므로 대개 틀린 쪽은 이름이다.
+     빌드를 멈추지는 않는다(이름이 더 길어지는 건 정상이므로), 다만 말은 해 준다. */
+  {
+    const norm = s => String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const odd = list.filter(g => g.nameEn && !norm(g.nameEn).includes(norm(g.id)));
+    if(odd.length) console.log(`· ⚠ 아이디와 이름이 어긋남: ${odd.map(g=>`${g.id} ↔ "${g.nameEn}"`).join(", ")}`);
+  }
 
   const heroes = pickHeroes(list, 3);
   const hero = heroes[0] || null;

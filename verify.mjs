@@ -141,6 +141,18 @@ console.log("\n[목록 페이지]");
       : bad(`문구 "${eyebrow}" / 실제 ${cards.length}곳`);
   }
 
+  /* 아이디와 영문 이름은 서로 맞아야 한다 —— 아이디는 주소·사진 파일명·
+     에어비앤비 링크가 같이 쓰는 값이라, 어긋나면 둘 중 하나가 오타다.
+     「Dotlwat」이 화면에서만 「Dottlwat」이던 적이 있다. */
+  {
+    const names = await p.$$eval(".card h3 a", a=>a.map(x=>({id:x.dataset.detail, n:x.textContent.trim()})));
+    const norm = s => String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const odd = names.filter(x => !norm(x.n).includes(norm(x.id)));
+    odd.length===0
+      ? ok("아이디와 이름 표기 일치 (15곳)")
+      : bad(`아이디와 이름이 어긋남: ${odd.map(x=>`${x.id} ↔ "${x.n}"`).join(", ")}`);
+  }
+
   /* 히어로는 세 칸 —— 서로 다른 숙소여야 하고, 도틀왓은 절대 올라오면 안 된다.
      그리고 누를 수 없어야 한다: 여기 걸린 세 곳만 지름길을 얻으면 불공평해진다. */
   const hero = await p.$$eval(".hero-img .hcell", els=>els.map(e=>({
@@ -399,6 +411,23 @@ console.log("\n[목록 페이지]");
     flip>0 ? ok(`아래쪽 핀 ${flip}개는 말풍선이 위로`) : bad("위로 여는 핀이 없음");
     const sideEn = await p.textContent("#side");
     /West|South|East/.test(sideEn) ? ok("지도 옆 목록 영문") : bad("옆 목록 영문 아님");
+    /* 옆 목록에 손을 얹으면 핀의 말풍선이 열린다 —— 사진도 같이 와야 한다.
+       예전엔 핀에 마우스가 닿을 때만 사진을 받아와서, 목록에서 짚으면
+       말풍선은 열리는데 회색 빈 칸만 떴다. */
+    {
+      await p.hover('.item[data-go="conanbeach"]');
+      await p.waitForTimeout(300);
+      const t = await p.evaluate(()=>{
+        const pin = document.querySelector('.mpin[data-pin="conanbeach"]');
+        const img = pin && pin.querySelector(".tip img");
+        return { on: !!pin && pin.classList.contains("on"),
+                 vis: pin ? getComputedStyle(pin.querySelector(".tip")).opacity : "0",
+                 src: !!img && !!img.getAttribute("src") };
+      });
+      t.on && t.vis==="1" && t.src
+        ? ok("옆 목록 호버 → 핀 말풍선에 사진")
+        : bad(`목록 호버 ${JSON.stringify(t)}`);
+    }
     /* 옆 목록의 평점 —— 별이 붙고, 후기 없는 곳은 카드와 같은 감귤색 */
     const rt = await p.evaluate(()=>{
       const stars = document.querySelectorAll("#side .rt .star").length;
