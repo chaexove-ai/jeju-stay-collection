@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { parseCSV, buildStays, pickHero, pickHeroes } from "./src/data.mjs";
 import { T, TAGS, BADGES, MIN_REVIEWS } from "./src/i18n.mjs";
 import { JEJU } from "./src/jeju.mjs";
+import { PRIVACY, PRIVACY_KO, PRIVACY_DATE, BIZ } from "./src/legal.mjs";
 
 const HERE  = path.dirname(fileURLToPath(import.meta.url));
 const SRC   = path.join(HERE, "src");
@@ -133,7 +134,8 @@ const masthead = (lang, hrefEn, hrefZh) => `<div class="bar">
   </div>
 </div>`;
 
-const darkFoot = `<div class="dark">
+/* 푸터는 언어마다 주소가 달라서(/privacy · /zh/privacy) 함수로 둔다. */
+const darkFoot = (lang="en") => `<div class="dark">
   <div class="wrap">
     <div class="wall">
       <div class="eyebrow"><span class="lbl">03</span><i></i><span class="lbl" data-t="wallEyebrow"></span></div>
@@ -147,8 +149,14 @@ const darkFoot = `<div class="dark">
       <div class="meta">
         <div data-t="contact"></div>
         <div><a href="mailto:hello@jejustaycollection.com">hello@jejustaycollection.com</a></div>
+        <div><a href="${lang==="zh"?"/zh":""}/privacy" data-t="privacyLink"></a></div>${BIZ.regNo ? `
+        <div class="biz">${BIZ.nameEn} (${BIZ.nameKo}) &middot; ${BIZ.owner}<br>Business Registration No. ${BIZ.regNo}<br>${BIZ.address}</div>` : ""}
       </div>
     </div>
+    ${/* 전자상거래법 제20조 고지 —— 이 사이트는 거래의 당사자가 아니다.
+         숙소와 게스트 사이에 분쟁이 생겼을 때 책임을 나눠 지지 않기 위한
+         한 줄이므로, 디자인을 이유로 지우지 말 것. */""}
+    <p class="notparty"><span data-t="notParty"></span></p>
     <div class="credit">Map data &copy; OpenStreetMap contributors, ODbL &middot; Administrative boundaries from South Korean public geospatial data.</div>
   </div>
 </div>`;
@@ -356,7 +364,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
     </div>
   </div>
 </main>
-${darkFoot}
+${darkFoot(lang)}
 <button type="button" class="totop" id="toTop" aria-label="Back to top" hidden>
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -746,7 +754,7 @@ function pageStay({g, others, css, renderSrc, R, lang="en"}){
 
   const body = `${masthead(lang, `/stay/${g.id}`, `/zh/stay/${g.id}`)}
 <div id="stayRoot">${R.stayHTML(g,others,lang)}</div>
-${darkFoot}`;
+${darkFoot(lang)}`;
 
   const script = `${preamble(renderSrc, `
 const STAY=${JSON.stringify(g)};
@@ -797,7 +805,7 @@ function page404({css}){
      or the address was mistyped. Every house in the collection is one click away.</p>
   <div class="s-act"><a class="btn btn-auto" href="/">The Collection</a></div>
 </main>
-${darkFoot}`;
+${darkFoot("en")}`;
   return shell({
     title:"Not found — Jeju Stay Collection",
     desc:"That page is not here. The collection of handpicked stays on Jeju Island is one click away.",
@@ -805,6 +813,65 @@ ${darkFoot}`;
     css, body:fillText(body, "en", null),
     script:`document.querySelectorAll(".lang a").forEach(function(b){b.addEventListener("click",function(){});});`
   });
+}
+
+/* ---------- 개인정보처리방침 ----------
+   본문은 src/legal.mjs 에 있고 여기서는 모양만 입힌다.
+   국문 원문은 두 언어 페이지 모두 맨 아래에 함께 싣는다 ——
+   화면에 나가는 언어는 영문·繁體지만, 국내에서 근거가 되는 것은 국문본이다. */
+const block = b => [
+  b.p  ? b.p.map(x=>`<p>${x}</p>`).join("") : "",
+  b.ul ? `<ul>${b.ul.map(x=>`<li>${x}</li>`).join("")}</ul>` : "",
+  b.after ? b.after.map(x=>`<p>${x}</p>`).join("") : ""
+].join("");
+
+const sections = list => list.map(b=>`<section><h2>${b.h}</h2>${block(b)}</section>`).join("");
+
+function pagePrivacy({css, lang}){
+  const L  = PRIVACY[lang];
+  const K  = PRIVACY_KO;
+  const zh = lang==="zh";
+
+  const body = `${masthead(lang, "/privacy", "/zh/privacy")}
+<main class="wrap legal">
+  <div class="eyebrow"><span class="lbl">§</span><i></i><span class="lbl">${L.eyebrow}</span></div>
+  <h1>${L.title}</h1>
+  <p class="lede">${L.lede}</p>
+  <p class="legal-date">${L.effective(PRIVACY_DATE)}</p>
+  ${sections(L.sections)}
+
+  <hr class="legal-hr">
+
+  <section class="legal-ko" lang="ko">
+    <h2>${K.title}</h2>
+    <p class="lede">${K.lede}</p>
+    <p class="legal-date">${K.effective(PRIVACY_DATE)}</p>
+    <p class="legal-callout">${K.notParty}</p>
+    ${sections(K.sections)}
+  </section>
+</main>
+${darkFoot(lang)}`;
+
+  return shell({
+    title:`${L.title} — Jeju Stay Collection`,
+    desc:zh ? "Jeju Stay Collection 的隱私權政策 —— 本站蒐集的資料、保存期間與拒絕方式。"
+            : "How Jeju Stay Collection handles the little information this site sees — what is collected, for how long, and how to refuse it.",
+    canonical:`${SITE}${zh?"/zh":""}/privacy`,
+    alts:{en:SITE+"/privacy", zh:SITE+"/zh/privacy"},
+    ogImage:SITE+"/og.png", ogTitle:"Jeju Stay Collection",
+    css, body:fillText(body, lang, null),
+    /* <html lang> 은 zh 가 아니라 zh-Hant —— 간체와 번체를 구분하지 않으면
+       검색엔진과 스크린리더가 같은 중국어로 취급한다. */
+    lang:zh?"zh-Hant":"en",
+    script:`document.querySelectorAll(".lang a").forEach(function(b){b.addEventListener("click",function(){});});`
+  }).replace("</head>",
+    `<script type="application/ld+json">${JSON.stringify({
+      "@context":"https://schema.org", "@type":"WebPage",
+      name:L.title, inLanguage:zh?"zh-Hant":"en",
+      url:`${SITE}${zh?"/zh":""}/privacy`,
+      dateModified:PRIVACY_DATE,
+      isPartOf:{"@type":"WebSite", name:"Jeju Stay Collection", url:SITE}
+    })}</script>\n</head>`);
 }
 
 /* ---------- 실행 ---------- */
@@ -871,13 +938,17 @@ async function main(){
 
   /* 사이트맵에는 두 언어를 모두 넣는다 —— 한쪽만 내면 다른 언어는
      색인이 늦거나 아예 안 잡힌다. 서로를 가리키는 hreflang 은 각 페이지 head 에. */
-  const paths = ["/", ...list.map(g=>`/stay/${g.id}`)];
+  const paths = ["/", ...list.map(g=>`/stay/${g.id}`), "/privacy"];
   const urls  = [...paths, ...paths.map(u => u==="/" ? "/zh" : "/zh"+u)];
   const today = new Date().toISOString().slice(0,10);
   await writeFile(path.join(DIST,"sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`+
     urls.map(u=>`  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")+
     `\n</urlset>\n`, "utf8");
+  /* 개인정보처리방침 —— 언어마다 주소가 따로 있다 (/privacy · /zh/privacy) */
+  await writeFile(path.join(DIST,"privacy.html"), pagePrivacy({css, lang:"en"}), "utf8");
+  await writeFile(path.join(DIST,"zh","privacy.html"), pagePrivacy({css, lang:"zh"}), "utf8");
+
   await writeFile(path.join(DIST,"404.html"), page404({css}), "utf8");
   await writeFile(path.join(DIST,"robots.txt"),
     `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`, "utf8");

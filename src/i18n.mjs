@@ -47,6 +47,11 @@ export const T = {
     footer:"A curated collection of independent stays across Jeju Island, put together and looked after by a team that lives here.",
     contact:"Jeju Island, Republic of Korea",
     email:"hello@jejustaycollection.com",
+    /* 전자상거래법 제20조 —— 거래의 당사자가 아니라는 사실을 미리 알린다.
+       이 한 줄이 없으면 숙소와 게스트 사이에 문제가 생겼을 때
+       사이트가 책임을 나눠 지게 된다. 지우지 말 것. */
+    notParty:"Jeju Stay Collection introduces independent stays on Jeju Island and links to their booking pages. Reservations are made with each stay through Airbnb; we are not a party to the booking, payment, or refund.",
+    privacyLink:"Privacy Policy",
     none:"<b>Nothing matches those filters.</b><br>Try widening the region or the party size.",
 
     /* ── 상세 페이지 ── */
@@ -102,6 +107,8 @@ export const T = {
     footer:"由住在濟州島的團隊親自挑選並長期照顧的獨立住宿選輯。",
     contact:"大韓民國 濟州島",
     email:"hello@jejustaycollection.com",
+    notParty:"Jeju Stay Collection 僅介紹濟州島上的獨立住宿，並連結至各住宿的訂房頁面。訂房契約成立於旅客與各住宿之間（透過 Airbnb），本站並非訂房、付款或退款的當事人。",
+    privacyLink:"隱私權政策",
     none:"<b>沒有符合條件的住宿。</b><br>請放寬地區或人數條件。",
 
     detail:"查看詳情",

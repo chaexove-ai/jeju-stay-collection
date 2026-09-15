@@ -620,8 +620,46 @@ h1 em{font-style:italic}
 }
 
 /* ── 없는 주소 ──────────────────────────────────────────── */
-.nf{padding:110px 0 140px; max-width:760px}
+.nf{padding-block:110px 140px; max-width:760px}
 
 .nf h1{margin-bottom:20px}
 .nf .lede{margin-bottom:36px}
-@media (max-width:760px){ .nf{padding:64px 0 88px} }
+@media (max-width:760px){ .nf{padding-block:64px 88px} }
+
+/* ── 법적 고지 ──────────────────────────────────────────────
+   읽힐 일이 많지 않은 글이지만, 읽으려 할 때 읽히지 않으면
+   고지하지 않은 것과 같다. 본문 폭은 66ch 를 넘기지 않는다. */
+/* padding 을 한 줄로 쓰면 .wrap 의 좌우 여백이 0 으로 덮여 글이
+   화면 모서리에 붙는다 —— .bar-in 에서 이미 한 번 밟은 자리다. */
+.legal{padding-block:96px 120px; max-width:760px}
+.legal h1{margin:0 0 18px; font-family:var(--serif); font-weight:var(--display-w);
+  font-size:40px; line-height:1.15; letter-spacing:-.01em}
+.legal .lede{margin-bottom:14px}
+.legal .legal-date{margin:0 0 52px; font-size:13px; line-height:1.7; color:var(--clay)}
+.legal section{margin-bottom:38px}
+.legal h2{margin:0 0 12px; font-size:15px; font-weight:600; letter-spacing:.01em; color:var(--basalt)}
+.legal p{margin:0 0 12px; font-size:14.5px; line-height:1.82; color:var(--stone); max-width:66ch}
+.legal ul{margin:0 0 12px; padding-left:20px; max-width:66ch}
+.legal li{margin-bottom:9px; font-size:14.5px; line-height:1.82; color:var(--stone)}
+.legal b{color:var(--basalt); font-weight:500}
+.legal a{border-bottom:1px solid var(--hairline-2); padding-bottom:1px; word-break:break-word}
+.legal a:hover{border-bottom-color:var(--basalt)}
+.legal-hr{height:0; border:0; border-top:1px solid var(--hairline); margin:64px 0 56px}
+/* 국문 원문 —— 번역본과 어긋나면 이쪽이 기준이다 */
+.legal-ko h2{font-size:14.5px}
+.legal-ko > h2:first-child{font-family:var(--serif); font-weight:var(--display-w);
+  font-size:27px; letter-spacing:-.005em; margin-bottom:16px}
+.legal .legal-callout{padding:16px 18px; background:var(--limestone);
+  border-left:2px solid var(--pine); margin-bottom:38px !important}
+@media (max-width:760px){
+  .legal{padding-block:56px 80px}
+  .legal h1{font-size:31px}
+  .legal-ko > h2:first-child{font-size:23px}
+}
+
+/* ── 푸터: 거래 당사자 아님 고지 ──────────────────────────────
+   전자상거래법 제20조. 작게 두되 --ash(3.3:1) 아래로는 내리지 않는다. */
+.notparty{margin:30px 0 0; padding-top:22px; border-top:1px solid #3A3630}
+.notparty span{display:block; max-width:92ch;
+  font-size:12.5px; line-height:1.75; color:var(--linen)}
+.foot .meta .biz{font-size:12px; line-height:1.75; color:var(--ash)}
