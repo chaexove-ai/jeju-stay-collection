@@ -17,7 +17,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseCSV, buildStays, pickHero, pickHeroes } from "./src/data.mjs";
-import { T, TAGS, BADGES, MIN_REVIEWS } from "./src/i18n.mjs";
+import { T, TAGS, BADGES, MIN_REVIEWS, FILTER_TAGS } from "./src/i18n.mjs";
 import { JEJU } from "./src/jeju.mjs";
 import { PRIVACY, PRIVACY_KO, PRIVACY_DATE, BIZ } from "./src/legal.mjs";
 
@@ -168,8 +168,9 @@ const T=${serialize(T)};
 const TAGS=${serialize(TAGS)};
 const BADGES=${serialize(BADGES)};
 const MIN_REVIEWS=${MIN_REVIEWS};
+const FILTER_TAGS=${serialize(FILTER_TAGS)};
 ${extra}
-const R=makeRender(T,TAGS,BADGES,MIN_REVIEWS,${JSON.stringify(prefix)});
+const R=makeRender(T,TAGS,BADGES,MIN_REVIEWS,${JSON.stringify(prefix)},FILTER_TAGS);
 /* 언어는 주소가 정한다 —— 예전에는 localStorage 에 담아두고 어느 주소에서든
    되살렸는데, 그러면 /(영문) 을 열어도 중국어가 나와 <html lang> · canonical ·
    광고 랜딩이 전부 어긋난다. 이제 이 페이지의 언어는 빌드 시점에 박힌다. */
@@ -277,7 +278,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
     if(site._hero.h1?.en||site._hero.h1?.zh)     siteTxt.h1  ={en:R.fmt(withN(site._hero.h1.en)),  zh:R.fmt(withN(site._hero.h1.zh||site._hero.h1.en))};
     if(site._hero.lede?.en||site._hero.lede?.zh) siteTxt.lede={en:R.fmt(withN(site._hero.lede.en)),zh:R.fmt(withN(site._hero.lede.zh||site._hero.lede.en))};
   }
-  const filt={region:"all",guests:"all",tag:"all"};
+  const filt=R.emptyFilt();
   const avg=R.avgRating(list);
   const villages=new Set(list.map(g=>g.region).filter(Boolean)).size;
 
@@ -374,6 +375,28 @@ ${darkFoot(lang)}
 const DATA=${JSON.stringify(list)};
 const SITE_TXT=${serialize(siteTxt)};
 const HERO=${hero?JSON.stringify({id:hero.id}):"null"};
+/* 필터 상태는 주소가 들고 있다 —— /?region=Aewol&tag=POOL
+   광고에서 「애월 풀빌라」 검색어를 이미 걸러진 목록으로 바로 떨어뜨릴 수 있고,
+   뒤로가기와 링크 공유가 동작하며, GA4 에서 랜딩 주소만으로 조건별 성과가 갈린다.
+   canonical 은 언제나 / 이므로 색인이 갈라지지는 않는다. */
+function readFilt(){
+  try{
+    var q=new URLSearchParams(location.search), raw={};
+    R.FILT_KEYS.forEach(function(k){ raw[k]=q.get(k); });
+    return R.sanitizeFilt(DATA, raw);
+  }catch(e){ return R.emptyFilt(); }
+}
+function writeFilt(){
+  try{
+    var q=new URLSearchParams();
+    R.FILT_KEYS.forEach(function(k){ if(filt[k] && filt[k]!=="all") q.set(k,filt[k]); });
+    var s=q.toString();
+    history.replaceState(null,"", s ? location.pathname+"?"+s : location.pathname);
+  }catch(e){}
+}
+/* 이 줄이 실행되는 시점에는 R(렌더러)이 아직 만들어지기 전이다 —— 머리말(preamble)이
+   페이지별 코드를 makeRender 호출보다 먼저 붙이기 때문. 그래서 여기서는 빈 값만
+   두고, 주소에서 읽어들이는 것은 맨 아래 첫 paint() 직전에 한다. */
 let filt={region:"all",guests:"all",tag:"all"};
 let view="list";
 const JE=${JSON.stringify({x0:JEJU.x0,x1:JEJU.x1,y0:JEJU.y0,y1:JEJU.y1})};
@@ -387,7 +410,8 @@ function paint(){
   document.getElementById("filters").innerHTML=R.filtersHTML(DATA,lang,filt);
   document.getElementById("grid").innerHTML=R.gridHTML(DATA,lang,filt);
   const shown=DATA.filter(g=>R.matches(g,filt));
-  document.getElementById("countTxt").innerHTML=T[lang].count(shown.length,DATA.length);
+  document.getElementById("countTxt").innerHTML=T[lang].count(shown.length,DATA.length)+R.clearHTML(lang,filt);
+  writeFilt();
   /* 지도가 열려 있으면 같이 다시 그린다 —— 핀 이름과 옆 목록, 캡션이 언어를 따라간다.
      예전엔 여기 window.L(Leaflet) 조건이 붙어 있었는데, Leaflet 을 걷어낸 뒤로
      그 값이 영영 undefined 라 지도가 열린 채 언어를 바꾸면 지도만 옛 언어로 남았다. */
@@ -398,12 +422,24 @@ function paint(){
     if(h) el.textContent = R.name(h,lang) + (i?"":" · "+R.shortRegion(R.region(h,lang)));
   });
 }
-document.getElementById("filters").addEventListener("click",e=>{
+/* 칩 · Clear 를 한 곳에서 처리한다 —— Clear 는 칩 줄 밖(카운트 옆, 0건 안내 안)에도
+   서므로 세 군데에 같은 처리기를 건다. */
+function onFilt(e){
   const b=e.target.closest("button[data-f]"); if(!b) return;
-  filt[b.dataset.f]=b.dataset.v;
-  track("filter_change",{filter_type:b.dataset.f,filter_value:b.dataset.v,language:lang});
+  const k=b.dataset.f;
+  if(k==="clear"){
+    filt=R.emptyFilt();
+    track("filter_change",{filter_type:"clear",filter_value:"all",language:lang});
+    return paint();
+  }
+  /* 켜진 칩을 다시 누르면 꺼진다 —— 줄 맨 앞의 리셋 칩 말고도 빠져나갈 길을 하나 더 둔다 */
+  filt[k] = (filt[k]===b.dataset.v) ? "all" : b.dataset.v;
+  track("filter_change",{filter_type:k,filter_value:filt[k],language:lang});
   paint();
-});
+}
+document.getElementById("filters").addEventListener("click",onFilt);
+document.querySelector(".count-row").addEventListener("click",onFilt);
+document.getElementById("grid").addEventListener("click",onFilt);
 document.getElementById("grid").addEventListener("click",e=>{
   const b=e.target.closest("button[data-toggle]"); if(!b) return;
   const box=document.getElementById("rooms-"+b.dataset.toggle);
@@ -691,7 +727,9 @@ if(sideEl){
   });
 }
 
-/* 최초 렌더 —— 지도 상태가 다 준비된 뒤에 한 번 */
+/* 최초 렌더 —— 지도 상태가 다 준비된 뒤에 한 번.
+   주소에 필터가 실려 들어왔으면(광고 랜딩) 여기서 집어 든다. */
+filt=readFilt();
 paint();
 `;
 
@@ -882,7 +920,7 @@ async function main(){
                   + `\n:root{--map-ar:${JEJU.w}/${JEJU.h}}\n`;
   const renderSrc = await readFile(path.join(SRC,"render.js"), "utf8");
   /* 같은 렌더러를 언어별 접두사만 바꿔 두 벌 만든다 */
-  const mkR       = pre => new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS,pre);
+  const mkR       = pre => new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS,pre,FILTER_TAGS);
   const R         = mkR(""), Rz = mkR("/zh");
 
   const {list, site} = buildStays(await loadTable());

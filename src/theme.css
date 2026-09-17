@@ -117,6 +117,12 @@ h1 em{font-style:italic}
 .count-row{display:flex; align-items:center; justify-content:space-between; gap:24px; padding-bottom:14px}
 .count-row .n{font-size:14px; color:var(--stone)}
 .count-row .n b{color:var(--basalt); font-weight:500}
+/* 필터를 끄는 길 —— 걸려 있을 때만 나타난다. 칩이 아니라 글자 링크로 둔 것은
+   「또 하나의 선택지」가 아니라 「되돌리기」라는 것을 눈으로 구분시키기 위해서다. */
+.fclear{font-size:13px; color:var(--stone); text-decoration:underline;
+  text-underline-offset:3px; padding:4px 2px; transition:.15s}
+.fclear:hover{color:var(--basalt)}
+.note .fclear{display:inline-block; margin-top:14px; font-size:14px}
 
 .grid{display:grid; gap:40px; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:stretch}
 .card{background:var(--paper); border:1px solid var(--hairline); padding:14px 14px 22px;
@@ -504,7 +510,10 @@ h1 em{font-style:italic}
   /* 「Where」「Who for」 라벨이 숨어 있어서 칩 두 줄이 무슨 기준인지 알 수 없었다.
      칩 줄은 옆으로 스크롤되므로 라벨은 줄 위에 따로 세운다. */
   .filters{gap:16px}
-  .fgrp{flex-direction:column; align-items:stretch; gap:7px}
+  /* 필터가 세 줄이 되면서 목록이 그만큼 아래로 밀린다 —— 줄 간격만 조금 좁힌다.
+     칩 높이(44px)는 손가락 최소 크기라 건드리지 않는다. */
+  .filters{gap:10px}
+  .fgrp{flex-direction:column; align-items:stretch; gap:6px}
   .fgrp > .lbl{width:auto; font-size:10.5px}
   .frow{flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch}
   .frow::-webkit-scrollbar{display:none}

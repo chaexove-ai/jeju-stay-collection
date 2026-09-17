@@ -23,6 +23,13 @@ const server = http.createServer((req,res)=>{
 await new Promise(r=>server.listen(0,r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
+/* 기대하는 숙소 수는 dist 가 말하게 한다 —— 예전에는 15 를 일곱 군데에
+   손으로 박아 두어서, 시트에 숙소를 한 곳 추가할 때마다 이 파일이 통째로
+   빨간불이 됐다. 그러면 검사를 안 돌리게 된다. 카드 수는 실제로 만들어진
+   /stay/ 페이지 수와 맞으면 된다 —— 서로 다른 경로에서 나온 두 숫자다. */
+const N = fs.readdirSync(path.join(DIST,"stay")).length;
+console.log(`\n· 기준 숙소 수 ${N}곳 (dist/stay 기준)`);
+
 const browser = await chromium.launch({executablePath:"/opt/pw-browsers/chromium"});
 const fails = [];
 const ok = m => console.log("  ✓ " + m);
@@ -119,10 +126,10 @@ console.log("\n[목록 페이지]");
   await p.goto(BASE+"/", {waitUntil:"networkidle"});
 
   const cards = await p.$$eval(".card h3 a", els=>els.map(e=>e.dataset.detail));
-  cards.length===15 ? ok(`카드 15장 (${cards.length})`) : bad(`카드 수 ${cards.length}, 15 기대`);
+  cards.length===N ? ok(`카드 ${cards.length}장`) : bad(`카드 수 ${cards.length}, ${N} 기대`);
   cards[cards.length-1]==="dotlwat"
     ? ok("도틀왓 마지막") : bad(`마지막 카드가 도틀왓이 아님: ${cards[cards.length-1]}`);
-  cards.indexOf("dotlwat")===14 ? ok("도틀왓 단 한 번, 맨 끝") : bad("도틀왓 위치 이상");
+  cards.indexOf("dotlwat")===N-1 ? ok("도틀왓 단 한 번, 맨 끝") : bad("도틀왓 위치 이상");
 
   /* 숙소 수는 문구에 글자로 박지 않는다 —— 열여섯 번째 집이 들어오는 날
      사이트가 조용히 거짓말을 하기 때문. 사전과 화면 양쪽으로 확인한다. */
@@ -155,7 +162,7 @@ console.log("\n[목록 페이지]");
     const norm = s => String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
     const odd = names.filter(x => !norm(x.n).includes(norm(x.id)));
     odd.length===0
-      ? ok("아이디와 이름 표기 일치 (15곳)")
+      ? ok(`아이디와 이름 표기 일치 (${N}곳)`)
       : bad(`아이디와 이름이 어긋남: ${odd.map(x=>`${x.id} ↔ "${x.n}"`).join(", ")}`);
   }
 
@@ -300,16 +307,67 @@ console.log("\n[목록 페이지]");
   const btns = await p.$$eval(".card .btn", a=>a.map(x=>x.getAttribute("href")));
   btns.every(h=>/airbnb\./i.test(h)) ? ok("카드 CTA → 에어비앤비 직결") : bad("카드 CTA 링크 이상");
 
+  /* 기대값을 손으로 박지 않는다 —— 후기가 5건을 넘으면 그 숙소는 다음 빌드에서
+     자동으로 숫자로 바뀐다. 숫자를 박아 두면 그때마다 이 검사가 거짓으로 빨개진다.
+     화면에 찍힌 개수가 데이터에서 계산한 개수와 같은지만 본다(= 규칙이 지켜졌는지). */
   const newly = await p.$$eval(".card .stars", els=>els.filter(e=>/Newly listed/.test(e.textContent)).length);
-  newly===4 ? ok("표본 부족 4곳 Newly listed") : bad(`Newly listed ${newly}곳, 4 기대`);
+  const newlyExp = await p.evaluate(()=>DATA.filter(g=>!(g.reviews>=MIN_REVIEWS && g.rating)).length);
+  newly===newlyExp ? ok(`표본 부족 ${newly}곳 Newly listed (데이터와 일치)`)
+                   : bad(`Newly listed ${newly}곳, 데이터 기준 ${newlyExp}곳`);
 
   const avg = await p.textContent(".avg b").catch(()=>null);
   avg ? ok(`평균 평점 ${avg}`) : bad("평균 평점 미표시");
 
-  await p.click('.chip[data-v="g3"]');
-  const after = await p.$$eval(".card", e=>e.length);
-  after>0 && after<15 ? ok(`인원 필터 동작 (15 → ${after})`) : bad(`필터 결과 ${after}`);
-  await p.click('.chip[data-f="guests"][data-v="all"]');
+  /* 필터 —— 「한 줄 = 한 필터 키 = 리셋 칩 하나」가 지켜지는지 본다.
+     예전에 시설(tag) 칩만 리셋 칩이 없어서, 한 번 누르면 새로고침 말고는
+     빠져나갈 수 없었다. 줄을 새로 늘릴 때 리셋 칩을 빠뜨리면 여기서 걸린다. */
+  {
+    const cnt = () => p.$$eval(".card", e=>e.length);
+    const url = () => p.evaluate(()=>location.pathname+location.search);
+
+    const keys = await p.$$eval("#filters button[data-f]", b=>[...new Set(b.map(x=>x.dataset.f))]);
+    const resets = await p.$$eval('#filters button[data-v="all"]', b=>b.map(x=>x.dataset.f));
+    keys.every(k=>resets.includes(k))
+      ? ok(`필터 키 ${keys.length}개 전부 리셋 칩 보유 (${keys.join(" · ")})`)
+      : bad(`리셋 칩 없는 필터 키: ${keys.filter(k=>!resets.includes(k)).join(" · ")}`);
+
+    await p.click('.chip[data-f="guests"][data-v="g3"]');
+    const g3 = await cnt();
+    g3>0 && g3<N ? ok(`인원 필터 동작 (${N} → ${g3})`) : bad(`인원 필터 결과 ${g3}`);
+    await p.click('.chip[data-f="guests"][data-v="all"]');
+
+    /* 시설 칩 하나를 골라 —— 켜고, 리셋 칩으로 끄고, 토글로도 꺼지는지 */
+    const tag = await p.$$eval('#filters button[data-f="tag"]',
+      b=>{ const x=b.find(y=>y.dataset.v!=="all"); return x?x.dataset.v:""; });
+    if(tag){
+      await p.click(`.chip[data-f="tag"][data-v="${tag}"]`);
+      const on = await cnt();
+      on>0 && on<N ? ok(`시설 필터 동작 ${tag} (${N} → ${on})`) : bad(`시설 필터 결과 ${on}`);
+      (await url()).includes("tag="+tag) ? ok(`필터가 주소에 실림 (${await url()})`) : bad(`주소 ${await url()}`);
+      await p.click('.chip[data-f="tag"][data-v="all"]');
+      (await cnt())===N ? ok("시설 리셋 칩으로 해제") : bad(`리셋 칩으로 안 풀림 (${await cnt()})`);
+      await p.click(`.chip[data-f="tag"][data-v="${tag}"]`);
+      await p.click(`.chip[data-f="tag"][data-v="${tag}"]`);
+      (await cnt())===N ? ok("같은 칩 재클릭으로도 해제") : bad(`토글 해제 실패 (${await cnt()})`);
+    } else bad("시설 칩이 한 개도 없음 —— FILTER_TAGS 와 시트 태그가 어긋났다");
+
+    /* 걸려 있을 때만 나오는 Clear */
+    (await p.$(".fclear")) ? bad("필터가 없는데 Clear 가 보인다") : ok("필터 없을 때 Clear 숨김");
+    await p.click('.chip[data-f="guests"][data-v="g3"]');
+    const cl = await p.$(".count-row .fclear");
+    cl ? ok("필터를 걸면 Clear 노출") : bad("Clear 가 안 나온다");
+    if(cl){
+      await cl.click();
+      (await cnt())===N && (await url())==="/" ? ok("Clear 로 전부 해제 · 주소도 정리") : bad(`Clear 실패 (${await cnt()} / ${await url()})`);
+    }
+
+    /* 광고 랜딩 —— 주소로 들어와도 걸러진 채 열려야 하고, 오타는 무시해야 한다 */
+    await p.goto(BASE+"/?guests=g3", {waitUntil:"networkidle"});
+    (await cnt())===g3 ? ok(`주소로 진입 시 필터 적용 (${g3}곳)`) : bad(`주소 진입 ${await cnt()}, ${g3} 기대`);
+    await p.goto(BASE+"/?tag=NOPE&region=Mars&guests=g9", {waitUntil:"networkidle"});
+    (await cnt())===N && (await url())==="/" ? ok("엉뚱한 파라미터는 무시하고 주소도 정리") : bad(`오타 처리 ${await cnt()} / ${await url()}`);
+    await p.goto(BASE+"/", {waitUntil:"networkidle"});
+  }
 
   /* 繁體中文은 이제 브라우저 안에서 갈아끼우는 게 아니라 주소가 다르다.
      링크가 실제로 /zh/ 로 가는지, 그 페이지가 자바스크립트가 돌기 전에
@@ -337,7 +395,7 @@ console.log("\n[목록 페이지]");
   const zh = await p.textContent(".coll-head h2");
   /住宿/.test(zh) ? ok(`繁體 페이지 (${zh})`) : bad(`繁體 페이지 실패: ${zh}`);
   const zhCards = await p.$$eval(".card", e=>e.length);
-  zhCards===15 ? ok("繁體에서도 15장") : bad(`繁體 ${zhCards}장`);
+  zhCards===N ? ok(`繁體에서도 ${N}장`) : bad(`繁體 ${zhCards}장`);
   const zhHero = await p.$$eval(".hero-img .hc", e=>e.map(x=>x.textContent.trim()));
   zhHero.some(t=>/[一-鿿]/.test(t))
     ? ok(`히어로 이름 繁體中文 (${zhHero[0]})`) : bad(`히어로 이름 [${zhHero}]`);
@@ -372,7 +430,7 @@ console.log("\n[목록 페이지]");
     const ext = await p.$$eval("img,script,link", e=>e.map(x=>x.src||x.href||"").filter(u=>/carto|tile\.|arcgis|leaflet/i.test(u)).length);
     ext===0 ? ok("외부 지도 서버 요청 0") : bad(`외부 지도 요청 ${ext}건`);
     const dots = await p.$$eval(".mmap-dots i", e=>e.length);
-    dots===15 ? ok("작은 지도 점 15개") : bad(`점 ${dots}개`);
+    dots===N ? ok(`작은 지도 점 ${N}개`) : bad(`점 ${dots}개`);
     /* 작은 지도에는 읍면 경계선이 없어야 한다 —— 372px 에서는 잡음이다 */
     const miniAdm = await p.$$eval(".mmap-canvas path.adm", e=>e.length);
     miniAdm===0 ? ok("작은 지도에 경계선 없음") : bad(`작은 지도 경계선 ${miniAdm}개`);
@@ -382,7 +440,7 @@ console.log("\n[목록 페이지]");
     const shown = await p.$eval("#mapwrap", e=>!e.hidden);
     hid && shown ? ok("지도 전환 동작") : bad("지도 전환 실패");
     const pins = await p.$$eval(".mpin", e=>e.length);
-    pins===15 ? ok("지도 핀 15개") : bad(`핀 ${pins}개`);
+    pins===N ? ok(`지도 핀 ${N}개`) : bad(`핀 ${pins}개`);
     const dup = await p.$$eval(".mpin", e=>e.filter(x=>x.hasAttribute("title")).length);
     dup===0 ? ok("브라우저 기본 툴팁 없음") : bad(`title 속성 ${dup}개`);
     /* 펼친 지도에는 경계선이 있어야 하고, 해안선 밖으로 새지 않게 clip 이 걸려 있어야 한다 */
@@ -402,8 +460,8 @@ console.log("\n[목록 페이지]");
        지도를 열자마자 15장이 날아가면 안 된다. */
     const lazy = await p.$$eval(".mpin .tip img[data-src]", e=>e.length);
     const eager = await p.$$eval(".mpin .tip img[src]", e=>e.length);
-    lazy===15 && eager===0
-      ? ok("핀 사진 15장 지연 로딩 (초기 요청 0)") : bad(`대기 ${lazy} / 이미 로드 ${eager}`);
+    lazy===N && eager===0
+      ? ok(`핀 사진 ${N}장 지연 로딩 (초기 요청 0)`) : bad(`대기 ${lazy} / 이미 로드 ${eager}`);
     /* 작은 크기로 바꿔 부르는지 —— 원본 w_1200 을 그대로 쓰면 한 장에 수백 KB */
     const small = await p.$eval(".mpin .tip img[data-src]", e=>e.dataset.src);
     /w_320/.test(small) ? ok("핀 사진 w_320 축소본") : bad(`사진 주소 ${small}`);
@@ -491,7 +549,7 @@ console.log("\n[모바일 390px]");
   });
   shapes.tabBorder==="0px/2px" && shapes.chipBorder!=="0px"
     ? ok("탭은 밑줄 · 칩은 상자로 구분") : bad(`탭 ${shapes.tabBorder} / 칩 ${shapes.chipBorder}`);
-  shapes.labels.length===2
+  shapes.labels.length===3
     ? ok(`필터 라벨 노출 (${shapes.labels.join(" · ")})`) : bad(`라벨 ${shapes.labels.length}개`);
 
   /* 핀 사이가 손가락으로 고를 만큼은 벌어져야 한다 */
@@ -558,8 +616,8 @@ console.log("\n[모바일 390px]");
     pressed:document.querySelector('#vtabs button[data-view="map"]').getAttribute("aria-pressed"),
     pins:document.querySelectorAll(".mpin").length
   }));
-  onMap.grid && onMap.map && onMap.pressed==="true" && onMap.pins===15
-    ? ok("지도 탭 → 지도 15핀") : bad(JSON.stringify(onMap));
+  onMap.grid && onMap.map && onMap.pressed==="true" && onMap.pins===N
+    ? ok(`지도 탭 → 지도 ${N}핀`) : bad(JSON.stringify(onMap));
   await p.click('#vtabs button[data-view="list"]');
   await p.waitForTimeout(300);
   const backOk = await p.evaluate(()=>!document.getElementById("grid").hidden

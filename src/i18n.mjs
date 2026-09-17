@@ -19,7 +19,9 @@ export const T = {
     s1:"Stays", s2:"Villages", s3:"Visited in person", s3b:"All",
     secEyebrow:"On the island", secTitle:"The Collection",
     secNote:"Ratings come from Airbnb. Rates change by season — check them on the listing.",
-    fWhere:"Where", fWho:"Who for", fAll:"All Jeju", fAny:"Any size",
+    fWhere:"Where", fWho:"Who for", fFeat:"Features",
+    fAll:"All Jeju", fAny:"Any size", fAnyFeat:"Any feature",
+    clear:"Clear filters",
     g1:"2 – 4 guests", g2:"5 – 8", g3:"9 or more",
     count:(n,t)=> n===t ? `<b>${n} ${n===1?"stay":"stays"}</b> · showing all` : `<b>${n} of ${t}</b> stays match`,
     cta:"Check dates &amp; prices",
@@ -52,7 +54,7 @@ export const T = {
        사이트가 책임을 나눠 지게 된다. 지우지 말 것. */
     notParty:"Jeju Stay Collection introduces independent stays on Jeju Island and links to their booking pages. Reservations are made with each stay through Airbnb; we are not a party to the booking, payment, or refund.",
     privacyLink:"Privacy Policy",
-    none:"<b>Nothing matches those filters.</b><br>Try widening the region or the party size.",
+    none:"<b>Nothing matches those filters.</b><br>Try widening the region, the party size or the features.",
 
     /* ── 상세 페이지 ── */
     detail:"View the stay",
@@ -79,7 +81,9 @@ export const T = {
     s1:"合作住宿", s2:"村落", s3:"親自走訪", s3b:"全部",
     secEyebrow:"島上", secTitle:"住宿選輯",
     secNote:"評分來自 Airbnb。房價隨季節變動，請於房源頁面確認。",
-    fWhere:"地區", fWho:"人數", fAll:"全濟州", fAny:"不限",
+    fWhere:"地區", fWho:"人數", fFeat:"特色",
+    fAll:"全濟州", fAny:"不限人數", fAnyFeat:"不限特色",
+    clear:"清除篩選",
     g1:"2 – 4 人", g2:"5 – 8 人", g3:"9 人以上",
     count:(n,t)=> n===t ? `<b>共 ${n} 間</b> · 顯示全部` : `<b>${t} 間中 ${n} 間</b>符合`,
     cta:"查看日期與房價",
@@ -109,7 +113,7 @@ export const T = {
     email:"hello@jejustaycollection.com",
     notParty:"Jeju Stay Collection 僅介紹濟州島上的獨立住宿，並連結至各住宿的訂房頁面。訂房契約成立於旅客與各住宿之間（透過 Airbnb），本站並非訂房、付款或退款的當事人。",
     privacyLink:"隱私權政策",
-    none:"<b>沒有符合條件的住宿。</b><br>請放寬地區或人數條件。",
+    none:"<b>沒有符合條件的住宿。</b><br>請放寬地區、人數或特色條件。",
 
     detail:"查看詳情",
     back:"住宿選輯",
@@ -144,6 +148,15 @@ export const TAGS = {
   GROUP:{en:"Group friendly",zh:"適合團體"},   FAMILY:{en:"Family friendly",zh:"適合家庭"},
   COUPLE:{en:"For couples",zh:"適合情侶"},     PET:{en:"Pet friendly",zh:"寵物友善"}
 };
+
+/* 필터 줄에 세우는 시설 칩 —— 목록을 여기에 고정한다.
+   예전에는 시트에서 가장 많이 쓰인 태그 상위 5개를 매 빌드마다 다시 뽑았는데,
+   5건 동점이 여럿이라 5등 자리가 시트 행 순서에 따라 뒤집혔다. 매월 예약률(B열)을
+   갱신하면 정렬이 바뀌므로 아무것도 안 건드려도 칩이 달라졌다.
+   광고 소재와 재방문 화면이 흔들리면 안 되므로 목록은 사람이 정한다.
+   순서가 곧 화면 순서다. 해당 태그를 가진 숙소가 0곳이면 그 칩만 자동으로 숨는다.
+   바꿀 때는 GA4 filter_change 의 filter_value 분포를 근거로. */
+export const FILTER_TAGS = ["POOL","HEATED","OCEAN","PRIVATE","STONE"];
 
 /* 알약 배지는 두 개뿐 —— 신규 등록, 그리고 할인.
    「영문|繁體」 자유 문구는 설명 아래 이탤릭 한 줄로.

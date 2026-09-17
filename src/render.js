@@ -5,7 +5,7 @@
    서버 렌더링을 위해 new Function 으로도 불러온다.
    따라서 여기서 DOM 을 건드리면 안 된다 —— 문자열만 만든다.
    ============================================================ */
-function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
+function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
 
   /* 언어마다 주소가 다르다 —— 영문은 /, 繁體는 /zh/.
      같은 렌더러를 접두사만 바꿔 두 번 돌린다. 화면 안의 모든 내부 링크가
@@ -173,7 +173,20 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
     </a>`;
   }
 
-  /* ---------- 필터 ---------- */
+  /* ---------- 필터 ----------
+
+     규칙 하나로 고정한다 —— 「한 줄 = 한 필터 키 = 그 줄 맨 앞의 리셋 칩 하나」.
+
+     예전에는 인원(guests)과 시설(tag)이 한 줄에 섞여 있었고 리셋 칩은 인원 것
+     하나뿐이라, 시설 칩을 누르면 새로고침 말고는 빠져나갈 길이 없었다.
+     줄을 늘릴 때 리셋 칩을 같이 만들지 않으면 같은 버그가 다시 난다.
+     FILT_KEYS 가 그 짝을 강제한다 —— 여기에 키를 넣으면 리셋 칩이 딸려 나오고,
+     Clear 와 주소 파라미터도 자동으로 그 키를 따라간다.
+     ---------------------------------------------------------------- */
+  const FILT_KEYS = ["region","guests","tag"];
+  const emptyFilt = () => { const f={}; FILT_KEYS.forEach(k=>f[k]="all"); return f; };
+  const isFiltered = filt => FILT_KEYS.some(k => (filt[k]||"all") !== "all");
+
   function filtersHTML(list,lang,filt){
     const t=T[lang];
     /* 키는 영문 약칭 하나로 고정하고, 칩에 찍는 글자만 언어를 따라간다 */
@@ -181,30 +194,50 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
     list.forEach(g=>{ if(g.region && !label[g.region])
       label[g.region] = (g.regionTag && g.regionTag[lang]) || g.region; });
     const regions=[...new Set(list.map(g=>g.region).filter(Boolean))];
-    const n={}; list.forEach(g=>g.tags.forEach(k=>{ if(TAGS[k]) n[k]=(n[k]||0)+1; }));
-    const tags=Object.entries(n).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
+    /* 시설 칩은 i18n 의 FILTER_TAGS 가 정한다 —— 순서도 그대로.
+       다만 그 태그를 가진 숙소가 한 곳도 없으면 누를 이유가 없으므로 숨긴다.
+       (0 건만 나오는 칩은 필터가 고장 난 것처럼 보인다) */
+    const have={}; list.forEach(g=>g.tags.forEach(k=>{ have[k]=(have[k]||0)+1; }));
+    const tags=(FILTER_TAGS||[]).filter(k=>TAGS[k] && have[k]);
     const chip=(label,key,val,on)=>
       `<button type="button" class="chip" data-f="${key}" data-v="${esc(val)}" aria-pressed="${on}">${esc(label)}</button>`;
     /* 라벨을 칩 줄 안이 아니라 밖에 둔다 —— 휴대폰에서는 칩 줄이 옆으로
        스크롤되기 때문에, 안에 있으면 라벨이 같이 밀려 사라진다. */
-    return `<div class="fgrp">
-        <span class="lbl">${esc(t.fWhere)}</span>
+    const row=(lbl,key,reset,rest)=>rest ? `<div class="fgrp">
+        <span class="lbl">${esc(lbl)}</span>
         <div class="frow">
-          ${chip(t.fAll,"region","all",filt.region==="all")}
-          ${regions.map(r=>chip(label[r]||r,"region",r,filt.region===r)).join("")}
+          ${chip(reset,key,"all",(filt[key]||"all")==="all")}
+          ${rest}
         </div>
-      </div>
-      <div class="fgrp">
-        <span class="lbl">${esc(t.fWho)}</span>
-        <div class="frow">
-          ${chip(t.fAny,"guests","all",filt.guests==="all")}
-          ${chip(t.g1,"guests","g1",filt.guests==="g1")}
-          ${chip(t.g2,"guests","g2",filt.guests==="g2")}
-          ${chip(t.g3,"guests","g3",filt.guests==="g3")}
-          ${tags.map(k=>chip(TAGS[k][lang],"tag",k,filt.tag===k)).join("")}
-        </div>
-      </div>`;
+      </div>` : "";
+    return row(t.fWhere,"region",t.fAll,
+             regions.map(r=>chip(label[r]||r,"region",r,filt.region===r)).join(""))
+         + row(t.fWho,"guests",t.fAny,
+             chip(t.g1,"guests","g1",filt.guests==="g1")
+            +chip(t.g2,"guests","g2",filt.guests==="g2")
+            +chip(t.g3,"guests","g3",filt.guests==="g3"))
+         + row(t.fFeat,"tag",t.fAnyFeat,
+             tags.map(k=>chip(TAGS[k][lang],"tag",k,filt.tag===k)).join(""));
   }
+
+  /* 주소로 들어온 값은 믿지 않는다 —— 광고 링크를 손으로 고쳐 쓰다가 오타가 나면
+     「아무것도 안 나오는데 왜 그런지 모르는 화면」이 된다. 실제로 고를 수 있는
+     값이 아니면 조용히 all 로 되돌린다. */
+  function sanitizeFilt(list, raw){
+    const f = emptyFilt();
+    if(!raw) return f;
+    const regions = new Set(list.map(g=>g.region).filter(Boolean));
+    const have = {}; list.forEach(g=>g.tags.forEach(k=>{ have[k]=1; }));
+    if(regions.has(raw.region)) f.region = raw.region;
+    if(["g1","g2","g3"].indexOf(raw.guests) >= 0) f.guests = raw.guests;
+    if((FILTER_TAGS||[]).indexOf(raw.tag) >= 0 && have[raw.tag]) f.tag = raw.tag;
+    return f;
+  }
+
+  /* 필터를 끄는 길은 늘 보여야 한다 —— 줄이 몇 개가 되든 한 번에 풀린다.
+     아무것도 안 걸려 있으면 나오지 않는다. */
+  const clearHTML = (lang,filt) => isFiltered(filt)
+    ? ` <button type="button" class="fclear" data-f="clear">${esc(T[lang].clear)}</button>` : "";
 
   function matches(g,filt){
     if(filt.region!=="all" && g.region!==filt.region) return false;
@@ -221,7 +254,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
   function gridHTML(list,lang,filt){
     const t=T[lang];
     const shown=list.filter(g=>matches(g,filt));
-    if(!shown.length) return `<div class="note">${t.none}</div>`;
+    if(!shown.length) return `<div class="note">${t.none}<br><button type="button" class="fclear" data-f="clear">${esc(t.clear)}</button></div>`;
     return shown.map((g,i)=>cardHTML(g,i,lang)).join("");
   }
 
@@ -330,5 +363,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX){
 
   return {esc, fmt, name, region, intro, stayUrl, hasRating, ratingHTML,
           availLine, cardHTML, miniHTML, filtersHTML, matches, gridHTML,
+          FILT_KEYS, emptyFilt, isFiltered, clearHTML,
+          sanitizeFilt,
           avgRating, stayHTML, shortRegion, photoAt, FOCUS};
 }
