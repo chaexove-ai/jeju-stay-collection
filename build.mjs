@@ -63,8 +63,18 @@ const META = {
   en:{ title:"Jeju Stay Collection — Handpicked Villas &amp; Stays on Jeju Island",
        desc:"A curated collection of private pool villas, ocean-view retreats and quiet stone houses across Jeju Island — each one visited and looked after by a local team." },
   zh:{ title:"Jeju Stay Collection — 濟州島精選泳池別墅與住宿",
-       desc:"精選濟州島的私人泳池別墅、海景住宿與石屋民宿。每一間都由住在島上的團隊親自走訪、長期照顧。" }
+       desc:"精選濟州島的私人泳池別墅、海景住宿與石屋民宿。每一間都由住在島上的團隊親自走訪、長期照顧。" },
+  ko:{ title:"제주 스테이 컬렉션 — 제주 독채 풀빌라·돌집 숙소 모음",
+       desc:"제주의 독채 풀빌라, 오션뷰 스테이, 돌집 민박을 모았습니다. 섬에 사는 팀이 직접 가 보고 돌보는 숙소들이며, 예약은 각 숙소의 네이버 예약으로 바로 연결됩니다." }
 };
+
+/* 언어 셋 —— 주소 앞가지와 <html lang>. 한 곳에서만 정하고 전부 여기를 본다.
+   예전처럼 zh?"/zh":"" 를 여기저기 적어두면 세 번째 언어를 붙일 때 한 군데를
+   빠뜨리고, 그 페이지만 조용히 다른 언어의 주소를 가리킨다. */
+const PRE      = { en:"", zh:"/zh", ko:"/ko" };
+const HTMLLANG = { en:"en", zh:"zh-Hant", ko:"ko" };
+const urlsFor  = pth => ({ en: pth, zh: "/zh"+(pth==="/"?"":pth), ko: "/ko"+(pth==="/"?"":pth) });
+const ogLoc    = l => l.startsWith("zh") ? "zh_TW" : l.startsWith("ko") ? "ko_KR" : "en_US";
 
 /* ---------- 페이지 껍데기 ---------- */
 function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, noindex, css, body, script, lang="en"}){
@@ -78,12 +88,13 @@ function shell({title, desc, canonical, ogImage, ogTitle, ogAlt, alts, noindex, 
 ${noindex?`<meta name="robots" content="noindex">
 `:""}<link rel="canonical" href="${canonical}">${alts?`
 <link rel="alternate" hreflang="en" href="${alts.en}">
-<link rel="alternate" hreflang="zh-Hant" href="${alts.zh}">
+<link rel="alternate" hreflang="zh-Hant" href="${alts.zh}">${alts.ko?`
+<link rel="alternate" hreflang="ko" href="${alts.ko}">`:""}
 <link rel="alternate" hreflang="x-default" href="${alts.en}">`:""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jeju Stay Collection">
-<meta property="og:locale" content="${lang.startsWith("zh")?"zh_TW":"en_US"}">
-<meta property="og:locale:alternate" content="${lang.startsWith("zh")?"en_US":"zh_TW"}">
+<meta property="og:locale" content="${ogLoc(lang)}">
+${["en_US","zh_TW","ko_KR"].filter(x=>x!==ogLoc(lang)).map(x=>`<meta property="og:locale:alternate" content="${x}">`).join("\n")}
 <meta property="og:title" content="${ogTitle||title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:url" content="${canonical}">${ogImage?`
@@ -124,12 +135,13 @@ const MARK_LIGHT = MARK.replace('stroke="#191817"','stroke="#F4F1EA"').replace('
 /* 언어 전환은 버튼이 아니라 링크다 —— 언어마다 주소가 따로 있기 때문.
    같은 화면을 브라우저 안에서 갈아끼우면 그 화면에는 주소가 없어서,
    광고 랜딩으로 지정할 수도, 공유할 수도, 검색엔진이 읽을 수도 없다. */
-const masthead = (lang, hrefEn, hrefZh) => `<div class="bar">
+const masthead = (lang, u) => `<div class="bar">
   <div class="wrap bar-in">
-    <a class="brand" href="${lang==="zh"?"/zh":"/"}">${MARK}<div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div></a>
+    <a class="brand" href="${PRE[lang]||"/"}">${MARK}<div class="brand-txt"><b>Jeju Stay</b><span>Collection</span></div></a>
     <div class="lang" role="group" aria-label="Language">
-      <a href="${hrefEn}" hreflang="en" data-lang="en" aria-current="${lang==="en"}">English</a>
-      <a href="${hrefZh}" hreflang="zh-Hant" data-lang="zh" aria-current="${lang==="zh"}">繁體中文</a>
+      <a href="${u.en}" hreflang="en" data-lang="en" aria-current="${lang==="en"}">English</a>
+      <a href="${u.zh}" hreflang="zh-Hant" data-lang="zh" aria-current="${lang==="zh"}">繁體中文</a>
+      <a href="${u.ko}" hreflang="ko" data-lang="ko" aria-current="${lang==="ko"}">한국어</a>
     </div>
   </div>
 </div>`;
@@ -149,7 +161,7 @@ const darkFoot = (lang="en") => `<div class="dark">
       <div class="meta">
         <div data-t="contact"></div>
         <div><a href="mailto:hello@jejustaycollection.com">hello@jejustaycollection.com</a></div>
-        <div><a href="${lang==="zh"?"/zh":""}/privacy" data-t="privacyLink"></a></div>${BIZ.regNo ? `
+        <div><a href="${PRE[lang]||""}/privacy" data-t="privacyLink"></a></div>${BIZ.regNo ? `
         <div class="biz">${BIZ.nameEn} (${BIZ.nameKo}) &middot; ${BIZ.owner}<br>Business Registration No. ${BIZ.regNo}<br>${BIZ.address}</div>` : ""}
       </div>
     </div>
@@ -186,7 +198,7 @@ function applyText(){
   });
   /* 사전(T)에 없는 고정 문구 —— 지도 라벨처럼 두 언어를 요소가 직접 들고 있는 것 */
   document.querySelectorAll("[data-en]").forEach(el=>{
-    el.textContent = (lang==="zh" && el.dataset.zh) ? el.dataset.zh : el.dataset.en;
+    el.textContent = el.dataset[lang] || el.dataset.en;
   });
 }
 document.querySelectorAll(".lang a").forEach(b=>b.addEventListener("click",()=>{
@@ -194,7 +206,10 @@ document.querySelectorAll(".lang a").forEach(b=>b.addEventListener("click",()=>{
 }));
 document.addEventListener("click",e=>{
   const a=e.target.closest("a[data-prop]");
-  if(a) track("airbnb_click",{stay:a.dataset.prop, stay_name:a.dataset.name, room:a.dataset.room, language:lang});
+  /* 나가는 문이 언어마다 다르다 —— 영문·繁體는 에어비앤비, 한글은 네이버.
+     이벤트 이름을 갈라 두어야 숙소별 정산에서 둘을 합치든 나누든 고를 수 있다. */
+  if(a) track(lang==="ko"?"naver_click":"airbnb_click",
+              {stay:a.dataset.prop, stay_name:a.dataset.name, room:a.dataset.room, language:lang});
   const d=e.target.closest("a[data-detail]");
   if(d) track("stay_detail",{stay:d.dataset.detail, language:lang});
 });`;
@@ -262,8 +277,9 @@ function fillText(html, lang, siteTxt){
         if(typeof v === "function") v = v(STAY_COUNT);
         return typeof v === "string" ? open + v + close : m;
       })
-    .replace(/(<([a-z0-9]+)\b[^>]*\sdata-en="([^"]*)"[^>]*\sdata-zh="([^"]*)"[^>]*>)(<\/\2>)/g,
-      (m, open, tag, en, zh, close) => open + (lang === "zh" && zh ? zh : en) + close);
+    .replace(/(<([a-z0-9]+)\b[^>]*\sdata-en="([^"]*)"[^>]*\sdata-zh="([^"]*)"(?:[^>]*\sdata-ko="([^"]*)")?[^>]*>)(<\/\2>)/g,
+      (m, open, tag, en, zh, ko, close) =>
+        open + (lang === "ko" ? (ko || en) : lang === "zh" ? (zh || en) : en) + close);
 }
 
 function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
@@ -282,7 +298,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
   const avg=R.avgRating(list);
   const villages=new Set(list.map(g=>g.region).filter(Boolean)).size;
 
-  const body = `${masthead(lang, "/", "/zh")}
+  const body = `${masthead(lang, urlsFor("/"))}
 <header class="hero wrap" id="hero">
   <div class="hero-txt">
     <div class="eyebrow"><span class="lbl">01</span><i></i><span class="lbl" data-t="place"></span></div>
@@ -293,7 +309,7 @@ function pageIndex({list, site, hero, heroes, css, renderSrc, R, lang="en"}){
         <span data-t="heroCta"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBF9F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       </a>
-      ${avg?`<div class="avg"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>
+      ${(avg && lang!=="ko")?`<div class="avg"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>
         <span><b>${avg}</b> <span data-t="avgLabel"></span></span></div>`:""}
     </div>
     <div class="rule" style="max-width:520px"></div>
@@ -404,7 +420,7 @@ function PROJ(lat,lng){
   const s=Math.sin(lat*Math.PI/180);
   const my=0.5-Math.log((1+s)/(1-s))/(4*Math.PI);
   return [((lng+180)/360-JE.x0)/(JE.x1-JE.x0)*100, (my-JE.y0)/(JE.y1-JE.y0)*100];
-}`, lang, zh?"/zh":"")}
+}`, lang, PRE[lang])}
 function paint(){
   applyText();
   document.getElementById("filters").innerHTML=R.filtersHTML(DATA,lang,filt);
@@ -461,6 +477,9 @@ function mapped(){ return GEO.filter(function(g){ return R.matches(g, filt); });
 var STAR_S = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="star" aria-hidden="true">'
            + '<path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5-5.8-3.05-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"/></svg>';
 function ratingMark(g){
+  /* 한글 화면은 네이버로 보낸다 —— 에어비앤비 평점을 지도 카드에만 남겨두면
+     목록에서는 안 보이던 숫자가 핀을 누를 때만 튀어나온다. 같이 뺀다. */
+  if(lang==="ko") return "";
   return R.hasRating(g)
     ? STAR_S + "<b>" + g.rating.toFixed(2) + "</b> <span>(" + g.reviews + ")</span>"
     : '<span class="new">' + R.esc(T[lang].newListing) + "</span>";
@@ -765,9 +784,9 @@ paint();
   const html = shell({
     title:META[lang].title,
     desc:META[lang].desc,
-    lang:zh?"zh-Hant":"en",
-    canonical:SITE+(zh?"/zh":"/"),
-    alts:{en:SITE+"/", zh:SITE+"/zh"},
+    lang:HTMLLANG[lang],
+    canonical:SITE+(PRE[lang]||"/"),
+    alts:{en:SITE+"/", zh:SITE+"/zh", ko:SITE+"/ko"},
     /* 공유 카드 —— 카톡·아이메시지가 집어가는 그림은 한 장짜리 정지
        이미지라, 숙소 사진 한 장을 쓰면 그 주의 히어로 숙소만 공짜 노출을
        가져간다. 컬렉션 전체를 가리키는 그림을 따로 둔다. ogcard.mjs 로 만든다. */
@@ -790,7 +809,7 @@ function pageStay({g, others, css, renderSrc, R, lang="en"}){
   const desc=(R.intro(g,lang) || (zh ? `${n} —— 濟州島 ${region} 的精選住宿。`
                                      : `${n} — a handpicked stay in ${region}, Jeju Island.`)).slice(0,300);
 
-  const body = `${masthead(lang, `/stay/${g.id}`, `/zh/stay/${g.id}`)}
+  const body = `${masthead(lang, urlsFor(`/stay/${g.id}`))}
 <div id="stayRoot">${R.stayHTML(g,others,lang)}</div>
 ${darkFoot(lang)}`;
 
@@ -807,20 +826,22 @@ paint();`;
   /* 검색엔진용 구조화 데이터 —— 평점은 표본 기준을 넘겼을 때만 넣는다 */
   const ld = {
     "@context":"https://schema.org", "@type":"LodgingBusiness",
-    name:n, description:desc, url:`${SITE}/stay/${g.id}`,
+    name:n, description:desc, url:`${SITE}${PRE[lang]}/stay/${g.id}`,
     address:{"@type":"PostalAddress", addressRegion:region, addressCountry:"KR"},
     ...(g.photo?{image:g.photo}:{}),
     ...(g.geo?{geo:{"@type":"GeoCoordinates", latitude:g.geo.lat, longitude:g.geo.lng}}:{}),
-    ...(R.hasRating(g)?{aggregateRating:{"@type":"AggregateRating",
+    /* 한글 페이지는 평점을 화면에 내보내지 않는다. 구조화 데이터에만 남기면
+       「보이지 않는 내용」이 되어 검색엔진이 문제 삼는다. 같이 뺀다. */
+    ...((lang!=="ko" && R.hasRating(g))?{aggregateRating:{"@type":"AggregateRating",
         ratingValue:g.rating.toFixed(2), reviewCount:g.reviews, bestRating:5}}:{})
   };
 
   const html = shell({
     title:`${n} — Jeju Stay Collection`,
     desc:desc.replace(/"/g,"&quot;"),
-    lang:zh?"zh-Hant":"en",
-    canonical:`${SITE}${zh?"/zh":""}/stay/${g.id}`,
-    alts:{en:`${SITE}/stay/${g.id}`, zh:`${SITE}/zh/stay/${g.id}`},
+    lang:HTMLLANG[lang],
+    canonical:`${SITE}${PRE[lang]}/stay/${g.id}`,
+    alts:{en:`${SITE}/stay/${g.id}`, zh:`${SITE}/zh/stay/${g.id}`, ko:`${SITE}/ko/stay/${g.id}`},
     /* 상세 페이지는 그 숙소 사진이 맞다 —— 그 숙소를 보라고 보내는 링크이므로.
        사진이 없으면 컬렉션 카드로 떨어진다. */
     ogImage:g.photo||SITE+"/og.png",
@@ -835,7 +856,7 @@ paint();`;
    주소를 잘못 눌렀거나, 시트에서 내린 숙소의 링크가 어딘가에 남아 있을 때
    호스팅 기본 화면이 뜨면 그 사람은 그대로 나간다. 컬렉션으로 돌려보낸다. */
 function page404({css}){
-  const body = `${masthead("en", "/", "/zh")}
+  const body = `${masthead("en", urlsFor("/"))}
 <main class="wrap nf">
   <div class="eyebrow"><span class="lbl">404</span></div>
   <h1>This page has moved on.</h1>
@@ -866,11 +887,12 @@ const block = b => [
 const sections = list => list.map(b=>`<section><h2>${b.h}</h2>${block(b)}</section>`).join("");
 
 function pagePrivacy({css, lang}){
-  const L  = PRIVACY[lang];
-  const K  = PRIVACY_KO;
+  /* 한글 페이지에서는 국문본이 본문이다 —— 같은 글을 아래 또 싣지 않는다. */
+  const L  = lang==="ko" ? PRIVACY_KO : PRIVACY[lang];
+  const K  = lang==="ko" ? null : PRIVACY_KO;
   const zh = lang==="zh";
 
-  const body = `${masthead(lang, "/privacy", "/zh/privacy")}
+  const body = `${masthead(lang, urlsFor("/privacy"))}
 <main class="wrap legal">
   <div class="eyebrow"><span class="lbl">§</span><i></i><span class="lbl">${L.eyebrow}</span></div>
   <h1>${L.title}</h1>
@@ -878,7 +900,7 @@ function pagePrivacy({css, lang}){
   <p class="legal-date">${L.effective(PRIVACY_DATE)}</p>
   ${sections(L.sections)}
 
-  <hr class="legal-hr">
+  ${K ? `<hr class="legal-hr">
 
   <section class="legal-ko" lang="ko">
     <h2>${K.title}</h2>
@@ -886,27 +908,28 @@ function pagePrivacy({css, lang}){
     <p class="legal-date">${K.effective(PRIVACY_DATE)}</p>
     <p class="legal-callout">${K.notParty}</p>
     ${sections(K.sections)}
-  </section>
+  </section>` : ""}
 </main>
 ${darkFoot(lang)}`;
 
   return shell({
     title:`${L.title} — Jeju Stay Collection`,
-    desc:zh ? "Jeju Stay Collection 的隱私權政策 —— 本站蒐集的資料、保存期間與拒絕方式。"
-            : "How Jeju Stay Collection handles the little information this site sees — what is collected, for how long, and how to refuse it.",
-    canonical:`${SITE}${zh?"/zh":""}/privacy`,
-    alts:{en:SITE+"/privacy", zh:SITE+"/zh/privacy"},
+    desc:lang==="ko" ? "제주 스테이 컬렉션 개인정보처리방침 —— 수집 항목, 보유 기간, 거부 방법."
+        : zh ? "Jeju Stay Collection 的隱私權政策 —— 本站蒐集的資料、保存期間與拒絕方式。"
+             : "How Jeju Stay Collection handles the little information this site sees — what is collected, for how long, and how to refuse it.",
+    canonical:`${SITE}${PRE[lang]}/privacy`,
+    alts:{en:SITE+"/privacy", zh:SITE+"/zh/privacy", ko:SITE+"/ko/privacy"},
     ogImage:SITE+"/og.png", ogTitle:"Jeju Stay Collection",
     css, body:fillText(body, lang, null),
     /* <html lang> 은 zh 가 아니라 zh-Hant —— 간체와 번체를 구분하지 않으면
        검색엔진과 스크린리더가 같은 중국어로 취급한다. */
-    lang:zh?"zh-Hant":"en",
+    lang:HTMLLANG[lang],
     script:`document.querySelectorAll(".lang a").forEach(function(b){b.addEventListener("click",function(){});});`
   }).replace("</head>",
     `<script type="application/ld+json">${JSON.stringify({
       "@context":"https://schema.org", "@type":"WebPage",
       name:L.title, inLanguage:zh?"zh-Hant":"en",
-      url:`${SITE}${zh?"/zh":""}/privacy`,
+      url:`${SITE}${PRE[lang]}/privacy`,
       dateModified:PRIVACY_DATE,
       isPartOf:{"@type":"WebSite", name:"Jeju Stay Collection", url:SITE}
     })}</script>\n</head>`);
@@ -921,7 +944,7 @@ async function main(){
   const renderSrc = await readFile(path.join(SRC,"render.js"), "utf8");
   /* 같은 렌더러를 언어별 접두사만 바꿔 두 벌 만든다 */
   const mkR       = pre => new Function(renderSrc + "; return makeRender;")()(T,TAGS,BADGES,MIN_REVIEWS,pre,FILTER_TAGS);
-  const R         = mkR(""), Rz = mkR("/zh");
+  const R         = mkR(""), Rz = mkR("/zh"), Rk = mkR("/ko");
 
   const {list, site} = buildStays(await loadTable());
   STAY_COUNT = list.length;
@@ -960,13 +983,16 @@ async function main(){
   await mkdir(path.join(DIST,"zh"),{recursive:true});
   await writeFile(path.join(DIST,"zh","index.html"),
     pageIndex({list, site, hero, heroes, css, renderSrc, R:Rz, lang:"zh"}), "utf8");
+  await mkdir(path.join(DIST,"ko"),{recursive:true});
+  await writeFile(path.join(DIST,"ko","index.html"),
+    pageIndex({list, site, hero, heroes, css, renderSrc, R:Rk, lang:"ko"}), "utf8");
 
   for(const g of list){
     /* 「다른 숙소」 —— 같은 지역 먼저, 그다음 정렬 순서. 자기 자신 제외. */
     const rest = list.filter(o=>o.id!==g.id);
     const near = rest.filter(o=>o.region===g.region);
     const others = [...near, ...rest.filter(o=>o.region!==g.region)].slice(0,4);
-    for(const [lang, rr, sub] of [["en",R,""],["zh",Rz,"zh"]]){
+    for(const [lang, rr, sub] of [["en",R,""],["zh",Rz,"zh"],["ko",Rk,"ko"]]){
       const dir = path.join(DIST, sub, "stay", g.id);
       await mkdir(dir,{recursive:true});
       await writeFile(path.join(dir,"index.html"),
@@ -977,7 +1003,9 @@ async function main(){
   /* 사이트맵에는 두 언어를 모두 넣는다 —— 한쪽만 내면 다른 언어는
      색인이 늦거나 아예 안 잡힌다. 서로를 가리키는 hreflang 은 각 페이지 head 에. */
   const paths = ["/", ...list.map(g=>`/stay/${g.id}`), "/privacy"];
-  const urls  = [...paths, ...paths.map(u => u==="/" ? "/zh" : "/zh"+u)];
+  const urls  = [...paths,
+                 ...paths.map(u => u==="/" ? "/zh" : "/zh"+u),
+                 ...paths.map(u => u==="/" ? "/ko" : "/ko"+u)];
   const today = new Date().toISOString().slice(0,10);
   await writeFile(path.join(DIST,"sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`+
@@ -986,6 +1014,7 @@ async function main(){
   /* 개인정보처리방침 —— 언어마다 주소가 따로 있다 (/privacy · /zh/privacy) */
   await writeFile(path.join(DIST,"privacy.html"), pagePrivacy({css, lang:"en"}), "utf8");
   await writeFile(path.join(DIST,"zh","privacy.html"), pagePrivacy({css, lang:"zh"}), "utf8");
+  await writeFile(path.join(DIST,"ko","privacy.html"), pagePrivacy({css, lang:"ko"}), "utf8");
 
   await writeFile(path.join(DIST,"404.html"), page404({css}), "utf8");
   await writeFile(path.join(DIST,"robots.txt"),
@@ -994,7 +1023,7 @@ async function main(){
   console.log(`· 숙소 ${list.length}곳`);
   console.log(`· 히어로 ${hero?hero.id:"(없음)"}`);
   console.log(`· 좌표 있는 숙소 ${list.filter(g=>g.geo).length}곳 / 평점 표시 ${list.filter(g=>R.hasRating(g)).length}곳`);
-  console.log(`· 페이지 ${urls.length}개 (영문 ${paths.length} · 繁體 ${paths.length}) → dist/`);
+  console.log(`· 페이지 ${urls.length}개 (영문 ${paths.length} · 繁體 ${paths.length} · 한글 ${paths.length}) → dist/`);
 }
 
 main().catch(e=>{ console.error("\n✗ 빌드 실패:", e.message, "\n"); process.exit(1); });

@@ -65,9 +65,18 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
             stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${IC[k]}"/></svg>`
     : "";
 
-  const name   = (g,lang)=> (lang==="zh"?g.nameZh:g.nameEn) || g.nameEn || g.nameKo || g.id;
-  const region = (g,lang)=> (lang==="zh"?g.regionZh:g.regionEn) || g.regionEn || "";
-  const intro  = (g,lang)=> (lang==="zh"?g.introZh:g.introEn) || g.introEn || "";
+  /* 언어 셋 —— 繁體·한글 칸이 비면 영문으로 내려간다. 한글 숙소명·소개는
+     시트의 F열·U열을 그대로 쓰고, 지역만 코드의 표(REGION_KO)에서 온다. */
+  const SUF  = {en:"En", zh:"Zh", ko:"Ko"};
+  const pick = (g,base,lang)=> g[base+(SUF[lang]||"En")] || g[base+"En"] || "";
+  const name   = (g,lang)=> pick(g,"name",lang) || g.nameKo || g.id;
+  const region = (g,lang)=> pick(g,"region",lang);
+  const intro  = (g,lang)=> pick(g,"intro",lang);
+
+  /* 예약 버튼이 가는 곳 —— 한글은 네이버, 나머지는 에어비앤비.
+     국내 손님을 에어비앤비로 보내면 숙소가 수수료를 더 문다.
+     Z열(네이버 링크)이 비어 있으면 에어비앤비로 내려간다 —— 막다른 길보다 낫다. */
+  const bookHref = (g,lang)=> (lang==="ko" && g.naver) ? g.naver : ((g.rooms[0]||{}).link || "");
   const stayUrl= g => PREFIX + "/stay/" + encodeURIComponent(g.id);
 
   /* 같은 사진을 작은 크기로 —— 사진은 Cloudinary 에 w_1200 으로 올라가 있다.
@@ -89,6 +98,9 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
         && g.reviews >= MIN_REVIEWS;
   }
   function ratingHTML(g,lang,t){
+    /* 한글 화면은 네이버로 보낸다. 거기 적힌 평점과 다른 숫자를 여기 걸어두면
+       눌러서 간 화면과 어긋난다 —— 그래서 한글에서는 평점을 내보내지 않는다. */
+    if(lang==="ko") return "";
     if(hasRating(g))
       return `<span class="stars">${STAR}<b>${g.rating.toFixed(2)}</b> <span>${esc(t.reviews(g.reviews))}</span></span>`;
     /* 평점 대신 나가는 줄 —— 회색으로 흘리면 「없는 것」처럼 보인다.
@@ -106,7 +118,13 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
     const m=/^DEAL:?(\d+)?$/.exec(g.badge);
     if(m)                    out.flag = m[1] ? `${m[1]}% ${lang==="zh"?"優惠":"off"}` : (lang==="zh"?"優惠":"Deal");
     else if(BADGES[g.badge]) out.flag = BADGES[g.badge][lang];
-    else if(raw.includes("|")){ const p=raw.split("|"); out.incl=((lang==="zh"?p[1]:p[0])||p[0]).trim(); }
+    else if(raw.includes("|")){
+      /* 「영문|繁體|한글」 —— 세 번째 칸은 없어도 된다. 다만 한글 화면에서
+         영문으로 내려보내면 번역이 덜 된 것처럼 보이므로 그때는 숨긴다. */
+      const p=raw.split("|");
+      const i = lang==="zh" ? 1 : lang==="ko" ? 2 : 0;
+      out.incl = (lang==="ko" ? (p[i]||"") : (p[i]||p[0]||"")).trim();
+    }
     return out;
   }
 
@@ -143,10 +161,10 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
       ${tags.length?`<div class="tags">${tags.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
       <div class="c-foot">
         <div class="avail">${esc(availLine(g,t))}</div>
-        <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"
+        <a class="btn" href="${esc(bookHref(g,lang))}" target="_blank" rel="noopener"
            data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}"
            data-room="${esc((lang==="zh"?primary.nameZh:primary.nameEn)||t.whole)}">${t.cta} ${ARROW}</a>
-        ${multi
+        ${multi && lang!=="ko"
           /* 객실이 여럿이면 카드 안에서 바로 펼친다 —— 방을 고르러 다른 페이지로
              넘어가게 하지 않는다. 상세 페이지는 사진과 제목으로만 간다. */
           ? `<div class="micro micro-a"><button type="button" data-toggle="${esc(g.id)}">${esc(t.microRooms(g.rooms.length))}</button></div>
@@ -274,6 +292,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
     const bp=badgeParts(g,lang);
     const primary=g.rooms[0];
     const multi=g.rooms.length>1;
+    const rh=ratingHTML(g,lang,t);
 
     const rooms = g.rooms.map(rm=>{
       const rn=(lang==="zh"?rm.nameZh:rm.nameEn) || rm.nameEn || (rm.whole?t.whole:n);
@@ -292,7 +311,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
           <div class="two two-map">
             <div class="mapbox">
               <iframe title="${esc(n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                src="https://www.google.com/maps?q=${g.geo.lat},${g.geo.lng}&z=13&hl=${lang==="zh"?"zh-TW":"en"}&output=embed"></iframe>
+                src="https://www.google.com/maps?q=${g.geo.lat},${g.geo.lng}&z=13&hl=${lang==="zh"?"zh-TW":lang==="ko"?"ko":"en"}&output=embed"></iframe>
             </div>
             <div class="map-side">
               <p class="map-note">${esc(t.mapNote)}</p>
@@ -313,14 +332,14 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
           <div class="eyebrow"><span class="lbl">${esc(r)}</span><i></i><span class="lbl">${esc(t.place)}</span></div>
           <h1>${esc(n)}</h1>
           <div class="s-meta">
-            ${ratingHTML(g,lang,t)}
-            <span class="sep">·</span>
+            ${rh}
+            ${rh?'<span class="sep">·</span>':""}
             <span class="avail">${esc(availLine(g,t))}</span>
           </div>
           ${p?`<p class="s-intro">${esc(p)}</p>`:""}
           ${bp.incl?`<div class="incl" data-txt="${esc(bp.incl)}" style="margin:0 0 24px">${esc(bp.incl)}</div>`:""}
           <div class="s-act">
-            <a class="btn" href="${esc(primary.link)}" target="_blank" rel="noopener"
+            <a class="btn" href="${esc(bookHref(g,lang))}" target="_blank" rel="noopener"
                data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}"
                data-room="${esc((lang==="zh"?primary.nameZh:primary.nameEn)||t.whole)}">${t.cta} ${ARROW}</a>
             <div class="micro">${esc(t.micro)}</div>
@@ -334,14 +353,19 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
           <div class="two">
             <div>
               <h2>${esc(t.featTitle)}</h2>
-              ${hasRating(g)?`<p class="sub">${esc(t.ratingNote)}</p>`:`<p class="sub">&nbsp;</p>`}
+              ${(lang!=="ko" && hasRating(g))?`<p class="sub">${esc(t.ratingNote)}</p>`:`<p class="sub">&nbsp;</p>`}
               ${feats.length?`<div class="feat">${feats.map(x=>`<span>${icon(x.k)}${esc(x.label)}</span>`).join("")}</div>`
                             :`<p class="prose">${esc(p)}</p>`}
             </div>
             <div class="book">
-              <h2>${esc(multi?t.roomsTitle:t.roomsOne)}</h2>
+              <h2>${esc(lang==="ko" ? t.roomsOne : (multi?t.roomsTitle:t.roomsOne))}</h2>
               <p class="sub">${esc(t.micro)}</p>
-              <div class="rlist">${rooms}</div>
+              ${lang==="ko"
+                /* 네이버 예약은 업체 단위 주소 하나다. 객실을 여기서 고르게 해봐야
+                   전부 같은 곳으로 가므로, 버튼 하나로 두고 선택은 네이버에 맡긴다. */
+                ? `<div class="s-act"><a class="btn" href="${esc(bookHref(g,lang))}" target="_blank" rel="noopener"
+                     data-prop="${esc(g.id)}" data-name="${esc(g.nameEn||g.id)}" data-room="">${t.cta} ${ARROW}</a></div>`
+                : `<div class="rlist">${rooms}</div>`}
             </div>
           </div>
         </div>
@@ -361,7 +385,7 @@ function makeRender(T, TAGS, BADGES, MIN_REVIEWS, PREFIX, FILTER_TAGS){
     `;
   }
 
-  return {esc, fmt, name, region, intro, stayUrl, hasRating, ratingHTML,
+  return {esc, fmt, name, region, intro, stayUrl, bookHref, hasRating, ratingHTML,
           availLine, cardHTML, miniHTML, filtersHTML, matches, gridHTML,
           FILT_KEYS, emptyFilt, isFiltered, clearHTML,
           sanitizeFilt,

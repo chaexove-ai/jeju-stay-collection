@@ -672,3 +672,9 @@ h1 em{font-style:italic}
 .notparty span{display:block; max-width:92ch;
   font-size:12.5px; line-height:1.75; color:var(--linen)}
 .foot .meta .biz{font-size:12px; line-height:1.75; color:var(--ash)}
+
+/* 언어가 셋이 되면서 휴대폰에서 스위처가 바 밖으로 밀린다 —— 좁은 화면에서만 줄인다 */
+@media (max-width:720px){
+  .lang a{min-width:0; padding:0 11px; font-size:12px; letter-spacing:.06em}
+  .bar-in{gap:12px}
+}

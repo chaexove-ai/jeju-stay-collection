@@ -10,10 +10,13 @@ export const COL = {
   pin:0, occ:1, show:2, id:3, badge:4, nameKo:5, nameEn:6, nameZh:7,
   regionEn:8, regionZh:9, introEn:10, introZh:11, tags:12,
   roomEn:13, roomZh:14, sleeps:15, whole:16, photo:17, link:18,
-  focus:19, introKo:20, rating:21, reviews:22, lat:23, lng:24
+  focus:19, introKo:20, rating:21, reviews:22, lat:23, lng:24,
+  naver:25
 };
 
 export const IMG_DIR = "img";
+
+import { REGION_KO } from "./i18n.mjs";
 
 export function parseCSV(text){
   const out=[]; let row=[], cell="", q=false;
@@ -60,7 +63,8 @@ export function geo(latRaw, lngRaw){
 }
 
 const CARRY = ["badge","badgeRaw","nameKo","nameEn","nameZh","regionEn","regionZh",
-               "introEn","introZh","introKo","tagsRaw","photo","focus","rating","reviews","lat","lng"];
+               "introEn","introZh","introKo","tagsRaw","photo","focus","rating","reviews","lat","lng",
+               "naver"];
 
 export function buildStays(table){
   const body = table.slice(1).filter(r=>r.some(c=>c&&c.trim()));
@@ -81,7 +85,7 @@ export function buildStays(table){
 
     if(!map.has(id)) map.set(id,{id,pin:null,occ:null,rooms:[],
       badge:"",badgeRaw:"",nameKo:"",nameEn:"",nameZh:"",regionEn:"",regionZh:"",
-      introEn:"",introZh:"",introKo:"",tagsRaw:"",photo:"",focus:"",
+      introEn:"",introZh:"",introKo:"",tagsRaw:"",photo:"",focus:"",naver:"",
       rating:null,reviews:null,lat:null,lng:null});
     const g=map.get(id);
     if(g.pin===null) g.pin=num(c[COL.pin]);
@@ -95,7 +99,8 @@ export function buildStays(table){
       tagsRaw:cell(c,COL.tags), photo:cell(c,COL.photo),
       focus:cell(c,COL.focus).toLowerCase(),
       rating:num(c[COL.rating]), reviews:num(c[COL.reviews]),
-      lat:num(c[COL.lat]), lng:num(c[COL.lng])
+      lat:num(c[COL.lat]), lng:num(c[COL.lng]),
+      naver:cell(c,COL.naver)
     };
     for(const k of CARRY) if(!g[k] && row[k]) g[k]=row[k];
 
@@ -126,7 +131,10 @@ export function buildStays(table){
        풀리면 안 되기 때문. 화면에 찍을 글자는 따로 들고 간다.
        繁體는 「濟州 涯月邑」처럼 앞에 시 이름이 붙어 오므로 뒤 토막만 쓴다. */
     g.region    = shortRegion(g.regionEn);
-    g.regionTag = { en: g.region,
+    const rko = REGION_KO[g.region];
+    g.regionKo  = (rko && rko.full) || g.region;
+    g.regionTag = { ko: (rko && rko.short) || g.region,
+                    en: g.region,
                     zh: (g.regionZh||"").trim().split(/\s+/).pop() || g.region };
     g.bottom    = g.pin!==null && g.pin<0;
     g.geo       = geo(g.lat, g.lng);
